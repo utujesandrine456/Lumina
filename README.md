@@ -25,7 +25,7 @@ Database: MongoDB
 Icons & UI: FontAwesome, Tailwind, Styled Components
 
 📱 Installation
-git clone https://github.com/yourusername/lumina.git
+git clone https://github.com/utujesandrine456/Lumina.git
 cd lumina
 npm install
 npm start
@@ -36,4 +36,4 @@ Lumina was built to support farmers by simplifying logistics, improving connecti
 
 👩‍💻 Contributors
 
-Developed by [Your Name] and the Lumina Team.
+Developed by UWASE UTUJE Sandrine and the Lumina Team.
