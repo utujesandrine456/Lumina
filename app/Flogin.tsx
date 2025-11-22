@@ -18,11 +18,11 @@ export default function Login(){
                         <Text style={{ fontFamily: 'Satisfy_400Regular', fontSize: 52, fontWeight: '400', textAlign: 'center'}}>Lumina</Text>
                     </View>
                     
-                    <Text style={styles.titlecontainer}>Login</Text>
-                    <MonoText style={{ fontSize: 16, textAlign: 'center', color: '#5E5E5E', marginBlock: 10}}>Login to get linked with your data on your dashboard.</MonoText>
+                    <Text style={styles.titlecontainer}>Login As Farmer</Text>
+                    <MonoText style={{ fontSize: 16, textAlign: 'center', color: '#5E5E5E', marginBlock: 10, marginHorizontal: 5}}>Login to get linked with your data on your dashboard.</MonoText>
                     <View style={{ marginHorizontal: 30, marginBlock: 30}}> 
-                        <Text style={styles.label}>Email or Phone:</Text>
-                        <TextInput style={styles.input} placeholder="Email or Phone"  keyboardType="email-address" />
+                        <Text style={styles.label}>Phone Number:</Text>
+                        <TextInput style={styles.input} placeholder="Phone Number"  keyboardType="email-address" />
                         <Text style={styles.label}>Password:</Text>
                         <TextInput style={styles.input} placeholder="Password"   />
                     </View>
@@ -56,7 +56,7 @@ export default function Login(){
                             <Image source={require('@/assets/images/download.jpeg')} style={{ width: 40, height: 40}}/>
                         </TouchableOpacity>
                     </View>
-                    <Text style={{ color: '#767676ff', textAlign: 'center', marginBlock: 20, fontSize: 17, fontFamily: 'Poppins_500Medium'}}>Don’t have an  Account? <Link href='/signup'><MonoText style={{ textDecorationLine: 'underline', marginLeft: 10, fontWeight: 'bold'}}>Sign up</MonoText></Link></Text>
+                    <Text style={{ color: '#767676ff', textAlign: 'center', marginBlock: 20, fontSize: 17, fontFamily: 'Poppins_500Medium'}}>Don’t have an  Account? <Link href='/Fsignup'><MonoText style={{ textDecorationLine: 'underline', marginLeft: 10, fontWeight: 'bold'}}>Sign up</MonoText></Link></Text>
 
                 </View>
             </ScrollView>

@@ -35,8 +35,10 @@ export default function Layout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="home" options={{ title: 'Home' }} />
-      <Stack.Screen name="Location" options={{ title: 'Location' }} />
+      <Stack.Screen name="location" options={{ title: 'Location' }} />
       <Stack.Screen name="crops" options={{ title: 'Crops' }} />
+      <Stack.Screen name="cropprofile" options={{ title: 'Crops' }} />
+      <Stack.Screen name="truckprofile" options={{ title: 'Crops' }} />
       <Stack.Screen name="trucks" options={{ title: 'Trucks' }} />
       <Stack.Screen name="signup" options={{ title: 'Signup' }} />
       <Stack.Screen name="login" options={{ title: 'Login' }} />

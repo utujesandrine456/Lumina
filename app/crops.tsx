@@ -1,15 +1,18 @@
-import React  from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, TextInput, StyleSheet} from "react-native";
-import { MonoText } from '@/components/StyledText';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Image, StyleSheet, Dimensions, Platform } from "react-native";
 import { Link } from 'expo-router';
-import TopBar from '@/components/TopBar';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+
+const { width } = Dimensions.get('window');
+const COLUMN_WIDTH = (width);
 
 
-export default function Crops(){
+export default function Crops() {
     type CropName = 'Maize' | 'Beans' | 'Potato' | 'Sweet Potato' | 'Rice' | 'Casava';
 
-    const images:Record<CropName, any> = {
+    const images: Record<CropName, any> = {
         Maize: require("@/assets/images/maize.jpeg"),
         Beans: require("@/assets/images/beans.jpg"),
         Potato: require("@/assets/images/potato.jpeg"),
@@ -18,43 +21,230 @@ export default function Crops(){
         Casava: require("@/assets/images/casava.jpeg"),
     };
 
+    const cropsdata: { id: number, name: CropName, price: number }[] = [
+        { id: 1, name: 'Maize', price: 13 },
+        { id: 2, name: 'Beans', price: 10 },
+        { id: 3, name: 'Potato', price: 20 },
+        { id: 4, name: 'Sweet Potato', price: 16 },
+        { id: 5, name: 'Rice', price: 22 },
+        { id: 6, name: 'Casava', price: 11 }
+    ];
 
-    const cropsdata: {id: number,name: CropName, price: string}[] = [
-        {id: 1, name: 'Maize', price: '13 Frw/kg'},
-        {id: 2, name: 'Beans', price: '10 Frw/kg'},
-        {id: 3, name: 'Potato', price: '20 Frw/kg'},
-        {id: 4, name: 'Sweet Potato', price: '16 Frw/kg'},
-        {id: 5, name: 'Rice', price: '22 Frw/kg'},
-        {id: 6, name: 'Casava', price: '11 Frw/kg'}
-    ]
+    const [selectedCrop, setSelectedCrop] = useState<number[]>([]);
 
+    const toggleSelection = (id: number) => {
+        if(selectedCrop.includes(id)){
+            setSelectedCrop(selectedCrop.filter(item => item != id));
+        }else{
+            setSelectedCrop([...selectedCrop, id]);
+        }
+    };
 
     return (
-        <>  
-            <TopBar title='Crops' ></TopBar>
-            <ScrollView>
-                <View style={{ backgroundColor: 'white'}}>
-                    <Text style={{ fontFamily: 'Poppins_600SemiBold', textAlign: 'center', fontSize: 28, marginBlock: 20}}>Transported Crops</Text>
-                    <View style={{flexDirection: 'row',flexWrap: 'wrap',justifyContent: 'space-between',paddingHorizontal: 10,}}>
-                        {cropsdata.map((crop) => (
-                            <View key={crop.id} style={{ width: '48%', backgroundColor: '#fff', borderRadius: 10, marginBottom: 15, padding: 10, alignItems: 'center', elevation: 3, }}>
-                                <Image source={images[crop.name]} style={{ width: 120, height: 80, borderRadius: 20 }} resizeMode="cover"/>
-                                <MonoText style={{ fontWeight: '600', marginTop: 10 }}>{crop.name}</MonoText>
-                                <MonoText style={{ color: 'gray', fontSize: 14 }}>{crop.price}</MonoText>
-                            </View>
-                        ))}
+        <SafeAreaView style={styles.container}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                <Animated.View entering={FadeInDown.delay(100).duration(800)} style={styles.header}>
+                    <Text style={styles.headerTitle}>Select Produce</Text>
+                    <Text style={styles.headerSubtitle}>Choose the crops you want to trade</Text>
+                </Animated.View>
 
-                        <Text style={{ fontSize: 26, fontFamily: 'Poppins_600SemiBold', textAlign: 'center', marginBlock: 30}}>Want To Transport Your Crops ?</Text>
-                        <View style={{marginBottom: 20 , marginHorizontal: 'auto'}}>
-                            <FontAwesome name="hand-o-down" size={60} color="black" style={{transform: [ { translateY: -20}] , marginBlock: 20, marginHorizontal: 'auto'}} />
-                            <TouchableOpacity style={{paddingHorizontal: 20, paddingVertical: 8, alignSelf: 'center', borderRadius: 50, elevation: 5, shadowColor: '#000', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.25, shadowRadius: 5, display: 'flex', gap: 40, alignItems: 'center', flexDirection: 'row' }}>
-                                <Image source={require("@/assets/images/Logo.png")} style={{width: 55, height: 55}}></Image>
-                                <Link href="/signup"><Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 20, textAlign: 'center'}}>Book Transport</Text></Link>
+                <View style={styles.grid}>
+                    {cropsdata.map((crop, index) => (
+                        <Animated.View
+                            key={crop.id}
+                            entering={FadeInDown.delay(200 + index * 100).duration(800).springify()}
+                        >
+                            <TouchableOpacity
+                                activeOpacity={0.9}
+                                onPress={() => toggleSelection(crop.id)}
+                                style={{
+                                    ...styles.card,
+                                    ...(selectedCrop.includes(crop.id) ? styles.cardSelected : {})
+                                }}
+                            >
+                                <Image source={images[crop.name]} style={styles.cardImage} resizeMode="cover" />
+
+                                {selectedCrop.includes(crop.id) && (
+                                    <View style={styles.selectedOverlay}>
+                                        <View style={styles.checkmarkBadge}>
+                                            <Ionicons name="checkmark" size={16} color="#FFF" />
+                                        </View>
+                                    </View>
+                                )}
+
+                                <View style={[styles.cardInfo, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+                                    <Text style={styles.cropName}>{crop.name}</Text>
+                                    <Text style={styles.cropPrice}>{crop.price} Frw/Kg</Text>
+                                </View>
                             </TouchableOpacity>
-                        </View>
-                    </View>
+                        </Animated.View>
+                    ))}
                 </View>
+
+                <Animated.View style={styles.actionsContainer}>
+                    <Link
+                        href={{
+                            pathname: "/cropprofile",
+                            params: {selected: selectedCrop.join(',') }
+                        }}
+                        asChild
+                    >
+                        <TouchableOpacity style={styles.detailsButton}>
+                            <Text style={styles.detailsButtonText}>View Details</Text>
+                        </TouchableOpacity>
+                    </Link>
+
+                    <Link href="/trucks" asChild>
+                        <TouchableOpacity
+                            style={{
+                                ...styles.confirmButton,
+                                ...(!selectedCrop ? styles.disabledButton : {})
+                            }}
+                            disabled={!selectedCrop}
+                        >
+                            <Text style={styles.confirmButtonText}>Confirm Selection</Text>
+                            <Ionicons name="arrow-forward" size={20} color="#FFF" />
+                        </TouchableOpacity>
+                    </Link>
+                </Animated.View>
             </ScrollView>
-        </>
-    )
+        </SafeAreaView>
+    );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#F8F9FA',
+    },
+    scrollContent: {
+        padding: 24,
+        paddingBottom: 50,
+    },
+    header: {
+        marginBottom: 32,
+    },
+    headerTitle: {
+        fontFamily: 'Poppins_700Bold',
+        fontSize: 32,
+        color: '#1A1A1A',
+        marginBottom: 8,
+    },
+    headerSubtitle: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 16,
+        color: '#757575',
+    },
+    grid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        gap: 16,
+    },
+    card: {
+        width: COLUMN_WIDTH - 50,
+        height: COLUMN_WIDTH / 2,
+        borderRadius: 5,
+        overflow: 'hidden',
+        backgroundColor: '#FFF',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        marginBottom: 16,
+        borderWidth: 2,
+        borderColor: '#ffff',
+    },
+    cardSelected: {
+        borderColor: '#2E7D32',
+        transform: [{ scale: 0.98 }],
+    },
+    cardImage: {
+        width: '100%',
+        height: '100%',
+    },
+    selectedOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(46, 125, 50, 0.2)',
+        zIndex: 1,
+        justifyContent: 'flex-start',
+        alignItems: 'flex-end',
+        padding: 12,
+    },
+    checkmarkBadge: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#2E7D32',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 2,
+    },
+    cardInfo: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        padding: 12,
+        overflow: 'hidden',
+    },
+    cropName: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 16,
+        color: '#FFF',
+        marginBottom: 4,
+    },
+    cropPrice: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 12,
+        color: '#E0E0E0',
+    },
+    actionsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 24,
+        gap: 16,
+    },
+    detailsButton: {
+        flex: 1,
+        paddingVertical: 16,
+        borderRadius: 10,
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#000',
+    },
+    detailsButtonText: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 14,
+        color: '#000',
+    },
+    confirmButton: {
+        flex: 1.5,
+        flexDirection: 'row',
+        paddingVertical: 16,
+        borderRadius: 10,
+        backgroundColor: '#000',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+    },
+    disabledButton: {
+        backgroundColor: '#BDBDBD',
+        elevation: 0,
+    },
+    confirmButtonText: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 14,
+        color: '#FFF',
+    },
+});
+
+

@@ -1,50 +1,57 @@
-import React, {useState} from 'react';
-import {View, Text, TouchableOpacity, Image, ScrollView} from 'react-native';
-import { useRouter, Link } from 'expo-router';
+import React from 'react';
+import {View, Text, TouchableOpacity, Image, ScrollView, Dimensions} from 'react-native';
+import { Link } from 'expo-router';
 import {MonoText} from '@/components/StyledText';
 import { Ionicons } from '@expo/vector-icons';
 
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen(){
     return(
     <>
         <ScrollView>
             <View>
-                <View style={{ display: 'flex', gap: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBlock: 10}}>
-                    <Text style={{ fontFamily: 'Satisfy_400Regular', fontSize: 52, fontWeight: '400', textAlign: 'center'}}>Lumina</Text>
+                <View style={{marginBlock: 20}}>
+                    <Text style={{ fontFamily: 'Satisfy_400Regular', fontSize: 60, textAlign: 'center'}}>Lumina</Text>
                 </View>
-                <Image source={require("@/assets/images/Logo.png")} style={{ position: 'relative', left:30, top:10}}></Image>
-                <View style={{display: 'flex', position: 'relative', top: -60}}>
-                    <Image source={require("@/assets/images/HomeImage.png")} style={{marginHorizontal: 'auto'}}></Image>
-                    <View style={{position: 'relative', left: -20, top: -50}}>
-                        <TouchableOpacity style={{borderColor: 'black', borderWidth: 2, paddingHorizontal: 20, paddingVertical: 10, alignSelf: 'flex-end', borderRadius: 25 }}>
+                
+                <View style={{alignItems: "flex-start", marginBottom: -82, marginLeft: 40}}>
+                    <Image source={require("@/assets/images/Logo.png")} style={{width: 60, height: 60}}/>
+                </View>
+                
+                <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 20 }}>
+                    <View style={{ width: width * 0.88,height: 306,borderRadius: 20 }}>
+                        <Image source={require("@/assets/images/HomeImage.png")} style={{width: '100%', height: '100%'}} resizeMode='cover'/>
+                    </View>
+                </View>
+                <Link href="/role" asChild>
+                    <View style={{marginRight: 10}}>
+                        <TouchableOpacity style={{borderColor: 'black', borderWidth: 2, paddingHorizontal: 20, paddingVertical: 10, alignSelf: 'flex-end', borderRadius: 25, marginTop: -70 }}>
                             <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 18}}>Grow Market</Text>
                         </TouchableOpacity>
                     </View>
+                </Link>
+                <View style={{ marginBlock: 10}}>
+                    <Text style={{ textAlign: 'center', fontSize: 22, marginHorizontal: 10, fontFamily: 'Poppins_600SemiBold'}}>Find , Book and Rent a Truck to Transport your Crops Easily </Text>
+                    <MonoText style={{ textAlign: 'center', fontSize: 16, fontWeight: '500', color: '#5E5E5E', marginBlock: 10}}>Get a truck whenever and wherever you need it to transport your crops </MonoText>
                 </View>
-
-                <View style={{ position: 'relative', top: -60}}>
-                    <Text style={{ textAlign: 'center', fontSize: 26, marginHorizontal: 10, fontFamily: 'Poppins_600SemiBold'}}>Find , Book and Rent a Truck to Transport your Crops Easily </Text>
-                    <MonoText style={{ textAlign: 'center', fontSize: 20, fontWeight: '500', color: '#5E5E5E', marginBlock: 16}}>Get a truck whenever and wherever you need it to transport your crops </MonoText>
-                </View>
-                <View style={{marginBottom: 20 }}>
-                    <TouchableOpacity style={{paddingHorizontal: 20, paddingVertical: 8, alignSelf: 'center', borderRadius: 50, elevation: 5, shadowColor: '#000', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.25, shadowRadius: 5, display: 'flex', gap: 40,alignItems: 'center', flexDirection: 'row' }}>
-                        <Image source={require("@/assets/images/Logo.png")} style={{width: 55, height: 55}}></Image>
-                        <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 20, textAlign: 'center'}}>Get Started</Text>
-                        <Link href="/signup">
+                <View style={{marginBottom: 10 }}>
+                    <Link href="/role" asChild>
+                        <TouchableOpacity style={{backgroundColor: 'white', paddingHorizontal: 15, paddingVertical: 6, alignSelf: 'center', borderRadius: 50, elevation: 5, shadowColor: '#000', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.25, shadowRadius: 5, display: 'flex', gap: 30,alignItems: 'center', flexDirection: 'row' }}>
+                            <Image source={require("@/assets/images/Logo.png")} style={{width: 55, height: 55}}></Image>
+                            <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 20, textAlign: 'center'}}>Get Started</Text>
                             <TouchableOpacity>
                                 <View style={{ display: 'flex', flexDirection:'row'}}>
-                                    <Ionicons name="chevron-forward" size={26} color="#BDBDBD" style={{marginRight: -5}} />
-                                    <Ionicons name="chevron-forward" size={26} color="#7A7A7A" style={{marginRight: -5}}/>
+                                    <Ionicons name="chevron-forward" size={26} color="#BDBDBD" style={{marginRight: -6}} />
+                                    <Ionicons name="chevron-forward" size={26} color="#7A7A7A" style={{marginRight: -6}}/>
                                     <Ionicons name="chevron-forward" size={26} color="black" />
                                 </View>
                             </TouchableOpacity>
-                        </Link>
-                    </TouchableOpacity>
+                        </TouchableOpacity>
+                    </Link>
                 </View>
             </View>
-        </ScrollView>
-            
+        </ScrollView>  
     </>
     )
 }
