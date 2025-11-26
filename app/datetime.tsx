@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   buttonTextcontainer: {
-    color: "#000000",
+    color: "#000",
     fontSize: 14,
     fontFamily: "Poppins_500Medium",
   },

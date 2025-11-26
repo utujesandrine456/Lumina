@@ -11,7 +11,6 @@ interface DriverState {
     };
     driverLocation: string;
     setUserRole: (role: 'farmer' | 'driver') => void;
-    setTrip: (trip: any) => void;
     setDriverLocation: (location: string) => void;
     toggleDateAvailability: (date: string) => void;
     setTruckStatus: (status: 'Moving' | 'Paused' | 'Stopped') => void;
@@ -42,6 +41,5 @@ export const useDriverStore = create<DriverState>((set) => ({
             return { unavailableDates: newDates };
         }),
     setTruckStatus: (status) => set({ truckStatus: status }),
-    setTrip(trip) => set({trip}),
     setTripDetails: (details) => set((state) => ({ trip: { ...state.trip, ...details } })),
 }));
