@@ -46,6 +46,7 @@ export default function EditScreenInfo({ path }: { path: string }) {
   );
 }
 
+
 const styles = StyleSheet.create({
   getStartedContainer: {
     alignItems: 'center',
