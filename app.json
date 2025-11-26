@@ -14,7 +14,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location.",
+        "NSLocationAlwaysUsageDescription": "This app needs access to your location."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +26,16 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
@@ -30,17 +43,17 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      "expo-font",
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Lumina to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
         }
       ]
-    ],
+    ]
+  },
     "experiments": {
       "typedRoutes": true
     }
-  }
 }
+
+

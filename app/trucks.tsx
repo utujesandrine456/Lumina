@@ -53,19 +53,8 @@ export default function Trucks() {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 <View style={styles.grid}>
                     {trucksdata.map((truck, index) => (
-                        <Animated.View
-                            key={truck.id}
-                            entering={FadeInUp.delay(index * 100).springify()}
-                            style={styles.cardContainer}
-                        >
-                            <TouchableOpacity
-                                activeOpacity={0.9}
-                                onPress={() => toggleSelection(truck.id)}
-                                style={{
-                                    ...styles.card,
-                                    ...(selectedTruck === truck.id ? styles.cardSelected : {})
-                                }}
-                            >
+                        <Animated.View key={truck.id} entering={FadeInUp.delay(index * 100).springify()} style={styles.cardContainer}>
+                            <TouchableOpacity activeOpacity={0.9} onPress={() => toggleSelection(truck.id)} style={{...styles.card, ...(selectedTruck === truck.id ? styles.cardSelected : {})}}>
                                 <Image source={images[truck.name]} style={styles.cardImage} resizeMode="cover" />
 
                                 {selectedTruck === truck.id && (
@@ -159,7 +148,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 24,
-        paddingBottom: 100,
+        paddingBottom: 40,
     },
     grid: {
         gap: 20,

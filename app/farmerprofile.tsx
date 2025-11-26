@@ -17,6 +17,7 @@ export default function Profile() {
         { icon: "time-outline", label: "History", route: "/history" },
         { icon: "settings-outline", label: "Settings", route: "/settings" },
         { icon: "help-circle-outline", label: "Help & Support", route: "/support" },
+        { icon: "swap-horizontal-outline", label: "Switch Role", route: "/role" },
     ];
 
     return (
@@ -43,7 +44,7 @@ export default function Profile() {
                             </TouchableOpacity>
                         </View>
                         <Text style={styles.userName}>John Doe</Text>
-                        <Text style={styles.userRole}>Premium Member</Text>
+                        <Text style={styles.userRole}>Farmer</Text>
                     </View>
                 </Animated.View>
 

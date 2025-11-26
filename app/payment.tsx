@@ -54,7 +54,7 @@ export default function Payment(){
                 </View>
 
                 <TouchableOpacity style={{backgroundColor: 'black', alignSelf: 'center', paddingHorizontal: 30, paddingVertical: 10, borderRadius: 10, marginVertical: 30}} onPress={() => { if(!selected){setError("Please select a payment method !!!."); return } setError("");  setOpenModal(true)}}>
-                    <Text style={{color: 'white', fontFamily: 'Poppins_500Medium', fontSize: 18}}>Confirm</Text>
+                    <Text style={{color: 'white', fontFamily: 'Poppins_500Medium', fontSize: 16}}>Confirm</Text>
                 </TouchableOpacity>
             </View>
 
@@ -88,7 +88,6 @@ export default function Payment(){
 
             <Modal transparent visible={succes} animationType="fade">
                 <BlurView intensity={50} tint="dark" style={styles.modalBackground}>
-                    
                     <View style={styles.modalBox}>
                         <Image source={require('@/assets/images/Success.png')} alt="Success" width={100} height={100} style={{marginHorizontal:'auto', marginBlock: 30}} />
                         <Text style={{fontSize: 26, fontFamily: "Poppins_600SemiBold", textAlign: 'center'}}>Payment Success</Text>

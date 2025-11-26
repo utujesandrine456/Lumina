@@ -17,14 +17,15 @@ export default function DSignup(){
                     <Image source={require("@/assets/images/Logo.png")} style={{}}></Image>
                     <Text style={{ fontFamily: 'Satisfy_400Regular', fontSize: 52, fontWeight: '400', textAlign: 'center'}}>Lumina</Text>
                 </View>
-                
-                <Text style={styles.titlecontainer}>Sign Up As Driver</Text>
+                <Text style={styles.titlecontainer}>Sign Up</Text>
                 <MonoText style={{ fontSize: 16, textAlign: 'center', color: '#5E5E5E', marginBlock: 10, marginHorizontal: 5}}>Sign up for free so as to be able to drive crops to any location (market).</MonoText>
-                <View style={{ marginHorizontal: 30, marginBlock: 30}}> 
+                <View style={{ marginHorizontal: 30, marginBlock: 30 }}> 
                     <Text style={styles.label}>Username:</Text>
                     <TextInput style={styles.input} placeholder="Username"/>
-                    <Text style={styles.label}>Email or Phone:</Text>
-                    <TextInput style={styles.input} placeholder="Email or Phone"  keyboardType="email-address" />
+                    <Text style={styles.label}>Phone Number:</Text>
+                    <TextInput style={styles.input} placeholder="Phone Number"/>
+                    <Text style={styles.label}>National ID:</Text>
+                    <TextInput style={styles.input} placeholder="National ID"  keyboardType="email-address" />
                     <Text style={styles.label}>Password:</Text>
                     <TextInput style={styles.input} placeholder="Password"   />
                 </View>
@@ -35,31 +36,22 @@ export default function DSignup(){
                         </View>
                         <MonoText style={styles.checkboxLabel}>Remember me</MonoText>
                     </TouchableOpacity>
-
-                    
-                    <TouchableOpacity>
-                        <MonoText style={styles.forgot}>Forgot Password?</MonoText>
-                    </TouchableOpacity>
                 </View>
-
-                <Link href="/crops" style={{marginHorizontal: 'auto'}}>
+                <Link href="/trucks" asChild>
                     <TouchableOpacity style={styles.button}>
                         <Text style={styles.buttonTextcontainer}>Sign Up</Text>
                     </TouchableOpacity>
                 </Link>
-                
                 <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginBlock: 20}}>
                     <View style={{ width: 150, height:1, backgroundColor: '#C1C1C1'}}></View>
                     <MonoText style={{ color: '#767676ff'}}>or</MonoText>
                     <View style={{ width: 150, height:1, backgroundColor: '#C1C1C1'}}></View>
                 </View>
-                
                 <View>
                     <TouchableOpacity style={styles.iconButton}>
                         <Image source={require('@/assets/images/download.jpeg')} style={{ width: 40, height: 40}}/>
                     </TouchableOpacity>
                 </View>
-
                 <Text style={{ color: '#767676ff', textAlign: 'center', marginBlock: 20, fontSize: 17, fontFamily: 'Poppins_500Medium'}}>Already have an  Account? <Link href="/Dlogin"><MonoText style={{ textDecorationLine: 'underline', marginLeft: 10, fontWeight: 'bold'}}>Login</MonoText></Link></Text>
             </View>
         </ScrollView>
@@ -90,8 +82,8 @@ const styles  = StyleSheet.create({
         marginBottom: 14,
         fontSize: 15,
         fontFamily: "Poppins_400Regular",
-        backgroundColor: "#F9FAFB",
-        color: '#CCCCCC'
+        backgroundColor: "#ff",
+        color: '#3a3a3aff'
     },
     button: {
         flexDirection: "row",

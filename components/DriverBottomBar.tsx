@@ -2,19 +2,18 @@ import React from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
-import MaterialIcons from "react-native-vector-icons/MaterialCommunityIcons";
-
 
 export default function BottomBar() {
   const router = useRouter();
   const pathname = usePathname();
 
   const tabs: { name: string, route: string, icon: keyof typeof Ionicons.glyphMap; }[] = [
-    { name: "Home", icon: "home-outline", route: "/home" },
+    { name: "Home", icon: "home-outline", route: "/driverdashboard" },
     { name: "Location", icon: "location-outline", route: "/landing" },
-    { name: "Calendar", icon: "calendar-outline", route: "/datetime?role=farmer" },
-    { name: "Dashboard", icon: "grid", route: "/farmerdashboard?role=farmer" },
+    { name: "Calendar", icon: "calendar-outline", route: "/datetime?role=driver" },
+    { name: "Dashboard", icon: "grid", route: "/driverdashboard?role=driver" },
   ];
+
 
   return (
     <View style={styles.container}>

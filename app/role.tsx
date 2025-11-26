@@ -4,10 +4,12 @@ import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp, LayoutAnimationConfig } from 'react-native-reanimated';
+import { useDriverStore } from '@/constants/store';
 
 const { width } = Dimensions.get('window');
 
 export default function RoleScreen() {
+    const { setUserRole } = useDriverStore();
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.contentContainer}>
@@ -24,7 +26,7 @@ export default function RoleScreen() {
 
                 <View style={styles.cardsContainer}>
                     <Link href="/Fsignup" asChild>
-                        <TouchableOpacity activeOpacity={0.9}>
+                        <TouchableOpacity activeOpacity={0.9} onPress={() => setUserRole('farmer')}>
                             <Animated.View entering={FadeInDown.delay(300).duration(1000).springify()} style={styles.card}>
                                 <View style={{ ...styles.iconContainer, backgroundColor: '#E8F5E9' }}>
                                     <Ionicons name="leaf" size={32} color="#2E7D32" />
@@ -39,7 +41,7 @@ export default function RoleScreen() {
                     </Link>
 
                     <Link href="/Dsignup" asChild>
-                        <TouchableOpacity activeOpacity={0.9}>
+                        <TouchableOpacity activeOpacity={0.9} onPress={() => setUserRole('driver')}>
                             <Animated.View entering={FadeInDown.delay(500).duration(1000).springify()} style={styles.card}>
                                 <View style={{ ...styles.iconContainer, backgroundColor: '#E3F2FD' }}>
                                     <Ionicons name="car" size={32} color="#1565C0" />

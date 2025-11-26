@@ -11,7 +11,7 @@ import BottomBar from '@/components/BottomBar';
 export default function Location(){
     return (
     <> 
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'black'}}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center'}}>
             <View>
                 <Image source={require('@/assets/images/Location.png')} style={{ height: screenHeight - 65 , width: screenWidth}} ></Image>
                 <View style={{ height: screenHeight, backgroundColor: '#0000001a', position: 'absolute', width: screenWidth}}></View>
@@ -45,8 +45,9 @@ export default function Location(){
                     </Link>
                 </TouchableOpacity>
             </View>
-            <BottomBar />
+            
         </View>
+        <BottomBar />
     </>
     )
 }

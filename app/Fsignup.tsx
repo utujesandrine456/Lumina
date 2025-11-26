@@ -18,8 +18,8 @@ export default function FSignup(){
                     <Text style={{ fontFamily: 'Satisfy_400Regular', fontSize: 52, fontWeight: '400'}}>Lumina</Text>
                 </View>
                 
-                <Text style={styles.titlecontainer}>Sign Up As Farmer</Text>
-                <MonoText style={{ fontSize: 16, textAlign: 'center', color: '#5E5E5E', marginBlock: 10, marginHorizontal: 5}}>Sign up for free so as to be able to transport your crops to any location.</MonoText>
+                <Text style={styles.titlecontainer}>Sign Up</Text>
+                <MonoText style={{ fontSize: 16, textAlign: 'center', color: '#5E5E5E', marginHorizontal: 5}}>Sign up for free so as to be able to transport your crops to any location.</MonoText>
                 <View style={{ marginHorizontal: 30, marginBlock: 30}}> 
                     <Text style={styles.label}>Username:</Text>
                     <TextInput style={styles.input} placeholder="Username"/>
@@ -84,8 +84,8 @@ const styles  = StyleSheet.create({
         marginBottom: 14,
         fontSize: 15,
         fontFamily: "Poppins_400Regular",
-        backgroundColor: "#F9FAFB",
-        color: '#CCCCCC'
+        backgroundColor: "#fff",
+        color: '#3a3a3aff'
     },
     button: {
         flexDirection: "row",

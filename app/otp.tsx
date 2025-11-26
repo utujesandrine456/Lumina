@@ -61,7 +61,7 @@ export default function Otp() {
                     <View style={{position: 'absolute', top: -10, left: 20, backgroundColor: '#fff', paddingHorizontal: 5,}}>
                         <Text style={{
                             color: '#000',
-                            fontSize: 12,
+                            fontSize: 14,
                             fontFamily: 'Poppins_500Medium'
                         }}>Phone Number</Text>
                     </View>

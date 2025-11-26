@@ -44,8 +44,8 @@ export default function Crops() {
         <SafeAreaView style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 <Animated.View entering={FadeInDown.delay(100).duration(800)} style={styles.header}>
-                    <Text style={styles.headerTitle}>Select Produce</Text>
-                    <Text style={styles.headerSubtitle}>Choose the crops you want to trade</Text>
+                    <Text style={styles.headerTitle}>Select Crop</Text>
+                    <Text style={styles.headerSubtitle}>Choose the crops you want to be transported</Text>
                 </Animated.View>
 
                 <View style={styles.grid}>
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 24,
-        paddingBottom: 50,
+        paddingBottom: 40,
     },
     header: {
         marginBottom: 32,
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     },
     headerSubtitle: {
         fontFamily: 'Poppins_400Regular',
-        fontSize: 16,
+        fontSize: 15,
         color: '#757575',
     },
     grid: {

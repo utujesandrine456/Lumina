@@ -170,11 +170,14 @@ export default function CropProfile() {
               </TouchableOpacity>
             </Link>
 
-            {filteredCrops.length > 1 && (
-              <Text style={styles.selectionCounter}>
-                Crop {currentIndex + 1} of {filteredCrops.length} selected
-              </Text>
-            )}
+            <Link href="/trucks" asChild>
+              <TouchableOpacity style={styles.actionButton}>
+                <Text style={styles.actionButtonText}>
+                  Select All
+                </Text>
+                <Ionicons name="arrow-forward" size={20} color="#000" />
+              </TouchableOpacity>
+            </Link>
           </Animated.View>
         </View>
       </View>
@@ -315,13 +318,14 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
   },
   actionButton: {
-    width: '100%',
-    height: 56,
+    width: '75%',
+    height: 50,
     backgroundColor: '#FFF',
-    borderRadius: 18,
+    borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBlock: 8,
     gap: 8,
   },
   actionButtonText: {
@@ -333,12 +337,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_400Regular',
     fontSize: 12,
     color: 'rgba(255,255,255,0.5)',
-    marginTop: 12,
+    marginBlock: 10,
     textAlign: 'center',
   },
   navigationArrows: {
     position: 'absolute',
-    top: '50%',
+    top: '44%',
     left: 10,
     right: 10,
     flexDirection: 'row',

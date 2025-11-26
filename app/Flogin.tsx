@@ -1,30 +1,32 @@
-import React  from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Dimensions, TextInput, StyleSheet} from "react-native";
+import React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Image, Dimensions, TextInput, StyleSheet } from "react-native";
 import { MonoText } from '@/components/StyledText';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import {useState} from 'react';
+import { useState } from 'react';
+import { useDriverStore } from '@/constants/store';
 
 
-export default function Login(){
+export default function Login() {
+    const { setUserRole } = useDriverStore();
     const [remember, setRemember] = useState(false);
 
     return (
         <>
-            <ScrollView contentContainerStyle={{ }}>
-                <View style={{ paddingBlock: 30, backgroundColor: 'white'}}>
+            <ScrollView contentContainerStyle={{}}>
+                <View style={{ paddingBlock: 30, backgroundColor: 'white' }}>
                     <View style={{ display: 'flex', gap: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                            <Image source={require("@/assets/images/Logo.png")} style={{}}></Image>
-                        <Text style={{ fontFamily: 'Satisfy_400Regular', fontSize: 52, fontWeight: '400', textAlign: 'center'}}>Lumina</Text>
+                        <Image source={require("@/assets/images/Logo.png")} style={{}}></Image>
+                        <Text style={{ fontFamily: 'Satisfy_400Regular', fontSize: 52, fontWeight: '400', textAlign: 'center' }}>Lumina</Text>
                     </View>
-                    
-                    <Text style={styles.titlecontainer}>Login As Farmer</Text>
-                    <MonoText style={{ fontSize: 16, textAlign: 'center', color: '#5E5E5E', marginBlock: 10, marginHorizontal: 5}}>Login to get linked with your data on your dashboard.</MonoText>
-                    <View style={{ marginHorizontal: 30, marginBlock: 30}}> 
+
+                    <Text style={styles.titlecontainer}>Login</Text>
+                    <MonoText style={{ fontSize: 16, textAlign: 'center', color: '#5E5E5E', marginBlock: 10, marginHorizontal: 5 }}>Login to get linked with your data on your dashboard.</MonoText>
+                    <View style={{ marginHorizontal: 30, marginBlock: 30 }}>
                         <Text style={styles.label}>Phone Number:</Text>
-                        <TextInput style={styles.input} placeholder="Phone Number"  keyboardType="email-address" />
+                        <TextInput style={styles.input} placeholder="Phone Number" keyboardType="email-address" />
                         <Text style={styles.label}>Password:</Text>
-                        <TextInput style={styles.input} placeholder="Password"   />
+                        <TextInput style={styles.input} placeholder="Password" />
                     </View>
                     <View style={styles.row}>
                         <TouchableOpacity style={styles.checkboxContainer} onPress={() => setRemember(!remember)}>
@@ -34,29 +36,30 @@ export default function Login(){
                             <MonoText style={styles.checkboxLabel}>Remember me</MonoText>
                         </TouchableOpacity>
 
-                        
+
                         <TouchableOpacity>
                             <MonoText style={styles.forgot}>Forgot Password?</MonoText>
                         </TouchableOpacity>
                     </View>
-                    
-                    <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonTextcontainer}>Login</Text>
-                    </TouchableOpacity>
 
-                    
-                    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginBlock: 20}}>
-                        <View style={{ width: 150, height:1, backgroundColor: '#C1C1C1'}}></View>
-                        <MonoText style={{ color: '#767676ff'}}>or</MonoText>
-                        <View style={{ width: 150, height:1, backgroundColor: '#C1C1C1'}}></View>
+                    <Link href="/farmerdashboard" asChild>
+                        <TouchableOpacity style={styles.button} onPress={() => setUserRole('farmer')}>
+                            <Text style={styles.buttonTextcontainer}>Login</Text>
+                        </TouchableOpacity>
+                    </Link>
+
+                    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginBlock: 20 }}>
+                        <View style={{ width: 150, height: 1, backgroundColor: '#C1C1C1' }}></View>
+                        <MonoText style={{ color: '#767676ff' }}>or</MonoText>
+                        <View style={{ width: 150, height: 1, backgroundColor: '#C1C1C1' }}></View>
                     </View>
-                    
+
                     <View>
                         <TouchableOpacity style={styles.iconButton}>
-                            <Image source={require('@/assets/images/download.jpeg')} style={{ width: 40, height: 40}}/>
+                            <Image source={require('@/assets/images/download.jpeg')} style={{ width: 40, height: 40 }} />
                         </TouchableOpacity>
                     </View>
-                    <Text style={{ color: '#767676ff', textAlign: 'center', marginBlock: 20, fontSize: 17, fontFamily: 'Poppins_500Medium'}}>Don’t have an  Account? <Link href='/Fsignup'><MonoText style={{ textDecorationLine: 'underline', marginLeft: 10, fontWeight: 'bold'}}>Sign up</MonoText></Link></Text>
+                    <Text style={{ color: '#767676ff', textAlign: 'center', marginBlock: 20, fontSize: 17, fontFamily: 'Poppins_500Medium' }}>Don’t have an  Account? <Link href='/Fsignup'><MonoText style={{ textDecorationLine: 'underline', marginLeft: 10, fontWeight: 'bold' }}>Sign up</MonoText></Link></Text>
 
                 </View>
             </ScrollView>
@@ -65,8 +68,8 @@ export default function Login(){
 }
 
 
-const styles  = StyleSheet.create({
-    label:{
+const styles = StyleSheet.create({
+    label: {
         fontSize: 18,
         fontFamily: 'Poppins_500Medium',
         marginBlock: 12,
@@ -87,8 +90,8 @@ const styles  = StyleSheet.create({
         marginBottom: 14,
         fontSize: 15,
         fontFamily: "Poppins_400Regular",
-        backgroundColor: "#F9FAFB",
-        color: '#CCCCCC'
+        backgroundColor: "#fff",
+        color: '#3a3a3aff'
     },
     button: {
         flexDirection: "row",

@@ -20,7 +20,7 @@ export default function TopBar({title}: Props){
                 </View>
 
                 <View style={styles.rightGroup}>
-                    <Link href="/profile" asChild>
+                    <Link href="/farmerprofile" asChild>
                         <TouchableOpacity >
                             <Ionicons name="person-circle-outline" size={28} color="white" />
                         </TouchableOpacity>

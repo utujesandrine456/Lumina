@@ -1,8 +1,9 @@
 import React, { useState, useRef } from "react";
 import { View, Text, Dimensions, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-import Animated, {useAnimatedScrollHandler, useSharedValue, useAnimatedStyle, interpolate, Extrapolation, FadeInDown,type SharedValue } from "react-native-reanimated";
+import Animated, { useAnimatedScrollHandler, useSharedValue, useAnimatedStyle, interpolate, Extrapolation, FadeInDown, type SharedValue } from "react-native-reanimated";
 import { useRouter, useLocalSearchParams, Link } from "expo-router";
+import { useDriverStore } from '@/constants/store';
 
 const { width, height } = Dimensions.get("window");
 
@@ -10,14 +11,14 @@ const trucks = [
   {
     name: "Daihatsu",
     image: require("@/assets/images/DaihatsuRB.png"),
-    drivername: "Kamali",
+    drivername: "John Doe",
     phonenumber: +2507976567,
     capacity: "3 Seats",
     plate: "RAD246F",
     rating: "4.9",
     reviews: "39",
     status: 'green',
-    price: 21 
+    price: 21
   },
   {
     name: "Volvo",
@@ -29,7 +30,7 @@ const trucks = [
     rating: "4.8",
     reviews: "42",
     status: 'yellow',
-    price: 27 
+    price: 27
   },
   {
     name: "Shashi",
@@ -41,7 +42,7 @@ const trucks = [
     rating: "4.7",
     reviews: "28",
     status: 'red',
-    price: 18 
+    price: 18
   },
   {
     name: "Toyota",
@@ -53,7 +54,7 @@ const trucks = [
     rating: "4.8",
     reviews: "37",
     status: 'green',
-    price: 12 
+    price: 12
   },
   {
     name: "Cruiser",
@@ -65,7 +66,7 @@ const trucks = [
     rating: "4.9",
     reviews: "15",
     status: 'green',
-    price: 23 
+    price: 23
   },
   {
     name: "Suzuki",
@@ -77,7 +78,7 @@ const trucks = [
     rating: "4.6",
     reviews: "22",
     status: 'red',
-    price: 32 
+    price: 32
   }
 ];
 
@@ -121,7 +122,31 @@ export default function TruckProfile() {
   const [currentIndex, setCurrentIndex] = useState(initialIndex ? Number(initialIndex) : 0);
   const scrollX = useSharedValue(0);
   const scrollRef = useRef<Animated.ScrollView>(null);
+
   const router = useRouter();
+  const { truckStatus } = useDriverStore();
+
+  const getTruckStatusColor = (truck: any) => {
+    if (truck.drivername === "John Doe") {
+      switch (truckStatus) {
+        case 'Moving': return 'green';
+        case 'Paused': return 'yellow';
+        case 'Stopped': return 'red';
+        default: return 'red';
+      }
+    }
+    return truck.status;
+  };
+
+  const getStatusText = (truck: any) => {
+    if (truck.drivername === "John Doe") {
+      return truckStatus;
+    }
+
+    if (truck.status === 'green') return 'Moving';
+    if (truck.status === 'yellow') return 'Paused';
+    return 'Stopped';
+  };
 
 
   React.useEffect(() => {
@@ -205,10 +230,19 @@ export default function TruckProfile() {
             <View style={styles.ratingContainer}>
               <Ionicons name="star" size={16} color="#FFD700" />
               <Text style={styles.ratingText}>{trucks[currentIndex].rating} ({trucks[currentIndex].reviews} Reviews)</Text>
+              <View style={{
+                backgroundColor: getTruckStatusColor(trucks[currentIndex]) === 'green' ? '#4CAF50' :
+                  getTruckStatusColor(trucks[currentIndex]) === 'yellow' ? '#FFC107' : '#F44336',
+                paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, marginLeft: 8
+              }}>
+                <Text style={{ fontSize: 10, color: 'white', fontFamily: 'Poppins_500Medium' }}>
+                  {getStatusText(trucks[currentIndex])}
+                </Text>
+              </View>
             </View>
 
             <View style={styles.statsRow}>
-              <View style={{flexDirection: 'row', gap: 30, marginBlock: 5}}>
+              <View style={{ flexDirection: 'row', gap: 30, marginBlock: 5 }}>
                 <View style={styles.statItem}>
                   <Ionicons name="person" size={20} color="#fff" />
                   <Text style={styles.statValue}>{trucks[currentIndex].drivername}</Text>
@@ -222,7 +256,7 @@ export default function TruckProfile() {
                 </View>
               </View>
 
-              <View style={{flexDirection: 'row', gap: 30, marginBlock: 5}}>
+              <View style={{ flexDirection: 'row', gap: 30, marginBlock: 5 }}>
                 <View style={styles.statItem}>
                   <Ionicons name="people-outline" size={20} color="#2196F3" />
                   <Text style={styles.statValue}>{trucks[currentIndex].capacity}</Text>
