@@ -21,7 +21,7 @@ export default function HomeScreen(){
                 
                 <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 20 }}>
                     <View style={{ width: width * 0.88,height: 306,borderRadius: 20 }}>
-                        <Image source={require("@/assets/images/HomeImage.png")} style={{width: '100%', height: '100%'}} resizeMode='cover'/>
+                        <Image source={require("@/assets/images/Home.png")} style={{width: '100%', height: '100%'}} resizeMode='cover'/>
                     </View>
                 </View>
                 <Link href="/role" asChild>
