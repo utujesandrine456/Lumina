@@ -1,135 +1,295 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, TextInput, Modal } from "react-native";
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, Alert } from "react-native";
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { Link } from 'expo-router';
+import { MonoText } from '@/components/StyledText';
+import { useDriverStore } from '@/constants/store';
+import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
 
+export default function OTPScreen() {
+    const router = useRouter();
+    
+    const { phone, role, name, coopName, pin } = useLocalSearchParams<{
+        phone: string;
+        role: string;
+        name?: string;
+        coopName?: string;
+        pin?: string;
+    }>();
 
-export default function Otp() {
-    const [modalvisible, showmodalvisible] = useState(false);
+    const { setCurrentUser, setUserRole, drivers, addDriver, addCooperative } = useDriverStore();
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [timer, setTimer] = useState(60);
+    const [canResend, setCanResend] = useState(false);
+    const inputRefs = useRef<(TextInput | null)[]>([]);
 
-    const input1 = useRef<TextInput>(null);
-    const input2 = useRef<TextInput>(null);
-    const input3 = useRef<TextInput>(null);
-    const input4 = useRef<TextInput>(null);
+    const correctOTP = '123456';
 
-    const [otp, setOtp] = useState({d1: '', d2: '', d3: '', d4: ''});
-
-    const handleOtpChange = (key: string, value: string) => {
-        const numericValue = value.replace(/[^0-9]/g, '');
-        setOtp({...otp, [key]: numericValue});
-
-        if(numericValue.length === 1){
-            switch(key) {
-                case 'd1' : input2.current?.focus();
-                break;
-                case 'd2' : input3.current?.focus();
-                break;
-                case 'd3' : input4.current?.focus();
-                break;
-                default:
-                    break;
-            }
+    useEffect(() => {
+        if (timer > 0) {
+            const interval = setInterval(() => {
+                setTimer((prev) => {
+                    if (prev <= 1) {
+                        setCanResend(true);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(interval);
         }
-    }
+    }, [timer]);
 
-    const handleKeyPress = (key: string, e: any) => {
-        if (e.nativeEvent.key === 'Backspace' && otp[key as keyof typeof otp] === '') {
-            switch(key) {
-                case 'd2': input1.current?.focus();
-                break;
-                case 'd3': input2.current?.focus();
-                break;
-                case 'd4': input3.current?.focus();
-                break;
-                default:
-                    break;
-            }
+    const handleOtpChange = (value: string, index: number) => {
+        if (value.length > 1) return;
+        
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
         }
-    }
+
+        if (newOtp.every(digit => digit !== '') && newOtp.join('') === correctOTP) {
+            handleVerify();
+        }
+    };
+
+    const handleKeyPress = (key: string, index: number) => {
+        if (key === 'Backspace' && !otp[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handleVerify = () => {
+        const enteredOtp = otp.join('');
+        
+        if (enteredOtp !== correctOTP) {
+            Alert.alert('Invalid OTP', 'Please enter the correct OTP code');
+            setOtp(['', '', '', '', '', '']);
+            inputRefs.current[0]?.focus();
+            return;
+        }
+
+        if (role === 'admin') {
+            setCurrentUser({ id: `admin-${phone}`, name: 'Admin', phone, role: 'admin' });
+            router.push('/admindashboard');
+        } else if (role === 'cooperative') {
+            const coopId = `coop-${phone}`;
+            setCurrentUser({ id: coopId, name: name || 'Cooperative Officer', phone, role: 'cooperative' });
+            addCooperative({
+                id: coopId,
+                name: coopName || 'Cooperative',
+                officerName: name || 'Officer',
+                location: '',
+                phone,
+                pin,
+                status: 'pending',
+                farmers: [],
+            });
+            router.push('/cooperativedashboard');
+        } else if (role === 'driver') {
+            const existing = drivers.find((d) => d.phone === phone);
+            const driver = existing ?? {
+                id: `drv-${Date.now()}`,
+                name: name || 'Driver',
+                phone,
+                pin,
+                plateNumber: 'UNKNOWN',
+                capacity: 0,
+                rating: 0,
+                availability: true,
+                verified: false,
+            } as any;
+
+            if (!existing) addDriver(driver);
+            setCurrentUser({ id: driver.id, name: driver.name, phone, role: 'driver' });
+            router.push('/driverdashboard');
+        }
+    };
+
+    const handleResend = () => {
+        setTimer(60);
+        setCanResend(false);
+        setOtp(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+        Alert.alert('OTP Sent', 'A new OTP has been sent to your phone');
+    };
 
     return (
-        <>
-            <View style={{ height: '100%', backgroundColor: '#fff', padding: 20 }}>
-                <Image source={require("@/assets/images/otp.png")} style={{ width: 300, height: 300, marginHorizontal: 'auto' }} />
-                <Text style={{ fontFamily: 'Poppins_600SemiBold', textAlign: 'left', fontSize: 20, fontWeight: 'bold', marginVertical: 20 }}>OTP Verification</Text>
-                <Text style={{ fontFamily: 'Poppins_400Regular', textAlign: 'left', fontSize: 16, color: '#666', marginBottom: 20 }}>Enter Phone number to send one time password</Text>
-                <View style={{ marginBottom: 30, marginTop: 10 }}>
-                    <View style={{borderWidth: 1.5, borderColor: '#000', borderRadius: 15, paddingHorizontal: 15, height: 55, justifyContent: 'center'}}>
-                        <TextInput placeholder="+250 781 234 567" placeholderTextColor="#999" keyboardType='number-pad' style={{fontFamily: 'Poppins_400Regular', fontSize: 16, outline: 'none' as any,color: '#333',height: '100%'}}/>
-                    </View>
-                    <View style={{position: 'absolute', top: -10, left: 20, backgroundColor: '#fff', paddingHorizontal: 5,}}>
-                        <Text style={{
-                            color: '#000',
-                            fontSize: 14,
-                            fontFamily: 'Poppins_500Medium'
-                        }}>Phone Number</Text>
-                    </View>
+        <SafeAreaView style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Ionicons name="arrow-back" size={24} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Verify OTP</Text>
+                    <View style={{ width: 24 }} />
                 </View>
-                <TouchableOpacity style={{ backgroundColor: '#000', padding: 12, borderRadius: 8, alignSelf: 'center', paddingHorizontal: 20 }} onPress={() => showmodalvisible(true)}>
-                    <Text style={{ color: '#fff', textAlign: 'center', fontFamily: 'Poppins_500Medium' }}>Continue</Text>
-                </TouchableOpacity>
 
-                <Modal visible={modalvisible} transparent animationType="fade">
-                    <BlurView intensity={40} tint="light" style={{ flex: 1, justifyContent: 'center'}}>
-                        <View style={{backgroundColor: '#000', padding: 30 , borderRadius: 30, margin: 20 }}>
-                            <TouchableOpacity style={{ flexDirection: 'row', gap: 10, margin: 10}} onPress={() => showmodalvisible(false)}>
-                                <Ionicons name="arrow-back" size={20} color="#fff" />
-                                <Text style={{fontFamily: 'Poppins_500Medium', fontSize: 16, color: '#fff'}}>Back</Text>
+                <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.content}>
+                    <View style={styles.iconContainer}>
+                        <Ionicons name="lock-closed" size={64} color="#000" />
+                    </View>
+                    
+                    <Text style={styles.title}>Enter Verification Code</Text>
+                    <MonoText style={styles.subtitle}>
+                        We've sent a 6-digit code to{'\n'}
+                        <Text style={styles.phoneNumber}>{phone}</Text>
+                    </MonoText>
+
+                    <View style={styles.otpContainer}>
+                        {otp.map((digit, index) => (
+                            <Animated.View
+                                key={index}
+                                entering={SlideInRight.delay(300 + index * 50).springify()}
+                            >
+                                <TextInput      
+                                    ref={(ref) => { inputRefs.current[index] = ref; }}
+                                    style={[styles.otpInput, digit && styles.otpInputFilled]}
+                                    value={digit}
+                                    onChangeText={(value) => handleOtpChange(value, index)}
+                                    onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
+                                    keyboardType="number-pad"
+                                    maxLength={1}
+                                    selectTextOnFocus
+                                />
+                            </Animated.View>
+                        ))}
+                    </View>
+
+                    <View style={styles.timerContainer}>
+                        {timer > 0 ? (
+                            <MonoText style={styles.timerText}>
+                                Resend code in {timer}s
+                            </MonoText>
+                        ) : (
+                            <TouchableOpacity onPress={handleResend}>
+                                <Text style={styles.resendText}>Resend OTP</Text>
                             </TouchableOpacity>
-
-                            <View style={{ padding: 20 }}>
-                                <Text style={{fontFamily: 'Poppins_600SemiBold', fontSize: 20, color: '#fff'}}>Verification Code</Text>
-                                <Text style={{fontFamily: 'Poppins_400Regular', fontSize: 12, color: '#ccc', marginTop: 10}}>We have sent an otp to your phone number verify in your SMS</Text>
-                                <View style={{ flexDirection: 'row', gap: 10, marginBlock: 20 , alignItems: 'center', justifyContent: 'center'}}>
-                                    <TextInput 
-                                        ref={input1}
-                                        value={otp.d1}
-                                        onChangeText={(value) => handleOtpChange('d1', value)}
-                                        onKeyPress={(e) => handleKeyPress('d1', e)}
-                                        keyboardType="number-pad" 
-                                        maxLength={1} 
-                                        style={{borderWidth: 1, borderColor: '#fff', color: '#fff', width: 50, height: 50, borderRadius: 10, textAlign: 'center', fontFamily: 'Poppins_500Medium', fontSize: 20}} 
-                                    />
-                                    <TextInput 
-                                        ref={input2}
-                                        value={otp.d2}
-                                        onChangeText={(value) => handleOtpChange('d2', value)}
-                                        onKeyPress={(e) => handleKeyPress('d2', e)}
-                                        keyboardType="number-pad" 
-                                        maxLength={1} 
-                                        style={{borderWidth: 1, borderColor: '#fff', color: '#fff', width: 50, height: 50, borderRadius: 10, textAlign: 'center', fontFamily: 'Poppins_500Medium', fontSize: 20}} 
-                                    />
-                                    <TextInput 
-                                        ref={input3}
-                                        value={otp.d3}
-                                        onChangeText={(value) => handleOtpChange('d3', value)}
-                                        onKeyPress={(e) => handleKeyPress('d3', e)}
-                                        keyboardType="number-pad" 
-                                        maxLength={1} 
-                                        style={{borderWidth: 1, borderColor: '#fff', color: '#fff', width: 50, height: 50, borderRadius: 10, textAlign: 'center', fontFamily: 'Poppins_500Medium', fontSize: 20}} 
-                                    />
-                                    <TextInput 
-                                        ref={input4}
-                                        value={otp.d4}
-                                        onChangeText={(value) => handleOtpChange('d4', value)}
-                                        onKeyPress={(e) => handleKeyPress('d4', e)}
-                                        keyboardType="number-pad" 
-                                        maxLength={1} 
-                                        style={{borderWidth: 1, borderColor: '#fff', color: '#fff', width: 50, height: 50, borderRadius: 10, textAlign: 'center', fontFamily: 'Poppins_500Medium', fontSize: 20}} 
-                                    />
-                                </View>
-                                <Link href="/crops" asChild>
-                                    <TouchableOpacity style={{ backgroundColor: '#fff', padding: 12, borderRadius: 8, alignSelf: 'center', paddingHorizontal: 20 }} onPress={() => showmodalvisible(false)}>
-                                        <Text style={{ textAlign: 'center', fontFamily: 'Poppins_500Medium', fontSize: 18}}>Verify</Text>
-                                    </TouchableOpacity>
-                                </Link>
-                            </View>  
+                        )}
                         </View>
                         
-                    </BlurView>
-                </Modal>
-            </View>
-        </>
-    )
+                    <TouchableOpacity
+                        style={[styles.verifyButton, otp.every(d => d !== '') && styles.verifyButtonActive]}
+                        onPress={handleVerify}
+                        disabled={!otp.every(d => d !== '')}
+                    >
+                        <Text style={styles.verifyButtonText}>Verify</Text>
+                    </TouchableOpacity>
+                </Animated.View>
+            </ScrollView>
+        </SafeAreaView>
+    );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+    },
+    scrollContent: {
+        flexGrow: 1,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E0E0E0',
+    },
+    headerTitle: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 18,
+        color: '#000',
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: 20,
+        paddingTop: 40,
+        alignItems: 'center',
+    },
+    iconContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 32,
+    },
+    title: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 24,
+        color: '#000',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    subtitle: {
+        fontSize: 16,
+        color: '#757575',
+        textAlign: 'center',
+        marginBottom: 40,
+    },
+    phoneNumber: {
+        fontFamily: 'Poppins_600SemiBold',
+        color: '#000',
+    },
+    otpContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        marginBottom: 32,
+        gap: 12,
+    },
+    otpInput: {
+        flex: 1,
+        height: 60,
+        borderWidth: 2,
+        borderColor: '#E0E0E0',
+        borderRadius: 12,
+        textAlign: 'center',
+        fontSize: 24,
+        fontFamily: 'Poppins_600SemiBold',
+        color: '#000',
+        backgroundColor: '#FFF',
+    },
+    otpInputFilled: {
+        borderColor: '#000',
+        backgroundColor: '#F5F5F5',
+    },
+    timerContainer: {
+        marginBottom: 32,
+    },
+    timerText: {
+        fontSize: 14,
+        color: '#757575',
+        textAlign: 'center',
+    },
+    resendText: {
+        fontSize: 14,
+        fontFamily: 'Poppins_600SemiBold',
+        color: '#000',
+        textAlign: 'center',
+    },
+    verifyButton: {
+        width: '100%',
+        backgroundColor: '#E0E0E0',
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    verifyButtonActive: {
+        backgroundColor: '#000',
+    },
+    verifyButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontFamily: 'Poppins_600SemiBold',
+    },
+});
+

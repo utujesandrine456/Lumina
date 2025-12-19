@@ -4,32 +4,41 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import BottomBar from '@/components/DriverBottomBar';
 import { useDriverStore } from '@/constants/store';
+import DriverBottomBar from '@/components/DriverBottomBar';
 
 const { width } = Dimensions.get('window');
 
 export default function DriverDashboard() {
     const router = useRouter();
-    const { truckStatus, setTruckStatus } = useDriverStore();
+    const { trips, updateDriver, currentUser } = useDriverStore();
+
+    const assignedTrips = trips.filter((t: any) => t.driverId === currentUser?.id && t.status !== 'delivered');
+    const completedTrips = trips.filter((t: any) => t.driverId === currentUser?.id && t.status === 'delivered');
 
     const stats = [
-        { label: "Today's Earnings", value: "45,000 Frw", icon: "wallet-outline", color: "#4CAF50" },
-        { label: "Total Trips", value: "12", icon: "map-outline", color: "#2196F3" },
-        { label: "Rating", value: "4.9", icon: "star-outline", color: "#FFD700" },
-    ];
-
-    const recentTrips = [
-        { id: 1, from: "Musanze", to: "Kigali", price: "15,000 Frw", status: "Completed", date: "Today, 10:00 AM" },
-        { id: 2, from: "Rubavu", to: "Musanze", price: "12,000 Frw", status: "Completed", date: "Yesterday, 2:30 PM" },
+        { label: "Active Trips", value: assignedTrips.length.toString(), icon: "map-outline", color: "#000" },
+        { label: "Completed", value: completedTrips.length.toString(), icon: "checkmark-circle-outline", color: "#000" },
+        { label: "Rating", value: "4.9", icon: "star-outline", color: "#000" },
     ];
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Moving': return '#4CAF50';
-            case 'Paused': return '#FFC107';
-            case 'Stopped': return '#F44336';
+            case 'accepted': return '#000';
+            case 'in-transit': return '#000';
+            case 'delivered': return '#000';
+            case 'pending': return '#757575';
             default: return '#757575';
+        }
+    };
+
+    const getStatusText = (status: string) => {
+        switch (status) {
+            case 'accepted': return 'Accepted';
+            case 'in-transit': return 'In Transit';
+            case 'delivered': return 'Delivered';
+            case 'pending': return 'Pending';
+            default: return status;
         }
     };
 
@@ -39,52 +48,17 @@ export default function DriverDashboard() {
                 <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
                     <View>
                         <Text style={styles.greeting}>Welcome back,</Text>
-                        <Text style={styles.driverName}>John Doe</Text>
+                        <Text style={styles.driverName}>{currentUser?.name || 'Driver'}</Text>
                     </View>
-                    <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/driverprofile')}>
+                    <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
                         <Ionicons name="person-circle-outline" size={40} color="#000" />
                     </TouchableOpacity>
                 </Animated.View>
 
-                <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.statusCard}>
-                    <Text style={styles.cardTitle}>Current Status</Text>
-                    <View style={styles.statusIndicator}>
-                        <View style={[styles.statusDot, { backgroundColor: getStatusColor(truckStatus) }]} />
-                        <Text style={[styles.statusText, { color: getStatusColor(truckStatus) }]}>{truckStatus}</Text>
-                    </View>
-
-                    <View style={styles.statusButtons}>
-                        <TouchableOpacity
-                            style={[styles.statusBtn, truckStatus === 'Moving' && styles.activeStatusBtn, { borderColor: '#4CAF50' }]}
-                            onPress={() => setTruckStatus('Moving')}
-                        >
-                            <Ionicons name="navigate-outline" size={24} color={truckStatus === 'Moving' ? '#FFF' : '#4CAF50'} />
-                            <Text style={[styles.statusBtnText, truckStatus === 'Moving' && styles.activeStatusBtnText, { color: truckStatus === 'Moving' ? '#FFF' : '#4CAF50' }]}>Moving</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.statusBtn, truckStatus === 'Paused' && styles.activeStatusBtn, { borderColor: '#FFC107' }]}
-                            onPress={() => setTruckStatus('Paused')}
-                        >
-                            <Ionicons name="pause-outline" size={24} color={truckStatus === 'Paused' ? '#FFF' : '#FFC107'} />
-                            <Text style={[styles.statusBtnText, truckStatus === 'Paused' && styles.activeStatusBtnText, { color: truckStatus === 'Paused' ? '#FFF' : '#FFC107' }]}>Paused</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.statusBtn, truckStatus === 'Stopped' && styles.activeStatusBtn, { borderColor: '#F44336' }]}
-                            onPress={() => setTruckStatus('Stopped')}
-                        >
-                            <Ionicons name="stop-circle-outline" size={24} color={truckStatus === 'Stopped' ? '#FFF' : '#F44336'} />
-                            <Text style={[styles.statusBtnText, truckStatus === 'Stopped' && styles.activeStatusBtnText, { color: truckStatus === 'Stopped' ? '#FFF' : '#F44336' }]}>Stopped</Text>
-                        </TouchableOpacity>
-                    </View>
-                </Animated.View>
-
-
                 <View style={styles.statsGrid}>
                     {stats.map((stat, index) => (
-                        <Animated.View key={index} entering={FadeInDown.delay(300 + (index * 100)).springify()} style={styles.statCard}>
-                            <View style={[styles.iconContainer, { backgroundColor: `${stat.color}20` }]}>
+                        <Animated.View key={index} entering={FadeInDown.delay(200 + (index * 100)).springify()} style={styles.statCard}>
+                            <View style={[styles.iconContainer, { backgroundColor: '#F5F5F5' }]}>
                                 <Ionicons name={stat.icon as any} size={24} color={stat.color} />
                             </View>
                             <Text style={styles.statValue}>{stat.value}</Text>
@@ -93,52 +67,75 @@ export default function DriverDashboard() {
                     ))}
                 </View>
 
-
-                <Animated.View entering={FadeInDown.delay(600).springify()} style={styles.availabilityCard}>
-                    <View style={styles.availabilityContent}>
-                        <Ionicons name="calendar-outline" size={32} color="#FFF" />
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.availabilityTitle}>Manage Availability</Text>
-                            <Text style={styles.availabilityDesc}>Set your unavailable dates to inform farmers.</Text>
+                <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.section}>
+                    <Text style={styles.sectionHeader}>Assigned Trips</Text>
+                    {assignedTrips.length === 0 ? (
+                        <View style={styles.emptyCard}>
+                            <Ionicons name="map-outline" size={48} color="#BDBDBD" />
+                            <Text style={styles.emptyText}>No assigned trips</Text>
                         </View>
-                    </View>
-                    <TouchableOpacity style={styles.availabilityButton} onPress={() => router.push('/datetime')}>
-                        <Text style={styles.availabilityBtnText}>Update Calendar</Text>
-                        <Ionicons name="arrow-forward" size={20} color="#000" />
-                    </TouchableOpacity>
+                    ) : (
+                        assignedTrips.map((trip: any) => (
+                            <View key={trip.id} style={styles.tripCard}>
+                                <View style={styles.tripHeader}>
+                                    <View style={styles.tripInfo}>
+                                        <Ionicons name="cube-outline" size={24} color="#000" />
+                                        <View style={styles.tripDetails}>
+                                            <Text style={styles.tripRoute}>
+                                                {trip.pickupLocation} → {trip.destination}
+                                            </Text>
+                                            <Text style={styles.tripDate}>
+                                                {new Date(trip.bookingTime).toLocaleDateString()}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(trip.status)}20` }]}>
+                                        <Text style={[styles.statusText, { color: getStatusColor(trip.status) }]}>
+                                            {getStatusText(trip.status)}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.tripStats}>
+                                    <Text style={styles.statText}>{trip.farmers.length} farmer{trip.farmers.length > 1 ? 's' : ''}</Text>
+                                    <Text style={styles.statText}>•</Text>
+                                    <Text style={styles.statText}>{trip.totalWeight} kg</Text>
+                                </View>
+
+                                <View style={styles.statusButtons}>
+                                    {trip.status === 'accepted' && (
+                                        <TouchableOpacity
+                                            style={styles.statusButton}
+                                            onPress={() => router.push({ pathname: '/pickupconfirmation', params: { tripId: trip.id } })}
+                                        >
+                                            <Ionicons name="checkmark-circle" size={20} color="#FFF" />
+                                            <Text style={styles.statusButtonText}>Confirm Pickup</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                    {trip.status === 'in-transit' && (
+                                        <TouchableOpacity
+                                            style={styles.statusButton}
+                                            onPress={() => router.push({ pathname: '/deliveryconfirmation', params: { tripId: trip.id } })}
+                                        >
+                                            <Ionicons name="checkmark-circle" size={20} color="#FFF" />
+                                            <Text style={styles.statusButtonText}>Confirm Delivery</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            </View>
+                        ))
+                    )}
                 </Animated.View>
-
-
-                <Animated.View entering={FadeInDown.delay(700).springify()} style={styles.section}>
-                    <Text style={styles.sectionHeader}>Recent Trips</Text>
-                    {recentTrips.map((trip, index) => (
-                        <View key={trip.id} style={styles.tripCard}>
-                            <View style={styles.tripIcon}>
-                                <Ionicons name="cube-outline" size={24} color="#000" />
-                            </View>
-                            <View style={styles.tripInfo}>
-                                <Text style={styles.tripRoute}>{trip.from} → {trip.to}</Text>
-                                <Text style={styles.tripDate}>{trip.date}</Text>
-                            </View>
-                            <View style={styles.tripRight}>
-                                <Text style={styles.tripPrice}>{trip.price}</Text>
-                                <Text style={styles.tripStatus}>{trip.status}</Text>
-                            </View>
-                        </View>
-                    ))}
-                </Animated.View>
-
             </ScrollView>
-            <BottomBar />
+            <DriverBottomBar />
         </SafeAreaView>
     );
 }
 
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: '#FFFFFF',
     },
     scrollContent: {
         paddingBottom: 30,
@@ -159,71 +156,10 @@ const styles = StyleSheet.create({
     driverName: {
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 24,
-        color: '#1A1A1A',
+        color: '#000',
     },
     profileButton: {
         padding: 4,
-    },
-    statusCard: {
-        backgroundColor: '#FFF',
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 12,
-        elevation: 3,
-    },
-    cardTitle: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 18,
-        color: '#1A1A1A',
-        marginBottom: 12,
-    },
-    statusIndicator: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-        backgroundColor: '#F5F5F5',
-        padding: 12,
-        borderRadius: 12,
-    },
-    statusDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        marginRight: 8,
-    },
-    statusText: {
-        fontFamily: 'Poppins_500Medium',
-        fontSize: 16,
-    },
-    statusButtons: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 10,
-    },
-    statusBtn: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        borderRadius: 16,
-        borderWidth: 1,
-        backgroundColor: '#FFF',
-    },
-    activeStatusBtn: {
-        backgroundColor: '#000', // Will be overridden by specific colors logic if needed, but using inline styles for color mapping
-        borderWidth: 0,
-    },
-    statusBtnText: {
-        fontFamily: 'Poppins_500Medium',
-        fontSize: 12,
-        marginTop: 4,
-    },
-    activeStatusBtnText: {
-        color: '#FFF',
     },
     statsGrid: {
         flexDirection: 'row',
@@ -238,11 +174,8 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 20,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 8,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
     },
     iconContainer: {
         width: 40,
@@ -255,51 +188,15 @@ const styles = StyleSheet.create({
     statValue: {
         fontFamily: 'Poppins_700Bold',
         fontSize: 16,
-        color: '#1A1A1A',
+        color: '#000',
         marginBottom: 2,
         textAlign: 'center',
     },
     statLabel: {
         fontFamily: 'Poppins_400Regular',
         fontSize: 11,
-        color: '#9E9E9E',
+        color: '#757575',
         textAlign: 'center',
-    },
-    availabilityCard: {
-        backgroundColor: '#1A1A1A',
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 24,
-    },
-    availabilityContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-        marginBottom: 16,
-    },
-    availabilityTitle: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 18,
-        color: '#FFF',
-    },
-    availabilityDesc: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 13,
-        color: '#CCC',
-    },
-    availabilityButton: {
-        backgroundColor: '#FFF',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        borderRadius: 12,
-        gap: 8,
-    },
-    availabilityBtnText: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 14,
-        color: '#000',
     },
     section: {
         marginBottom: 20,
@@ -307,61 +204,92 @@ const styles = StyleSheet.create({
     sectionHeader: {
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 18,
-        color: '#1A1A1A',
+        color: '#000',
         marginBottom: 16,
     },
     tripCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
         backgroundColor: '#FFF',
-        padding: 16,
         borderRadius: 20,
+        padding: 16,
         marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 8,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
     },
-    tripIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 16,
-        backgroundColor: '#F5F5F5',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 16,
+    tripHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 12,
     },
     tripInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    tripDetails: {
+        marginLeft: 12,
         flex: 1,
     },
     tripRoute: {
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 15,
-        color: '#1A1A1A',
+        color: '#000',
         marginBottom: 4,
     },
     tripDate: {
         fontFamily: 'Poppins_400Regular',
         fontSize: 12,
-        color: '#9E9E9E',
+        color: '#757575',
     },
-    tripRight: {
-        alignItems: 'flex-end',
+    statusBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
     },
-    tripPrice: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 15,
-        color: '#4CAF50',
-        marginBottom: 4,
-    },
-    tripStatus: {
+    statusText: {
         fontFamily: 'Poppins_500Medium',
-        fontSize: 11,
-        color: '#9E9E9E',
-        backgroundColor: '#F5F5F5',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 8,
+        fontSize: 12,
+    },
+    tripStats: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 12,
+    },
+    statText: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 12,
+        color: '#757575',
+    },
+    statusButtons: {
+        marginTop: 8,
+    },
+    statusButton: {
+        backgroundColor: '#000',
+        paddingVertical: 12,
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    statusButtonText: {
+        color: '#FFF',
+        fontSize: 14,
+        fontFamily: 'Poppins_600SemiBold',
+    },
+    emptyCard: {
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 32,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    emptyText: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 14,
+        color: '#757575',
+        marginTop: 12,
     },
 });

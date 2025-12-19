@@ -1,196 +1,222 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  Text,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
-import { db } from "@/firebaseConfig";
-import {
-  collection,
-  addDoc,
-  query,
-  orderBy,
-  onSnapshot,
-  serverTimestamp,
-} from "firebase/firestore";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput, Alert } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useDriverStore } from '@/constants/store';
 
-type Message = {
-  id: string;
-  text: string;
-  sender: string;
-  time?: any;
-};
+export default function ChatScreen() {
+    const router = useRouter();
+    const { tripId } = useLocalSearchParams<{ tripId: string }>();
+    const { trips, addChatMessage, currentUser } = useDriverStore();
+    const trip = trips.find(t => t.id === tripId);
+    const [message, setMessage] = useState('');
+    const listRef = useRef<FlatList>(null);
 
-export default function ChatScreen({ route }: any) {
-  const { farmerId = "farmer1", driverId = "driver1", myRole = "farmer" } =
-    route?.params ?? {};
+    if (!trip) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Ionicons name="arrow-back" size={24} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={styles.title}>Chat</Text>
+                    <View style={{ width: 24 }} />
+                </View>
+                <View style={styles.emptyState}>
+                    <Text style={styles.emptyText}>Trip not found.</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
-  const chatId = `${farmerId}_${driverId}`;
-  const messagesRef = collection(db, "chats", chatId, "messages");
+    const sender: 'driver' | 'cooperative' = currentUser?.role === 'driver' ? 'driver' : 'cooperative';
+    const chatDisabled = !trip.chatOpen || trip.status === 'delivered';
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const flatRef = useRef<FlatList>(null);
+    const handleSend = () => {
+        if (chatDisabled) {
+            Alert.alert('Chat Closed', 'Chat is available only after acceptance and before delivery.');
+            return;
+        }
+        const trimmed = message.trim();
+        if (!trimmed) return;
 
-  useEffect(() => {
-    const q = query(messagesRef, orderBy("time", "asc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs: Message[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as any),
-      }));
-      setMessages(msgs);
+        addChatMessage(trip.id, {
+            id: `${Date.now()}`,
+            sender,
+            text: trimmed,
+            timestamp: new Date().toISOString(),
+        });
+        setMessage('');
+        requestAnimationFrame(() => {
+            listRef.current?.scrollToEnd({ animated: true });
+        });
+    };
 
-      setTimeout(() => {
-        flatRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    });
-
-    return () => unsubscribe();
-  }, [chatId]);
-
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-    await addDoc(messagesRef, {
-      text: input.trim(),
-      sender: myRole,
-      time: serverTimestamp(),
-    });
-    setInput("");
-  };
-
-  const renderItem = ({ item }: { item: Message }) => {
-    const isMine = item.sender === myRole;
     return (
-      <View
-        style={[
-          styles.messageContainer,
-          isMine ? styles.myMessageContainer : styles.otherMessageContainer,
-        ]}
-      >
-        <View
-          style={[styles.bubble, isMine ? styles.myBubble : styles.otherBubble]}
-        >
-          <Text style={styles.messageText}>{item.text}</Text>
-          <Text style={styles.senderText}>{item.sender}</Text>
-        </View>
-      </View>
+        <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <Ionicons name="arrow-back" size={24} color="#000" />
+                </TouchableOpacity>
+                <Text style={styles.title}>Chat</Text>
+                <View style={{ width: 24 }} />
+            </View>
+
+            <View style={styles.tripMeta}>
+                <Text style={styles.tripRoute}>{trip.pickupLocation} → {trip.destination}</Text>
+                <Text style={styles.tripStatus}>
+                    {chatDisabled ? 'Chat closed after delivery' : 'Chat open for coordination'}
+                </Text>
+            </View>
+
+            <FlatList
+                ref={listRef}
+                data={trip.chat || []}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.messages}
+                renderItem={({ item }) => {
+                    const isMine = item.sender === sender;
+                    return (
+                        <View style={[styles.messageBubble, isMine ? styles.mine : styles.theirs]}>
+                            <Text style={[styles.messageText, isMine ? styles.mineText : styles.theirsText]}>
+                                {item.text}
+                            </Text>
+                            <Text style={[styles.timestamp, isMine ? styles.mineText : styles.theirsText]}>
+                                {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </Text>
+                        </View>
+                    );
+                }}
+            />
+
+            <View style={[styles.inputRow, chatDisabled && styles.inputDisabled]}>
+                <TextInput
+                    style={styles.input}
+                    placeholder={chatDisabled ? 'Chat closed' : 'Type a message'}
+                    placeholderTextColor="#757575"
+                    value={message}
+                    editable={!chatDisabled}
+                    onChangeText={setMessage}
+                />
+                <TouchableOpacity
+                    style={[styles.sendButton, chatDisabled && styles.sendButtonDisabled]}
+                    onPress={handleSend}
+                    disabled={chatDisabled}
+                >
+                    <Ionicons name="send" size={20} color="#FFF" />
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
     );
-  };
-
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.select({ ios: "padding", android: undefined })}
-      style={styles.wrapper}
-      keyboardVerticalOffset={Platform.select({ ios: 90, android: 60 })}
-    >
-      <FlatList
-        ref={flatRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ padding: 12, paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false}
-      />
-
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type a message..."
-          placeholderTextColor="#666"
-          value={input}
-          onChangeText={setInput}
-          onSubmitEditing={sendMessage}
-        />
-        <TouchableOpacity onPress={sendMessage} style={styles.sendBtn}>
-          <Ionicons name="send" size={20} color="#fff" />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
-  );
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: "#FFFFFF" },
-
-  inputRow: {
-    flexDirection: "row",
-    padding: 10,
-    borderTopWidth: 1,
-    borderColor: "#E5E5E5",
-    alignItems: "center",
-  },
-
-  input: {
-    flex: 1,
-    height: 44,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: "#000",
-    backgroundColor: "#fff",
-    fontFamily: "Poppins_400Regular",
-    color: "#000",
-  },
-
-  sendBtn: {
-    marginLeft: 8,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#000",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  messageContainer: {
-    marginVertical: 6,
-    flexDirection: "row",
-  },
-
-  myMessageContainer: {
-    justifyContent: "flex-end",
-    fontFamily: 'Poppins_40-Regular'
-  },
-
-  otherMessageContainer: {
-    justifyContent: "flex-start",
-  },
-
-  bubble: {
-    maxWidth: "80%",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-  },
-
-  myBubble: {
-    backgroundColor: "#000",
-    borderTopRightRadius: 4,
-  },
-
-  otherBubble: {
-    backgroundColor: "#F2F2F2",
-    borderTopLeftRadius: 4,
-  },
-
-  messageText: {
-    fontSize: 16,
-    fontFamily: "Poppins_400Regular",
-    color: "#000",
-  },
-
-  senderText: {
-    fontSize: 10,
-    fontFamily: "Poppins_400Regular",
-    marginTop: 6,
-    color: "#949494ff",
-    alignSelf: "flex-end",
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E0E0E0',
+    },
+    title: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 20,
+        color: '#000',
+    },
+    tripMeta: {
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E0E0E0',
+    },
+    tripRoute: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 16,
+        color: '#000',
+    },
+    tripStatus: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 12,
+        color: '#757575',
+        marginTop: 4,
+    },
+    messages: {
+        padding: 20,
+        gap: 12,
+    },
+    messageBubble: {
+        maxWidth: '80%',
+        padding: 12,
+        borderRadius: 12,
+    },
+    mine: {
+        alignSelf: 'flex-end',
+        backgroundColor: '#000',
+    },
+    theirs: {
+        alignSelf: 'flex-start',
+        backgroundColor: '#F5F5F5',
+    },
+    messageText: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 14,
+    },
+    mineText: {
+        color: '#FFF',
+    },
+    theirsText: {
+        color: '#000',
+    },
+    timestamp: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 10,
+        marginTop: 6,
+        opacity: 0.7,
+    },
+    inputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#E0E0E0',
+        gap: 8,
+    },
+    input: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: '#B5B5B5',
+        borderRadius: 12,
+        padding: 12,
+        fontFamily: 'Poppins_400Regular',
+        color: '#000',
+    },
+    sendButton: {
+        backgroundColor: '#000',
+        padding: 12,
+        borderRadius: 12,
+    },
+    sendButtonDisabled: {
+        backgroundColor: '#B5B5B5',
+    },
+    inputDisabled: {
+        opacity: 0.6,
+    },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyText: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 16,
+        color: '#757575',
+    },
 });
+

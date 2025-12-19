@@ -1,10 +1,15 @@
-import { useEffect } from 'react';
-import { setCustomText } from 'react-native-global-props';
-import {Stack} from 'expo-router';
-import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_700Bold, Poppins_600SemiBold } from "@expo-google-fonts/poppins";
-import {Text, View} from 'react-native';
-import {Satisfy_400Regular } from '@expo-google-fonts/satisfy';
-
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { View, Text } from 'react-native';
+import { useFonts } from 'expo-font';
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
+import { Satisfy_400Regular } from '@expo-google-fonts/satisfy';
 
 export default function Layout() {
   const [fontsLoaded] = useFonts({
@@ -15,35 +20,37 @@ export default function Layout() {
     Satisfy_400Regular,
   });
 
-  useEffect(() => {
-    if (fontsLoaded) {
-      const customTextProps = {
-        style: { fontFamily: 'Poppins_400Regular' },
-      };
-      setCustomText(customTextProps);
-    }
-  }, [fontsLoaded]);
-
   if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ fontSize: 24, fontFamily: 'Poppins_500Medium' }}>Loading ...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+        <Text >Loading...</Text>
       </View>
     );
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="home" options={{ title: 'Home' }} />
-      <Stack.Screen name="location" options={{ title: 'Location' }} />
-      <Stack.Screen name="crops" options={{ title: 'Crops' }} />
-      <Stack.Screen name="cropprofile" options={{ title: 'Crops' }} />
-      <Stack.Screen name="truckprofile" options={{ title: 'Crops' }} />
-      <Stack.Screen name="trucks" options={{ title: 'Trucks' }} />
-      <Stack.Screen name="signup" options={{ title: 'Signup' }} />
-      <Stack.Screen name="login" options={{ title: 'Login' }} />
-      <Stack.Screen name="profile" options={{ title: 'Profile' }} />
-      <Stack.Screen name="datetime" options={{ title: 'Date & Time' }} />
-    </Stack>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <StatusBar style="dark" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'fade',
+          contentStyle: { backgroundColor: '#FFFFFF' },
+        }}
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="CooperativeRegistrationScreen" />
+        <Stack.Screen name="PhoneVerificationScreen" />
+        <Stack.Screen name="CFarmerDashboardScreen" />
+        <Stack.Screen name="AddFarmerScreen" />
+        <Stack.Screen name="FarmerListScreen" />
+        <Stack.Screen name="CreateRequestScreen" />
+        <Stack.Screen name="ChatScreen" />
+        <Stack.Screen name="CDriverDashboardScreen" />
+        <Stack.Screen name="driverdashboard" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="deliveryconfirmation" />
+      </Stack>
+    </View>
   );
 }

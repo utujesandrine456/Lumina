@@ -3,17 +3,16 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 
-export default function BottomBar() {
+export default function CooperativeBottomBar() {
   const router = useRouter();
   const pathname = usePathname();
 
   const tabs: { name: string, route: string, icon: keyof typeof Ionicons.glyphMap; }[] = [
-    { name: "Dashboard", icon: "home-outline", route: "/driverdashboard" },
-    { name: "Jobs", icon: "briefcase-outline", route: "/driverjobs" },
+    { name: "Dashboard", icon: "home-outline", route: "/cooperativedashboard" },
+    { name: "Farmers", icon: "people-outline", route: "/farmerslist" },
+    { name: "Drivers", icon: "car-outline", route: "/nearbydrivers" },
     { name: "Trips", icon: "map-outline", route: "/trips" },
-    { name: "Profile", icon: "person-outline", route: "/profile" },
   ];
-
 
   return (
     <View style={styles.container}>
@@ -87,3 +86,4 @@ const styles = StyleSheet.create({
     textShadowRadius: 12,
   },
 });
+
