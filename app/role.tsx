@@ -157,18 +157,12 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 1,
         borderColor: '#F0F0F0',
-        ...Platform.select({
-            web: {
-                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.08)',
-            },
-            default: {
-                elevation: 4,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.08,
-                shadowRadius: 10,
-            },
-        }),
+        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.08)',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
     },
     iconContainer: {
         width: 56,

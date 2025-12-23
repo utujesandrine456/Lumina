@@ -4,39 +4,30 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
-import DateTimePicker from '@react-native-community/datetimepicker';
+
 
 export default function RegisterFarmer() {
     const router = useRouter();
     const { addFarmer } = useDriverStore();
     
     const [name, setName] = useState('');
-    const [location, setLocation] = useState('');
-    const [crop, setCrop] = useState('');
-    const [quantity, setQuantity] = useState('');
-    const [harvestDate, setHarvestDate] = useState(new Date());
-    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [crops, setCrops] = useState('');
+    const [phone, setPhone] = useState('');
+
 
     const handleSubmit = () => {
-        if (!name || !location || !crop || !quantity) {
-            Alert.alert('Error', 'Please fill in all required fields');
-            return;
-        }
-
-        const farmer = {
+        addFarmer({
             id: Date.now().toString(),
             name,
-            location,
-            crop,
-            quantity: parseFloat(quantity),
-            harvestDate: harvestDate.toISOString(),
-        };
-
-        addFarmer(farmer);
+            phone,
+            crops,
+        });
+        
         Alert.alert('Success', 'Farmer registered successfully!', [
             { text: 'OK', onPress: () => router.back() }
         ]);
     };
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -58,55 +49,21 @@ export default function RegisterFarmer() {
                         onChangeText={setName}
                     />
 
-                    <Text style={styles.label}>Location *</Text>
+                    <Text style={styles.label}>Phone Number *</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="Enter location"
-                        value={location}
-                        onChangeText={setLocation}
+                        placeholder="Enter farmer name"
+                        value={phone}
+                        onChangeText={setPhone}
                     />
 
-                    <Text style={styles.label}>Crop Type *</Text>
+                    <Text style={styles.label}>Crops Type *</Text>
                     <TextInput
                         style={styles.input}
                         placeholder="e.g., Maize, Potatoes, Rice"
-                        value={crop}
-                        onChangeText={setCrop}
+                        value={crops}
+                        onChangeText={setCrops}
                     />
-
-                    <Text style={styles.label}>Quantity (kg) *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter quantity"
-                        keyboardType="numeric"
-                        value={quantity}
-                        onChangeText={setQuantity}
-                    />
-
-                    <Text style={styles.label}>Harvest Date *</Text>
-                    <TouchableOpacity
-                        style={styles.dateButton}
-                        onPress={() => setShowDatePicker(true)}
-                    >
-                        <Text style={styles.dateText}>
-                            {harvestDate.toLocaleDateString()}
-                        </Text>
-                        <Ionicons name="calendar-outline" size={20} color="#000" />
-                    </TouchableOpacity>
-
-                    {showDatePicker && (
-                        <DateTimePicker
-                            value={harvestDate}
-                            mode="date"
-                            display="default"
-                            onChange={(event, selectedDate) => {
-                                setShowDatePicker(false);
-                                if (selectedDate) {
-                                    setHarvestDate(selectedDate);
-                                }
-                            }}
-                        />
-                    )}
 
                     <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
                         <Text style={styles.submitButtonText}>Register Farmer</Text>

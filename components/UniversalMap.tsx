@@ -9,9 +9,7 @@ type UniversalMapType = React.FC<any> & {
 const UniversalMap: UniversalMapType = (props: any) => {
   const { children, style, initialRegion, ...mapProps } = props;
 
-  // -----------------------
-  // 🌐 WEB VERSION (iframe)
-  // -----------------------
+
   if (Platform.OS === "web") {
     const lat = initialRegion?.latitude || 0;
     const lon = initialRegion?.longitude || 0;
@@ -29,15 +27,10 @@ const UniversalMap: UniversalMapType = (props: any) => {
           allowFullScreen
           loading="lazy"
         />
-
-        {/* Web cannot render RN-Markers so we ignore children */}
       </View>
     );
   }
 
-  // -------------------------------------------------------
-  // 📱 NATIVE VERSION (iOS + Android)
-  // -------------------------------------------------------
   const NativeMap = require("react-native-maps");
   const MapView = NativeMap.default;
   const Marker = NativeMap.Marker;
@@ -48,8 +41,6 @@ const UniversalMap: UniversalMapType = (props: any) => {
       {children &&
         React.Children.map(children, (child: any) => {
           if (!child) return null;
-
-          // Render custom marker
           if (child.type === UniversalMap.Marker) {
             const markerProps = child.props;
             return (

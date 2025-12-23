@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { View, Text } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Alert } from 'react-native';
 import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import {
   Poppins_400Regular,
   Poppins_500Medium,
@@ -11,8 +12,10 @@ import {
 } from '@expo-google-fonts/poppins';
 import { Satisfy_400Regular } from '@expo-google-fonts/satisfy';
 
+SplashScreen.preventAutoHideAsync();
+
 export default function Layout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
     Poppins_600SemiBold,
@@ -20,24 +23,20 @@ export default function Layout() {
     Satisfy_400Regular,
   });
 
-  if (!fontsLoaded) {
+
+  if (!fontsLoaded && !fontError) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-        <Text >Loading...</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', fontFamily: 'Poppins_500Medium'}}>Loading app...</Text>
       </View>
     );
   }
 
+  
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <>
       <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: 'fade',
-          contentStyle: { backgroundColor: '#FFFFFF' },
-        }}
-      >
+      <Stack screenOptions={{headerShown: false}}>
         <Stack.Screen name="index" />
         <Stack.Screen name="CooperativeRegistrationScreen" />
         <Stack.Screen name="PhoneVerificationScreen" />
@@ -50,7 +49,8 @@ export default function Layout() {
         <Stack.Screen name="driverdashboard" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="deliveryconfirmation" />
+        <Stack.Screen name="help" />
       </Stack>
-    </View>
+    </>
   );
 }

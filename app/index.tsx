@@ -110,19 +110,12 @@ const styles = StyleSheet.create({
         height: 320,
         borderRadius: 30,
         overflow: 'hidden',
-        // Shadow for Web and Native
-        ...Platform.select({
-            web: {
-                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.15)',
-            },
-            default: {
-                elevation: 8,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
-                shadowRadius: 10,
-            },
-        }),
+        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.15)',
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
     },
     heroImage: {
         width: '100%',
@@ -173,18 +166,12 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         borderWidth: 1,
         borderColor: '#F5F5F5',
-        ...Platform.select({
-            web: {
-                boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.15)',
-            },
-            default: {
-                elevation: 5,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
-                shadowRadius: 10,
-            },
-        }),
+        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.15)',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
     },
     primaryButtonContent: {
         flexDirection: 'row',

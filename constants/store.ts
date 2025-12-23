@@ -1,3 +1,4 @@
+import { CropShape } from 'expo-image-picker';
 import { create } from 'zustand';
 
 export type MobileRole = 'c-farmer' | 'c-driver' | 'driver';
@@ -7,6 +8,17 @@ export interface Coordinates {
   longitude: number;
 }
 
+export interface Crop{
+  name: string;
+}
+
+export interface Farmer{
+  id: string,
+  name: string,
+  phone: string,
+  crops: Crop[],
+}
+
 export interface Cooperative {
   id: string;
   name: string;
@@ -14,6 +26,8 @@ export interface Cooperative {
   pin: string;
   phone: string;
   location: string;
+  status: string;
+  farmers: Farmer[]
 }
 
 export interface TripFarmer {
@@ -29,18 +43,21 @@ export interface Driver {
   id: string;
   cooperativeId: string;
   fullName: string;
+  name?: string; 
   phone: string;
   nationalId: string;
   licenseNumber: string;
   vehicleType: string;
   available: boolean;
-  verified: boolean;
+  avatar?: string;
+  verified?: boolean;
+  rating?: number;
+  totalRatings?: number;
   coordinates?: Coordinates;
   availability?: boolean;
   plateNumber?: string;
   capacity?: number;
   vehicleModel?: string;
-  rating?: number;
 }
 
 export interface TransportRequest {
@@ -73,6 +90,7 @@ export interface Trip {
   bookingTime: string;
   farmers: TripFarmer[];
   totalWeight: number;
+  distance?: number;
 }
 
 export interface CurrentUser {
@@ -83,12 +101,11 @@ export interface CurrentUser {
 }
 
 interface AppState {
-  // Auth & session
   currentRole: MobileRole | null;
   currentCooperativeId: string | null;
   currentDriverId: string | null;
 
-  // Core entities
+
   cooperatives: Cooperative[];
   farmers: Farmer[];
   drivers: Driver[];
@@ -96,8 +113,6 @@ interface AppState {
   messages: ChatMessage[];
   trips: Trip[];
   currentUser: CurrentUser | null;
-
-  // Additional
   truckStatus: string;
   userRole: string;
   unavailableDates: { [date: string]: boolean };
@@ -106,7 +121,7 @@ interface AppState {
   driverCoordinates: Coordinates | null;
   nearbyDrivers: (Driver & { distance: number })[];
 
-  // Actions
+
   registerCooperative: (coop: Cooperative) => void;
   setCurrentRole: (role: MobileRole | null) => void;
   setCurrentCooperative: (id: string | null) => void;

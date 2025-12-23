@@ -7,17 +7,19 @@ import { MonoText } from '@/components/StyledText';
 import { useDriverStore } from '@/constants/store';
 import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
 
+
 export default function OTPScreen() {
     const router = useRouter();
     
     const { phone, role, name, coopName, pin } = useLocalSearchParams<{
         phone: string;
         role: string;
-        name?: string;
-        coopName?: string;
-        pin?: string;
+        name: string;
+        coopName: string;
+        pin: string;
     }>();
 
+    
     const { setCurrentUser, setUserRole, drivers, addDriver, addCooperative } = useDriverStore();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(60);
@@ -76,6 +78,7 @@ export default function OTPScreen() {
         if (role === 'admin') {
             setCurrentUser({ id: `admin-${phone}`, name: 'Admin', phone, role: 'admin' });
             router.push('/admindashboard');
+
         } else if (role === 'cooperative') {
             const coopId = `coop-${phone}`;
             setCurrentUser({ id: coopId, name: name || 'Cooperative Officer', phone, role: 'cooperative' });
@@ -89,6 +92,7 @@ export default function OTPScreen() {
                 status: 'pending',
                 farmers: [],
             });
+
             router.push('/cooperativedashboard');
         } else if (role === 'driver') {
             const existing = drivers.find((d) => d.phone === phone);
@@ -126,7 +130,6 @@ export default function OTPScreen() {
                         <Ionicons name="arrow-back" size={24} color="#000" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Verify OTP</Text>
-                    <View style={{ width: 24 }} />
                 </View>
 
                 <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.content}>
@@ -142,10 +145,7 @@ export default function OTPScreen() {
 
                     <View style={styles.otpContainer}>
                         {otp.map((digit, index) => (
-                            <Animated.View
-                                key={index}
-                                entering={SlideInRight.delay(300 + index * 50).springify()}
-                            >
+                            <Animated.View key={index} entering={SlideInRight.delay(300 + index * 50).springify()}>
                                 <TextInput      
                                     ref={(ref) => { inputRefs.current[index] = ref; }}
                                     style={[styles.otpInput, digit && styles.otpInputFilled]}
@@ -248,7 +248,8 @@ const styles = StyleSheet.create({
     },
     otpInput: {
         flex: 1,
-        height: 60,
+        width: 40,
+        height: 40,
         borderWidth: 2,
         borderColor: '#E0E0E0',
         borderRadius: 12,

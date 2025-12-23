@@ -1,17 +1,12 @@
-/**
- * Price Calculator Utility
- * Calculates transport price based on distance and weight
- */
-
 export interface PriceCalculation {
     distance: number; // km
     weight: number; // kg
     pricePerKg: number;
     pricePerKm: number;
-    totalPrice: number; // locked total price
+    totalPrice: number; 
 }
 
-// Total Price = (weight × price_per_kg) + (distance × price_per_km)
+
 export const calculatePrice = (
     distance: number,
     weight: number,
@@ -34,7 +29,7 @@ export const calculateDistance = (
     lat2: number,
     lon2: number
 ): number => {
-    const R = 6371; // Radius of the Earth in km
+    const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = 
@@ -42,6 +37,6 @@ export const calculateDistance = (
         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return Math.round(R * c * 100) / 100; // Round to 2 decimal places
+    return Math.round(R * c * 100) / 100; 
 };
 
