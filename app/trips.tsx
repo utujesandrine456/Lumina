@@ -7,23 +7,23 @@ import { useDriverStore } from '@/constants/store';
 
 export default function Trips() {
     const router = useRouter();
-    const { trips } = useDriverStore();
+    const { requests, drivers } = useDriverStore(); // Changed trips to requests
     const [filter, setFilter] = useState<'all' | 'pending' | 'ongoing' | 'completed'>('all');
 
-    const filteredTrips = trips.filter(trip => {
+    const filteredTrips = (requests || []).filter(trip => { // Added safe access
         if (filter === 'all') return true;
         if (filter === 'pending') return trip.status === 'pending';
-        if (filter === 'ongoing') return trip.status === 'accepted' || trip.status === 'in-transit';
-        if (filter === 'completed') return trip.status === 'delivered';
+        if (filter === 'ongoing') return trip.status === 'accepted' || trip.status === 'in-progress'; // Fixed status string
+        if (filter === 'completed') return trip.status === 'completed'; // Fixed status string
         return true;
     });
 
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'pending': return '#757575';
-        case 'accepted': return '#000';
-        case 'in-transit': return '#000';
-        case 'delivered': return '#000';
+            case 'accepted': return '#000';
+            case 'in-progress': return '#000'; // Fixed status string
+            case 'completed': return '#000'; // Fixed status string
             default: return '#757575';
         }
     };
@@ -31,19 +31,23 @@ export default function Trips() {
     const getStatusText = (status: string) => {
         switch (status) {
             case 'pending': return 'Pending';
-        case 'accepted': return 'Accepted';
-        case 'in-transit': return 'In Transit';
-            case 'delivered': return 'Delivered';
+            case 'accepted': return 'Accepted';
+            case 'in-progress': return 'In Progress'; // Fixed status string
+            case 'completed': return 'Completed'; // Fixed status string
             default: return status;
         }
     };
 
     const renderTrip = ({ item }: { item: any }) => {
+        const tripDriver = drivers.find(d => d.id === item.driverId);
+        const farmerCount = item.farmers?.length || 0;
+
         return (
             <TouchableOpacity
+                // ... existing touchable code ...
                 style={styles.tripCard}
                 onPress={() => {
-                    if (item.status === 'delivered' && !item.rating) {
+                    if (item.status === 'completed' && !item.rating) {
                         router.push({ pathname: '/ratedriver', params: { tripId: item.id } });
                     } else {
                         router.push({ pathname: '/bookingstatus', params: { tripId: item.id } });
@@ -56,7 +60,7 @@ export default function Trips() {
                         <View style={styles.tripDetails}>
                             <Text style={styles.tripId}>Trip #{item.id.slice(-6)}</Text>
                             <Text style={styles.tripDate}>
-                                {new Date(item.bookingTime).toLocaleDateString()}
+                                {new Date(item.bookingTime || item.createdAt).toLocaleDateString()}
                             </Text>
                         </View>
                     </View>
@@ -80,13 +84,13 @@ export default function Trips() {
                 </View>
 
                 <View style={styles.tripStats}>
-                    <Text style={styles.statText}>{item.farmers.length} farmer{item.farmers.length > 1 ? 's' : ''}</Text>
+                    <Text style={styles.statText}>{farmerCount} farmer{farmerCount !== 1 ? 's' : ''}</Text>
                     <Text style={styles.statText}>•</Text>
                     <Text style={styles.statText}>{item.totalWeight} kg</Text>
-                    {item.driver && (
+                    {tripDriver && (
                         <>
                             <Text style={styles.statText}>•</Text>
-                            <Text style={styles.statText}>{item.driver.name}</Text>
+                            <Text style={styles.statText}>{tripDriver.name}</Text>
                         </>
                     )}
                 </View>

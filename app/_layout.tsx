@@ -23,20 +23,26 @@ export default function Layout() {
     Satisfy_400Regular,
   });
 
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
 
   if (!fontsLoaded && !fontError) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', fontFamily: 'Poppins_500Medium'}}>Loading app...</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', fontFamily: 'Poppins_500Medium' }}>Loading app...</Text>
       </View>
     );
   }
 
-  
+
   return (
     <>
       <StatusBar style="dark" />
-      <Stack screenOptions={{headerShown: false}}>
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="CooperativeRegistrationScreen" />
         <Stack.Screen name="PhoneVerificationScreen" />

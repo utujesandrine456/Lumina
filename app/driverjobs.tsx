@@ -8,11 +8,11 @@ import { useRouter } from 'expo-router';
 
 export default function DriverJobs() {
     const router = useRouter();
-    const { trips, drivers, currentUser, updateTrip } = useDriverStore();
+    const { requests, drivers, currentUser, updateRequest, addMessage } = useDriverStore();
 
     const pendingTrips = useMemo(
-        () => trips.filter(t => t.status === 'pending' && !t.driverId),
-        [trips]
+        () => (requests || []).filter((t: any) => t.status === 'pending' && !t.driverId),
+        [requests]
     );
 
     const currentDriver = drivers.find(d => d.id === currentUser?.id);
@@ -23,21 +23,20 @@ export default function DriverJobs() {
             return;
         }
 
-        updateTrip(tripId, {
+        updateRequest(tripId, {
             driverId: currentDriver.id,
-            driver: currentDriver,
             status: 'accepted',
-            acceptedAt: new Date().toISOString(),
             priceLocked: true,
             chatOpen: true,
-            chat: [
-                {
-                    id: `${Date.now()}`,
-                    sender: 'driver',
-                    text: 'Driver accepted the job. Let us coordinate pickup.',
-                    timestamp: new Date().toISOString(),
-                },
-            ],
+        });
+
+        addMessage({
+            id: Date.now().toString(),
+            requestId: tripId,
+            senderId: currentDriver.id,
+            receiverId: 'coop',
+            text: 'Driver accepted the job. Let us coordinate pickup.',
+            timestamp: Date.now(),
         });
         Alert.alert('Accepted', 'You accepted this transport request.', [
             { text: 'Open Chat', onPress: () => router.push({ pathname: '/chat', params: { tripId } }) },

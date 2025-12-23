@@ -1,55 +1,57 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
 import BottomBar from '@/components/DriverBottomBar';
 
-
-
 export default function DriversList() {
     const router = useRouter();
-    const { farmers, setSelectedFarmers, selectedFarmers } = useDriverStore();
-    const [selectedIds, setSelectedIds] = useState<string[]>(selectedFarmers);
+    const { drivers = [] } = useDriverStore();
 
-    const toggleSelection = (farmerId: string) => {
-        const newSelection = selectedIds.includes(farmerId)
-            ? selectedIds.filter(id => id !== farmerId)
-            : [...selectedIds, farmerId];
-        setSelectedIds(newSelection);
-    };
+    // Filter only available and verified drivers
+    const availableDrivers = drivers.filter(d => d.available && d.verified);
 
-    const handleContinue = () => {
-        if (selectedIds.length === 0) {
-            return;
-        }
-        setSelectedFarmers(selectedIds);
-        router.push('/createtransportrequest');
-    };
-
-    const renderFarmer = ({ item }: { item: any }) => {
-        const isSelected = selectedIds.includes(item.id);
-        
+    const renderDriver = ({ item }: { item: any }) => {
         return (
             <TouchableOpacity
-                style={[styles.farmerCard, isSelected && styles.selectedCard]}
-                onPress={() => toggleSelection(item.id)}
+                style={styles.driverCard}
+                onPress={() => { }} // Could go to detailed driver profile
+                activeOpacity={0.9}
             >
-                <View style={styles.farmerInfo}>
-                    <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                        {isSelected && <Ionicons name="checkmark" size={16} color="#FFF" />}
+                <View style={styles.driverHeader}>
+                    <View style={styles.driverAvatar}>
+                        <Ionicons name="person" size={24} color="#555" />
                     </View>
-                    <View style={styles.farmerDetails}>
-                        <Text style={styles.farmerName}>{item.name}</Text>
-                        <Text style={styles.farmerLocation}>{item.location}</Text>
-                        <View style={styles.cropInfo}>
-                            <Text style={styles.cropText}>{item.crop}</Text>
-                            <Text style={styles.quantityText}>• {item.quantity} kg</Text>
+                    <View style={styles.driverInfo}>
+                        <Text style={styles.driverName}>{item.name}</Text>
+                        <View style={styles.ratingRow}>
+                            <Ionicons name="star" size={14} color="#000" />
+                            <Text style={styles.ratingText}>{(item.rating || 5.0).toFixed(1)}</Text>
+                            <Text style={styles.dotSeparator}>•</Text>
+                            <Text style={styles.vehicleText}>{item.vehicleType || 'Truck'}</Text>
                         </View>
-                        <Text style={styles.harvestDate}>
-                            Harvest: {new Date(item.harvestDate).toLocaleDateString()}
-                        </Text>
+                    </View>
+                    <View style={styles.statusBadge}>
+                        <View style={styles.statusDot} />
+                        <Text style={styles.statusText}>Available</Text>
+                    </View>
+                </View>
+
+                <View style={styles.divider} />
+
+                <View style={styles.cardFooter}>
+                    <View style={styles.footerItem}>
+                        <Ionicons name="call-outline" size={16} color="#555" />
+                        <Text style={styles.footerText}>{item.phone}</Text>
+                    </View>
+                    <View style={styles.footerItem}>
+                        <Ionicons name="cube-outline" size={16} color="#555" />
+                        <Text style={styles.footerText}>{item.capacity || '1000'} kg</Text>
+                    </View>
+                    <View style={styles.footerItem}>
+                        <Text style={styles.plateNumber}>{item.plateNumber}</Text>
                     </View>
                 </View>
             </TouchableOpacity>
@@ -57,67 +59,39 @@ export default function DriversList() {
     };
 
     return (
-    <>
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={{backgroundColor: 'black', width: 30, height: 30, borderRadius: 30, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center'}}>
-                    <Ionicons name="arrow-back" size={18} color="#fff" />
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
-                <Text style={styles.title}>Select Farmers</Text>
-                <View style={{display: 'flex', flexDirection: 'row'}}>
-                    <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
-                        <Ionicons name="person-circle-outline" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
-                        <Ionicons name="notifications-circle" size={24} color="#000" />
-                    </TouchableOpacity>
-                </View>
+                <Text style={styles.title}>Available Drivers</Text>
+                <View style={{ width: 44 }} />
             </View>
 
-            {farmers.length === 0 ? (
+            {availableDrivers.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Ionicons name="people-outline" size={64} color="#BDBDBD" />
-                    <Text style={styles.emptyText}>No farmers registered yet</Text>
-                    <TouchableOpacity
-                        style={styles.addButton}
-                        onPress={() => router.push('/registerfarmer')}
-                    >
-                        <Text style={styles.addButtonText}>Register First Farmer</Text>
-                    </TouchableOpacity>
+                    <View style={styles.emptyIconContainer}>
+                        <Ionicons name="car-sport-outline" size={48} color="#BDBDBD" />
+                    </View>
+                    <Text style={styles.emptyTitle}>No Drivers Available</Text>
+                    <Text style={styles.emptyText}>
+                        There are currently no drivers marked as available in your area.
+                    </Text>
                 </View>
             ) : (
-                <>
-                    <FlatList
-                        data={farmers}
-                        renderItem={renderFarmer}
-                        keyExtractor={(item) => item.id}
-                        contentContainerStyle={styles.listContent}
-                        showsVerticalScrollIndicator={false}
-                    />
-                    {selectedIds.length > 0 && (
-                        <View style={styles.footer}>
-                            <Text style={styles.selectedCount}>
-                                {selectedIds.length} farmer{selectedIds.length > 1 ? 's' : ''} selected
-                            </Text>
-                            <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-                                <Text style={styles.continueButtonText}>Continue</Text>
-                                <Ionicons name="arrow-forward" size={20} color="#FFF" />
-                            </TouchableOpacity>
-                        </View>
-                    )}
-                </>
+                <FlatList
+                    data={availableDrivers}
+                    renderItem={renderDriver}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                />
             )}
         </SafeAreaView>
-        <BottomBar />
-    </>
     );
 }
 
-
 const styles = StyleSheet.create({
-    profileButton: {
-        padding: 4,
-    },
     container: {
         flex: 1,
         backgroundColor: '#FFFFFF',
@@ -126,137 +100,162 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
-    },
-    title: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 20,
-        color: '#000',
-    },
-    listContent: {
-        padding: 20,
-    },
-    farmerCard: {
+        paddingHorizontal: 24,
+        paddingBottom: 20,
+        paddingTop: 10,
         backgroundColor: '#FFF',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
     },
-    selectedCard: {
-        borderColor: '#000',
-        borderWidth: 2,
-    },
-    farmerInfo: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-    },
-    checkbox: {
-        width: 24,
-        height: 24,
-        borderRadius: 6,
-        borderWidth: 2,
-        borderColor: '#BDBDBD',
-        marginRight: 12,
-        marginTop: 2,
+    backButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    checkboxSelected: {
-        backgroundColor: '#000',
-        borderColor: '#000',
+    title: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 18,
+        color: '#000',
     },
-    farmerDetails: {
+    listContent: {
+        padding: 24,
+        paddingBottom: 100,
+    },
+    driverCard: {
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#EEEEEE',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 12,
+        elevation: 2,
+    },
+    driverHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    driverAvatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    driverInfo: {
         flex: 1,
     },
-    farmerName: {
+    driverName: {
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 16,
         color: '#000',
-        marginBottom: 4,
     },
-    farmerLocation: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 14,
-        color: '#757575',
-        marginBottom: 8,
-    },
-    cropInfo: {
+    ratingRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 4,
+        marginTop: 2,
     },
-    cropText: {
+    ratingText: {
         fontFamily: 'Poppins_500Medium',
-        fontSize: 14,
+        fontSize: 12,
         color: '#000',
-    },
-    quantityText: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 14,
-        color: '#757575',
         marginLeft: 4,
     },
-    harvestDate: {
+    dotSeparator: {
+        marginHorizontal: 8,
+        color: '#BDBDBD',
+    },
+    vehicleText: {
         fontFamily: 'Poppins_400Regular',
         fontSize: 12,
         color: '#757575',
-        marginTop: 4,
+    },
+    statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F0FDF4',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#DCFCE7',
+    },
+    statusDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#000',
+        marginRight: 6,
+    },
+    statusText: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 10,
+        color: '#000',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#F5F5F5',
+        marginBottom: 12,
+    },
+    cardFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    footerItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    footerText: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 12,
+        color: '#555',
+    },
+    plateNumber: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 12,
+        color: '#000',
+        backgroundColor: '#F5F5F5',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 40,
+        marginTop: -60,
+    },
+    emptyIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#F9F9F9',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    emptyTitle: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 18,
+        color: '#000',
+        marginBottom: 8,
     },
     emptyText: {
         fontFamily: 'Poppins_400Regular',
-        fontSize: 16,
-        color: '#757575',
-        marginTop: 16,
-        marginBottom: 24,
-    },
-    addButton: {
-        backgroundColor: '#000',
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 12,
-    },
-    addButtonText: {
-        color: '#FFF',
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 16,
-    },
-    footer: {
-        padding: 20,
-        borderTopWidth: 1,
-        borderTopColor: '#E0E0E0',
-        backgroundColor: '#FFF',
-    },
-    selectedCount: {
-        fontFamily: 'Poppins_500Medium',
         fontSize: 14,
-        color: '#000',
-        marginBottom: 12,
+        color: '#757575',
         textAlign: 'center',
-    },
-    continueButton: {
-        backgroundColor: '#000',
-        paddingVertical: 16,
-        borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-    },
-    continueButtonText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontFamily: 'Poppins_600SemiBold',
+        lineHeight: 22,
     },
 });
 

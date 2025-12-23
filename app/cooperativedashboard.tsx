@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,95 +12,68 @@ const { width } = Dimensions.get('window');
 
 export default function CooperativeDashboard() {
     const router = useRouter();
-    const { farmers, trips, drivers, setNearbyDrivers } = useDriverStore();
+    const { currentUser, getCoopFarmers, getCoopRequests, updateCooperative, cooperatives } = useDriverStore();
 
-    const totalFarmers = farmers.length;
-    const activeTrips = trips.filter(t => t.status !== 'delivered').length;
-    const nearbyAvailableDrivers = drivers.filter(d => d.availability && d.verified).length;
+    const coopId = currentUser?.cooperativeId || currentUser?.id;
+    const currentCoop = cooperatives.find(c => c.id === coopId);
+    const farmers = coopId ? getCoopFarmers(coopId) : [];
+    const requests = coopId ? getCoopRequests(coopId) : [];
 
-    const quickActions = [
-        { label: "Register Farmer", icon: "person-add-outline", route: "/registerfarmer", color: "#000" },
-        { label: "Register Driver", icon: "car-outline", route: "/registerdriver", color: "#000" },
-        { label: "Farmers List", icon: "people-outline", route: "/farmerslist", color: "#000" },
-        { label: "Nearby Drivers", icon: "car-outline", route: "/nearbydrivers", color: "#000" },
-        { label: "Trips", icon: "map-outline", route: "/trips", color: "#000" },
-    ];
-
-    const recentActivity = trips.slice(0, 3).map(trip => ({
-        id: trip.id,
-        type: "Trip",
-        detail: `${trip.farmers.length} farmers to ${trip.destination}`,
-        date: new Date(trip.bookingTime).toLocaleDateString(),
-        status: trip.status,
-    }));
+    const activeRequests = requests.filter(r => r.status !== 'completed' && r.status !== 'rejected').length;
 
     useEffect(() => {
-        // Get current location and find nearby drivers
-        (async () => {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status === 'granted') {
-                let location = await Location.getCurrentPositionAsync({});
-                const { latitude, longitude } = location.coords;
-                
-                // Calculate distances and sort drivers
-                const driversWithDistance = drivers
-                    .filter(d => d.availability && d.verified && d.coordinates)
-                    .map(driver => {
-                        if (!driver.coordinates) return { ...driver, distance: Infinity };
-                        const distance = calculateDistance(
-                            latitude,
-                            longitude,
-                            driver.coordinates.latitude,
-                            driver.coordinates.longitude
-                        );
-                        return { ...driver, distance };
-                    })
-                    .sort((a, b) => a.distance - b.distance);
-                
-                setNearbyDrivers(driversWithDistance);
-            }
-        })();
-    }, [drivers]);
+        if (!currentUser || currentUser.role !== 'cooperative') {
+        }
+    }, [currentUser]);
 
-    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-        const R = 6371; // Radius of the Earth in km
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = 
-            Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-    };
+    useEffect(() => {
+        (async () => {
+            if (!coopId) return;
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') return;
+
+            let location = await Location.getCurrentPositionAsync({});
+            updateCooperative(coopId, { location: `${location.coords.latitude},${location.coords.longitude}` });
+        })();
+    }, [coopId]);
+
+    const quickActions = [
+        { label: "Register Farmer", icon: "person-add-outline", route: "/registerfarmer" },
+        { label: "Create Request", icon: "cube-outline", route: "/createtransportrequest" },
+        { label: "View Drivers", icon: "car-outline", route: "/driverslist" },
+        { label: "All Farmers", icon: "people-outline", route: "/farmerslist" },
+    ];
 
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
                     <View>
-                        <Text style={styles.greeting}>Good Morning,</Text>
-                        <Text style={styles.userName}>Cooperative Officer</Text>
+                        <Text style={styles.greeting}>Welcome Back,</Text>
+                        <Text style={styles.userName}>{currentUser?.name || 'Officer'}</Text>
+                        <Text style={styles.coopName}>{currentCoop?.name}</Text>
                     </View>
-                    <TouchableOpacity style={styles.profileButton}>
-                        <Ionicons name="person-circle-outline" size={40} color="#000" />
+                    <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
+                        <View style={styles.profileIcon}>
+                            <Ionicons name="person" size={24} color="#FFF" />
+                        </View>
                     </TouchableOpacity>
                 </Animated.View>
 
                 <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.statsCard}>
                     <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{totalFarmers}</Text>
-                        <Text style={styles.statLabel}>Total Farmers</Text>
+                        <Text style={styles.statValue}>{farmers.length}</Text>
+                        <Text style={styles.statLabel}>Farmers</Text>
                     </View>
                     <View style={styles.statDivider} />
                     <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{activeTrips}</Text>
-                        <Text style={styles.statLabel}>Active Trips</Text>
+                        <Text style={styles.statValue}>{activeRequests}</Text>
+                        <Text style={styles.statLabel}>Active Jobs</Text>
                     </View>
                     <View style={styles.statDivider} />
                     <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{nearbyAvailableDrivers}</Text>
-                        <Text style={styles.statLabel}>Nearby Drivers</Text>
+                        <Text style={styles.statValue}>{currentCoop?.location ? "Set" : "Off"}</Text>
+                        <Text style={styles.statLabel}>GPS Status</Text>
                     </View>
                 </Animated.View>
 
@@ -109,8 +82,8 @@ export default function CooperativeDashboard() {
                     {quickActions.map((action, index) => (
                         <Animated.View key={index} entering={FadeInDown.delay(300 + (index * 50)).springify()} style={styles.actionWrapper}>
                             <TouchableOpacity style={styles.actionButton} onPress={() => router.push(action.route as any)}>
-                                <View style={[styles.actionIcon, { backgroundColor: '#F5F5F5' }]}>
-                                    <Ionicons name={action.icon as any} size={24} color={action.color} />
+                                <View style={styles.actionIcon}>
+                                    <Ionicons name={action.icon as any} size={24} color="#1A1A1A" />
                                 </View>
                                 <Text style={styles.actionLabel}>{action.label}</Text>
                             </TouchableOpacity>
@@ -118,22 +91,30 @@ export default function CooperativeDashboard() {
                     ))}
                 </View>
 
-                <Text style={styles.sectionTitle}>Recent Activity</Text>
-                <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.activityList}>
-                    {recentActivity.length > 0 ? (
-                        recentActivity.map((item) => (
-                            <View key={item.id} style={styles.activityItem}>
-                                <View style={styles.activityIcon}>
-                                    <Ionicons name="cube-outline" size={24} color="#000" />
+                <Text style={styles.sectionTitle}>Recent Requests</Text>
+                <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.listContainer}>
+                    {requests.length > 0 ? (
+                        requests.slice(0, 5).map((req) => (
+                            <View key={req.id} style={styles.listItem}>
+                                <View style={styles.listIcon}>
+                                    <Ionicons name="cube" size={20} color="#1A1A1A" />
                                 </View>
-                                <View style={styles.activityContent}>
-                                    <Text style={styles.activityDetail}>{item.detail}</Text>
-                                    <Text style={styles.activityDate}>{item.date} • {item.status}</Text>
+                                <View style={styles.listContent}>
+                                    <Text style={styles.listTitle}>{req.cropType} - {req.quantity}</Text>
+                                    <Text style={styles.listSub}>{req.destination}</Text>
+                                </View>
+                                <View style={[styles.statusBadge, { backgroundColor: req.status === 'completed' ? '#1A1A1A' : '#F5F5F5' }]}>
+                                    <Text style={[styles.statusText, { color: req.status === 'completed' ? '#FFF' : '#000' }]}>
+                                        {req.status}
+                                    </Text>
                                 </View>
                             </View>
                         ))
                     ) : (
-                        <Text style={styles.emptyText}>No trips yet. Start by registering farmers!</Text>
+                        <View style={styles.emptyContainer}>
+                            <Ionicons name="documents-outline" size={48} color="#E0E0E0" />
+                            <Text style={styles.emptyText}>No transport requests yet.</Text>
+                        </View>
                     )}
                 </Animated.View>
             </ScrollView>
@@ -148,15 +129,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
     },
     scrollContent: {
-        paddingBottom: 30,
-        paddingHorizontal: 20,
+        paddingBottom: 100,
+        paddingHorizontal: 24,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginTop: 20,
-        marginBottom: 24,
+        marginBottom: 32,
     },
     greeting: {
         fontFamily: 'Poppins_400Regular',
@@ -166,24 +147,43 @@ const styles = StyleSheet.create({
     userName: {
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 24,
-        color: '#000',
+        color: '#1A1A1A',
+    },
+    coopName: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 14,
+        color: '#999',
+        marginTop: 2,
     },
     profileButton: {
         padding: 4,
     },
-    statsCard: {
-        backgroundColor: '#FFF',
+    profileIcon: {
+        width: 48,
+        height: 48,
         borderRadius: 24,
-        padding: 20,
+        backgroundColor: '#1A1A1A',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#1A1A1A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    statsCard: {
+        backgroundColor: '#1A1A1A',
+        borderRadius: 24,
+        padding: 24,
         marginBottom: 32,
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 12,
-        elevation: 3,
+        shadowColor: '#1A1A1A',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 16,
+        elevation: 6,
     },
     statItem: {
         alignItems: 'center',
@@ -192,23 +192,23 @@ const styles = StyleSheet.create({
     statValue: {
         fontFamily: 'Poppins_700Bold',
         fontSize: 24,
-        color: '#000',
+        color: '#FFFFFF',
         marginBottom: 4,
     },
     statLabel: {
         fontFamily: 'Poppins_400Regular',
         fontSize: 12,
-        color: '#757575',
+        color: '#999',
     },
     statDivider: {
         width: 1,
-        height: 40,
-        backgroundColor: '#E0E0E0',
+        height: 32,
+        backgroundColor: '#333',
     },
     sectionTitle: {
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 18,
-        color: '#000',
+        color: '#1A1A1A',
         marginBottom: 16,
     },
     actionsGrid: {
@@ -218,80 +218,86 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     actionWrapper: {
-        width: (width - 52) / 2,
+        width: (width - 60) / 2,
     },
     actionButton: {
-        backgroundColor: '#FFF',
-        padding: 16,
+        backgroundColor: '#FAFAFA',
+        padding: 20,
         borderRadius: 20,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#E0E0E0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 8,
-        elevation: 2,
+        borderColor: '#EEEEEE',
     },
     actionIcon: {
         width: 48,
         height: 48,
         borderRadius: 16,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
     },
     actionLabel: {
         fontFamily: 'Poppins_500Medium',
         fontSize: 14,
-        color: '#000',
+        color: '#1A1A1A',
     },
-    activityList: {
+    listContainer: {
         gap: 12,
     },
-    activityItem: {
+    listItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFF',
+        backgroundColor: '#FFFFFF',
         padding: 16,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 8,
-        elevation: 2,
+        borderColor: '#F0F0F0',
     },
-    activityIcon: {
+    listIcon: {
         width: 40,
         height: 40,
         borderRadius: 12,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#FAFAFA',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
     },
-    activityContent: {
+    listContent: {
         flex: 1,
     },
-    activityDetail: {
-        fontFamily: 'Poppins_500Medium',
+    listTitle: {
+        fontFamily: 'Poppins_600SemiBold',
         fontSize: 14,
-        color: '#000',
+        color: '#1A1A1A',
         marginBottom: 2,
     },
-    activityDate: {
+    listSub: {
         fontFamily: 'Poppins_400Regular',
         fontSize: 12,
-        color: '#757575',
+        color: '#999',
+    },
+    statusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    statusText: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 10,
+        textTransform: 'capitalize',
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        padding: 40,
     },
     emptyText: {
         fontFamily: 'Poppins_400Regular',
         fontSize: 14,
-        color: '#757575',
+        color: '#999',
         textAlign: 'center',
-        padding: 20,
+        marginTop: 12,
     },
 });
-

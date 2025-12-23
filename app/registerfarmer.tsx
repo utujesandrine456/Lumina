@@ -1,60 +1,90 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
-
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function RegisterFarmer() {
     const router = useRouter();
-    const { addFarmer } = useDriverStore();
-    
+    const { currentUser, addFarmerToCoop } = useDriverStore();
+
     const [name, setName] = useState('');
     const [crops, setCrops] = useState('');
     const [phone, setPhone] = useState('');
 
-
     const handleSubmit = () => {
-        addFarmer({
+        if (!name || !phone || !crops) {
+            Alert.alert('Missing Fields', 'Please fill in all required fields.');
+            return;
+        }
+
+        const coopId = currentUser?.cooperativeId || currentUser?.id;
+
+        if (!coopId) {
+            Alert.alert('Error', 'You must be logged in as a cooperative officer.');
+            return;
+        }
+
+        addFarmerToCoop(coopId, {
             id: Date.now().toString(),
+            cooperativeId: coopId,
             name,
             phone,
-            crops,
+            crops: crops.split(',').map(c => ({ id: Math.random().toString(), name: c.trim() })),
+            location: 'Unknown'
         });
-        
-        Alert.alert('Success', 'Farmer registered successfully!', [
-            { text: 'OK', onPress: () => router.back() }
-        ]);
-    };
 
+        if (Platform.OS === 'web' || Platform.OS === 'windows') {
+            window.alert('Farmer registered successfully!');
+            router.back();
+        } else {
+            Alert.alert(
+                'Success',
+                'Farmer registered successfully!',
+                [
+                    { text: 'OK', onPress: () => router.back() }
+                ]
+            );
+        }
+    };
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
+            <View style={styles.header}>
+                <TouchableOpacity
+                    onPress={() => router.back()}
+                    style={styles.backButton}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+                </TouchableOpacity>
+                <View style={styles.titleContainer}>
                     <Text style={styles.title}>Register Farmer</Text>
-                    <View style={{ width: 24 }} />
                 </View>
+                <View style={styles.placeholderButton} />
+            </View>
 
-                <View style={styles.form}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.form}>
                     <Text style={styles.label}>Farmer Name *</Text>
                     <TextInput
                         style={styles.input}
                         placeholder="Enter farmer name"
                         value={name}
                         onChangeText={setName}
+                        placeholderTextColor="#999"
                     />
 
                     <Text style={styles.label}>Phone Number *</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="Enter farmer name"
+                        placeholder="Enter phone number"
                         value={phone}
                         onChangeText={setPhone}
+                        keyboardType="phone-pad"
+                        placeholderTextColor="#999"
                     />
 
                     <Text style={styles.label}>Crops Type *</Text>
@@ -63,12 +93,15 @@ export default function RegisterFarmer() {
                         placeholder="e.g., Maize, Potatoes, Rice"
                         value={crops}
                         onChangeText={setCrops}
+                        placeholderTextColor="#999"
                     />
+                    <Text style={styles.helperText}>Separate multiple crops with commas</Text>
 
-                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} activeOpacity={0.9}>
                         <Text style={styles.submitButtonText}>Register Farmer</Text>
+                        <Ionicons name="person-add" size={20} color="#FFF" />
                     </TouchableOpacity>
-                </View>
+                </Animated.View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -80,63 +113,95 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
     },
     scrollContent: {
-        paddingBottom: 30,
+        paddingBottom: 40,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
+        paddingHorizontal: 24,
         paddingVertical: 16,
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
+        borderBottomColor: '#F5F5F5',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 10,
+        elevation: 2,
+        zIndex: 10,
+    },
+    backButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#EEEEEE',
+    },
+    placeholderButton: {
+        width: 44,
+    },
+    titleContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: -1,
     },
     title: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 20,
-        color: '#000',
+        fontSize: 18,
+        color: '#1A1A1A',
+        letterSpacing: 0.5,
     },
     form: {
-        paddingHorizontal: 20,
-        paddingTop: 24,
+        paddingHorizontal: 24,
+        paddingTop: 32,
     },
     label: {
         fontFamily: 'Poppins_500Medium',
-        fontSize: 16,
-        color: '#000',
+        fontSize: 14,
+        color: '#1A1A1A',
         marginBottom: 8,
         marginTop: 16,
     },
     input: {
-        borderWidth: 1,
-        borderColor: '#B5B5B5',
-        borderRadius: 12,
-        padding: 14,
+        borderWidth: 1.5,
+        borderColor: '#EEEEEE',
+        borderRadius: 16,
+        padding: 16,
         fontSize: 15,
         fontFamily: 'Poppins_400Regular',
-        backgroundColor: '#FFF',
-        color: '#000',
+        backgroundColor: '#FAFAFA',
+        color: '#1A1A1A',
     },
-    dateButton: {
-        borderWidth: 1,
-        borderColor: '#B5B5B5',
-        borderRadius: 12,
-        padding: 14,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    dateText: {
-        fontSize: 15,
+    helperText: {
         fontFamily: 'Poppins_400Regular',
-        color: '#000',
+        fontSize: 12,
+        color: '#999',
+        marginTop: 6,
+        marginLeft: 4,
     },
     submitButton: {
-        backgroundColor: '#000',
+        backgroundColor: '#1A1A1A',
         paddingVertical: 16,
-        borderRadius: 12,
+        borderRadius: 16,
         alignItems: 'center',
-        marginTop: 32,
+        marginTop: 40,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 8,
+        shadowColor: '#1A1A1A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+        elevation: 6,
     },
     submitButtonText: {
         color: '#FFF',
@@ -144,4 +209,3 @@ const styles = StyleSheet.create({
         fontFamily: 'Poppins_600SemiBold',
     },
 });
-

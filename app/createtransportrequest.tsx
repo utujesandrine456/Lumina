@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, Alert, Platform } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
@@ -11,9 +11,23 @@ import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
 
 export default function CreateTransportRequest() {
     const router = useRouter();
-    const { farmers, selectedFarmers, addTrip, setSelectedFarmers } = useDriverStore();
-    
-    const [cropType, setCropType] = useState('');
+    const { getCoopFarmers, currentUser, selectedFarmers = [], createRequest, setSelectedFarmers } = useDriverStore();
+    const coopId = currentUser?.cooperativeId || currentUser?.id;
+    const farmers = coopId ? getCoopFarmers(coopId) : [];
+    const { farmerIds } = useLocalSearchParams();
+
+    useEffect(() => {
+        if (selectedFarmers.length === 0 && farmerIds) {
+            const ids = (farmerIds as string).split(',');
+            setSelectedFarmers(ids);
+        }
+    }, [farmerIds, selectedFarmers.length]);
+
+    const finalSelectedIds = selectedFarmers.length > 0 ? selectedFarmers : (typeof farmerIds === 'string' ? farmerIds.split(',') : []);
+    const selectedFarmersData = (farmers || []).filter(f => finalSelectedIds.includes(f.id));
+    const availableCrops = Array.from(new Set(selectedFarmersData.flatMap(f => f.crops.map(c => c.name))));
+
+    const [cropTypes, setCropTypes] = useState<string[]>([]);
     const [totalWeight, setTotalWeight] = useState('');
     const [destination, setDestination] = useState('');
     const [pickupLocation, setPickupLocation] = useState('');
@@ -26,12 +40,6 @@ export default function CreateTransportRequest() {
     const [pickupCoords, setPickupCoords] = useState<{ latitude: number; longitude: number } | null>(null);
     const [destCoords, setDestCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
-    const selectedFarmersData = farmers.filter(f => selectedFarmers.includes(f.id));
-
-    // Get all unique crops from selected farmers
-    const availableCrops = Array.from(new Set(selectedFarmersData.flatMap(f => f.crops)));
-
-    // Calculate distance when both locations are set
     useEffect(() => {
         if (pickupCoords && destCoords) {
             const dist = calculateDistance(
@@ -44,7 +52,6 @@ export default function CreateTransportRequest() {
         }
     }, [pickupCoords, destCoords]);
 
-    // Calculate total price when distance, weight, and price/kg are set
     useEffect(() => {
         if (distance !== null && totalWeight && pricePerKg && pricePerKm) {
             const weight = parseFloat(totalWeight);
@@ -60,8 +67,6 @@ export default function CreateTransportRequest() {
     }, [distance, totalWeight, pricePerKg, pricePerKm]);
 
     const getLocationCoordinates = async (locationName: string, isPickup: boolean) => {
-        // Mock coordinates - in real app, use geocoding API
-        // For now, generate random coordinates near Rwanda
         const lat = -1.9 + (Math.random() * 0.5);
         const lon = 29.7 + (Math.random() * 0.5);
         return { latitude: lat, longitude: lon };
@@ -83,26 +88,50 @@ export default function CreateTransportRequest() {
         }
     };
 
+    const toggleCrop = (crop: string) => {
+        setCropTypes(prev => {
+            if (prev.includes(crop)) {
+                return prev.filter(c => c !== crop);
+            } else {
+                return [...prev, crop];
+            }
+        });
+    };
+
     const handleSubmit = () => {
-        if (!cropType || !totalWeight || !destination || !pickupLocation || !pricePerKg || !pricePerKm) {
-            Alert.alert('Error', 'Please fill in all required fields');
+        const missingFields = [];
+        if (cropTypes.length === 0) missingFields.push("Crop Type");
+        if (!totalWeight) missingFields.push("Weight");
+        if (!destination) missingFields.push("Destination");
+        if (!pickupLocation) missingFields.push("Pickup Location");
+        if (!pricePerKg) missingFields.push("Price/Kg");
+        if (!pricePerKm) missingFields.push("Price/Km");
+
+        if (missingFields.length > 0) {
+            alert(`Please fill in: ${missingFields.join(', ')}`);
             return;
         }
 
         if (selectedFarmersData.length === 0) {
-            Alert.alert('Error', 'Please select at least one farmer');
+            alert('No farmers selected! Go back and select farmers.');
             return;
         }
 
         if (!distance || totalPrice === null) {
-            Alert.alert('Error', 'Please ensure distance and price are calculated');
+            if (!pickupCoords || !destCoords) {
+                alert('Could not locate Pickup or Destination. Please try different addresses.');
+            } else {
+                alert('Calculating price... please wait a moment.');
+            }
             return;
         }
 
         const trip = {
             id: Date.now().toString(),
+            cooperativeId: coopId || '',
             farmers: selectedFarmersData,
-            cropType,
+            cropType: cropTypes.join(', '),
+            quantity: totalWeight,
             totalWeight: parseFloat(totalWeight),
             destination,
             pickupLocation,
@@ -110,47 +139,61 @@ export default function CreateTransportRequest() {
             pricePerKg: parseFloat(pricePerKg),
             pricePerKm: parseFloat(pricePerKm),
             distance,
-            totalPrice, // Locked price
+            totalPrice,
             status: 'pending' as const,
             priceLocked: false,
             chatOpen: false,
             bookingTime: new Date().toISOString(),
+            createdAt: Date.now(),
             pickupCoordinates: pickupCoords ? { latitude: pickupCoords.latitude, longitude: pickupCoords.longitude } : undefined,
             destinationCoordinates: destCoords ? { latitude: destCoords.latitude, longitude: destCoords.longitude } : undefined,
         };
 
-        addTrip(trip);
+        createRequest(trip as any);
         setSelectedFarmers([]);
-        Alert.alert('Success', `Transport request created! Total price locked at ${totalPrice.toFixed(2)} Frw.`, [
-            { text: 'OK', onPress: () => router.push('/nearbydrivers') }
-        ]);
+
+        if (Platform.OS === 'web') {
+            window.alert('Transport request created! Select a driver.');
+        } else {
+            Alert.alert('Success', 'Transport request created! Now select a driver.');
+        }
+        // Navigate to NearbyDrivers with the new request ID to allow selection
+        router.push({ pathname: '/nearbydrivers', params: { requestId: trip.id } });
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={styles.backButton}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                     </TouchableOpacity>
-                    <Text style={styles.title}>Create Transport Request</Text>
-                    <View style={{ width: 24 }} />
+                    <View style={styles.titleContainer}>
+                        <Text style={styles.title}>New Request</Text>
+                    </View>
+                    <View style={styles.placeholderButton} />
                 </View>
 
                 <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.form}>
                     <Text style={styles.sectionTitle}>Selected Farmers ({selectedFarmersData.length})</Text>
                     {selectedFarmersData.map((farmer, index) => (
-                        <Animated.View 
-                            key={farmer.id} 
+                        <Animated.View
+                            key={farmer.id}
                             entering={SlideInRight.delay(300 + index * 50).springify()}
                             style={styles.farmerItem}
                         >
                             <Text style={styles.farmerName}>{farmer.name}</Text>
-                            <Text style={styles.farmerDetails}>{farmer.village}</Text>
+                            <Text style={styles.farmerDetails}>
+                                {farmer.location && farmer.location !== 'Unknown' ? farmer.location : 'Location Pending'}
+                            </Text>
                             <View style={styles.cropsRow}>
-                                {farmer.crops.map(crop => (
-                                    <View key={crop} style={styles.cropTag}>
-                                        <Text style={styles.cropTagText}>{crop}</Text>
+                                {farmer.crops.map((crop) => (
+                                    <View key={crop.id} style={styles.cropTag}>
+                                        <Text style={styles.cropTagText}>{crop.name}</Text>
                                     </View>
                                 ))}
                             </View>
@@ -162,10 +205,10 @@ export default function CreateTransportRequest() {
                         {availableCrops.map((crop, index) => (
                             <TouchableOpacity
                                 key={crop}
-                                style={[styles.cropOption, cropType === crop && styles.cropOptionSelected]}
-                                onPress={() => setCropType(crop)}
+                                style={[styles.cropOption, cropTypes.includes(crop) && styles.cropOptionSelected]}
+                                onPress={() => toggleCrop(crop)}
                             >
-                                <Text style={[styles.cropOptionText, cropType === crop && styles.cropOptionTextSelected]}>
+                                <Text style={[styles.cropOptionText, cropTypes.includes(crop) && styles.cropOptionTextSelected]}>
                                     {crop}
                                 </Text>
                             </TouchableOpacity>
@@ -205,17 +248,45 @@ export default function CreateTransportRequest() {
                     )}
 
                     <Text style={styles.label}>Pickup Date *</Text>
-                    <TouchableOpacity
-                        style={styles.dateButton}
-                        onPress={() => setShowDatePicker(true)}
-                    >
-                        <Text style={styles.dateText}>
-                            {pickupDate.toLocaleDateString()}
-                        </Text>
-                        <Ionicons name="calendar-outline" size={20} color="#000" />
-                    </TouchableOpacity>
+                    {(Platform.OS === 'web' || Platform.OS === 'windows') ? (
+                        <View style={{ marginBottom: 15 }}>
+                            {React.createElement('input', {
+                                type: 'date',
+                                value: pickupDate.toISOString().split('T')[0],
+                                min: new Date().toISOString().split('T')[0],
+                                onChange: (e: any) => {
+                                    const d = new Date(e.target.value);
+                                    if (!isNaN(d.getTime())) {
+                                        setPickupDate(d);
+                                    }
+                                },
+                                style: {
+                                    padding: '12px',
+                                    borderRadius: '12px',
+                                    border: '1px solid #B5B5B5',
+                                    fontSize: '15px',
+                                    fontFamily: 'Poppins_400Regular',
+                                    width: '100%',
+                                    outline: 'none',
+                                    backgroundColor: '#FFF',
+                                    color: '#000',
+                                    boxSizing: 'border-box'
+                                }
+                            })}
+                        </View>
+                    ) : (
+                        <TouchableOpacity
+                            style={styles.dateButton}
+                            onPress={() => setShowDatePicker(true)}
+                        >
+                            <Text style={styles.dateText}>
+                                {pickupDate.toLocaleDateString()}
+                            </Text>
+                            <Ionicons name="calendar-outline" size={20} color="#000" />
+                        </TouchableOpacity>
+                    )}
 
-                    {showDatePicker && (
+                    {showDatePicker && Platform.OS !== 'web' && Platform.OS !== 'windows' && (
                         <DateTimePicker
                             value={pickupDate}
                             mode="date"
@@ -262,8 +333,8 @@ export default function CreateTransportRequest() {
                         </Animated.View>
                     )}
 
-                    <TouchableOpacity 
-                        style={[styles.submitButton, totalPrice !== null && styles.submitButtonActive]} 
+                    <TouchableOpacity
+                        style={[styles.submitButton, totalPrice !== null && styles.submitButtonActive]}
                         onPress={handleSubmit}
                         disabled={totalPrice === null}
                     >
@@ -288,15 +359,46 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
+        paddingHorizontal: 24,
         paddingVertical: 16,
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
+        borderBottomColor: '#F5F5F5',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 10,
+        elevation: 2,
+        zIndex: 10,
+    },
+    backButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#EEEEEE',
+    },
+    placeholderButton: {
+        width: 44,
+    },
+    titleContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: -1,
     },
     title: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 20,
-        color: '#000',
+        fontSize: 18,
+        color: '#1A1A1A',
+        letterSpacing: 0.5,
     },
     form: {
         paddingHorizontal: 20,

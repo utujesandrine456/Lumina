@@ -21,13 +21,12 @@ const roleDetails: Record<RoleOption, { title: string; subtitle: string }> = {
 
 export default function Register() {
     const router = useRouter();
-    const { setUserRole } = useDriverStore();
-
     const [role, setRole] = useState<RoleOption | null>(null);
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [coopName, setCoopName] = useState('');
     const [pin, setPin] = useState('');
+    const [location, setLocation] = useState('');
 
     const canSubmit = useMemo(() => {
         if (!role) return false;
@@ -41,7 +40,7 @@ export default function Register() {
             Alert.alert('Missing info', 'Please fill all required fields.');
             return;
         }
-        setUserRole(role);
+
         router.push({
             pathname: '/otp',
             params: {
@@ -78,15 +77,21 @@ export default function Register() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
+            <View style={styles.header}>
+                <TouchableOpacity
+                    onPress={() => router.back()}
+                    style={styles.backButton}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+                </TouchableOpacity>
+                <View style={styles.titleContainer}>
                     <Text style={styles.title}>Create Account</Text>
-                    <View style={{ width: 24 }} />
                 </View>
+                <View style={styles.placeholderButton} />
+            </View>
 
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.card}>
                     <Text style={styles.sectionTitle}>Select Role</Text>
                     <View style={styles.chipsRow}>
@@ -107,6 +112,14 @@ export default function Register() {
                         placeholder="Enter your name"
                         value={name}
                         onChangeText={setName}
+                    />
+
+                    <Text style={styles.label}>Location *</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Enter your location"
+                        value={location}
+                        onChangeText={setLocation}
                     />
 
                     <Text style={styles.label}>Phone Number *</Text>
@@ -138,14 +151,22 @@ export default function Register() {
                         disabled={!canSubmit}
                         activeOpacity={0.9}
                     >
-                        <Text style={styles.buttonText}>Continue to OTP</Text>
-                        <Ionicons name="arrow-forward" size={20} color="#FFF" />
+                        <Text style={[styles.buttonText, canSubmit && { color: '#FFF' }]}>Continue to OTP</Text>
+                        <Ionicons name="arrow-forward" size={20} color={canSubmit ? "#FFF" : "#999"} />
                     </TouchableOpacity>
+
+                    <View style={styles.footer}>
+                        <Text style={styles.footerText}>Already have an account?</Text>
+                        <TouchableOpacity onPress={() => router.push('/login')}>
+                            <Text style={styles.loginLink}>Login</Text>
+                        </TouchableOpacity>
+                    </View>
                 </Animated.View>
             </ScrollView>
         </SafeAreaView>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {
@@ -154,121 +175,184 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingBottom: 40,
+        paddingTop: 10,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
+        paddingHorizontal: 24,
         paddingVertical: 16,
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
+        borderBottomColor: '#F5F5F5',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 10,
+        elevation: 2,
+        zIndex: 10,
+    },
+    backButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#EEEEEE',
+    },
+    placeholderButton: {
+        width: 44,
+    },
+    titleContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: -1,
     },
     title: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 20,
-        color: '#000',
+        fontSize: 18,
+        color: '#1A1A1A',
+        letterSpacing: 0.5,
     },
     card: {
-        margin: 20,
+        marginHorizontal: 24,
+        marginTop: 20,
+        marginBottom: 20,
         backgroundColor: '#FFF',
-        borderRadius: 20,
-        padding: 20,
+        borderRadius: 24,
+        padding: 24,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
+        borderColor: '#F0F0F0',
         shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 6 },
-        elevation: 3,
+        shadowOpacity: 0.04,
+        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 2,
     },
     sectionTitle: {
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 16,
         color: '#000',
-        marginBottom: 12,
+        marginBottom: 16,
     },
     chipsRow: {
         flexDirection: 'row',
-        gap: 10,
-        marginBottom: 16,
+        gap: 12,
+        marginBottom: 20,
     },
     chip: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 8,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 14,
+        paddingVertical: 12,
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
-        backgroundColor: '#FFF',
+        borderColor: '#EEEEEE',
+        backgroundColor: '#FAFAFA',
     },
     chipActive: {
-        backgroundColor: '#000',
-        borderColor: '#000',
+        backgroundColor: '#1A1A1A',
+        borderColor: '#1A1A1A',
     },
     chipText: {
         fontFamily: 'Poppins_500Medium',
-        fontSize: 14,
-        color: '#000',
+        fontSize: 13,
+        color: '#757575',
     },
     chipTextActive: {
         color: '#FFF',
     },
     roleInfo: {
         marginTop: 8,
-        marginBottom: 4,
-        gap: 4,
+        marginBottom: 8,
+        padding: 16,
+        backgroundColor: '#F9F9F9',
+        borderRadius: 16,
+        borderLeftWidth: 3,
+        borderLeftColor: '#1A1A1A',
     },
     roleTitle: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 15,
-        color: '#000',
+        fontSize: 14,
+        color: '#1A1A1A',
+        marginBottom: 4,
     },
     roleSubtitle: {
         fontFamily: 'Poppins_400Regular',
-        fontSize: 13,
-        color: '#757575',
+        fontSize: 12,
+        color: '#666',
         lineHeight: 18,
     },
     label: {
         fontFamily: 'Poppins_500Medium',
         fontSize: 14,
-        color: '#000',
+        color: '#1A1A1A',
         marginBottom: 8,
-        marginTop: 12,
+        marginTop: 20,
     },
     input: {
-        borderWidth: 1,
-        borderColor: '#B5B5B5',
-        borderRadius: 12,
-        padding: 14,
+        borderWidth: 1.5,
+        borderColor: '#EEEEEE',
+        borderRadius: 16,
+        padding: 16,
         fontSize: 15,
         fontFamily: 'Poppins_400Regular',
-        backgroundColor: '#FFF',
-        color: '#000',
+        backgroundColor: '#FAFAFA',
+        color: '#1A1A1A',
     },
     group: {
-        marginTop: 8,
+        marginTop: 0,
     },
     button: {
-        marginTop: 24,
-        backgroundColor: '#E0E0E0',
-        borderRadius: 12,
-        paddingVertical: 14,
+        marginTop: 32,
+        backgroundColor: '#F0F0F0',
+        borderRadius: 16,
+        paddingVertical: 16,
         alignItems: 'center',
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: 8,
+        gap: 10,
     },
     buttonActive: {
-        backgroundColor: '#000',
+        backgroundColor: '#1A1A1A',
+        shadowColor: '#1A1A1A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+        elevation: 6,
     },
     buttonText: {
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 16,
-        color: '#FFF',
+        color: '#999',
+    },
+    footer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 24,
+        gap: 6,
+    },
+    footerText: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 14,
+        color: '#757575',
+    },
+    loginLink: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 14,
+        color: '#1A1A1A',
+        textDecorationLine: 'underline',
     },
 });
 
