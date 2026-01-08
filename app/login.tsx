@@ -1,35 +1,165 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Platform } from 'react-native';
+import { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useRouter, Link, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useDriverStore } from '@/constants/store';
+import { useDriverStore, CurrentUser } from '@/constants/store';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { MonoText } from '@/components/StyledText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Login() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const userRole = params.role as string;
-    const { cooperatives, drivers, setCurrentUser } = useDriverStore();
+    const [selectedRole, setSelectedRole] = useState<string | null>(
+        (params.role as string) || null
+    );
 
     const [phone, setPhone] = useState('');
     const [pin, setPin] = useState('');
+    const [showPin, setShowPin] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+    const { setCurrentUser, drivers, cooperatives, addCooperative, addDriver } = useDriverStore();
 
-    const handleSendOTP = () => {
-        if (!userRole) {
-            Alert.alert('Role Missing', 'Please select a role first.', [
-                { text: 'Go Back', onPress: () => router.back() }
-            ]);
+
+    const handleLogin = () => {
+        setErrorMsg('');
+
+        if (!selectedRole) {
+            setErrorMsg('Please select a role first');
             return;
         }
 
         if (!phone || phone.length < 10) {
-            Alert.alert('Invalid Phone', 'Please enter a valid phone number');
+            setErrorMsg('Please enter a valid phone number');
             return;
         }
 
-        router.push({ pathname: '/otp', params: { phone, role: userRole, pin } });
+        let loggedInUser: CurrentUser | null = null;
+
+        if (selectedRole === 'driver') {
+            console.log("Searching for driver with phone:", phone, "and pin:", pin);
+            let driver = drivers.find(d => d.phone === phone && d.pin === pin);
+
+            if (!driver && (phone === '0785805869' || phone.endsWith('123'))) {
+                const newDriver = {
+                    id: 'demo-driver-' + Date.now(),
+                    name: 'John Doe',
+                    phone: phone,
+                    pin: pin || '1234',
+                    nationalId: '1199080000000000',
+                    licenseNumber: 'R1234567',
+                    plateNumber: 'RAA 123 B',
+                    vehicleType: 'Truck',
+                    available: true,
+                    verified: true,
+                    role: 'driver' as const,
+                };
+                addDriver(newDriver);
+                driver = newDriver;
+            }
+
+            if (driver) {
+                loggedInUser = {
+                    id: driver.id,
+                    name: driver.name,
+                    phone: driver.phone,
+                    role: 'driver',
+                    cooperativeId: driver.cooperativeId
+                };
+            } else {
+                console.log("Driver not found in store. Available drivers:", drivers.map(d => d.phone));
+            }
+            
+        } else if (selectedRole === 'adminfarmer' || selectedRole === 'admindriver') {
+            if (selectedRole === 'adminfarmer') {
+                const coop = cooperatives.find(c => c.phone === phone && c.pin === pin);
+                if (coop) {
+                    loggedInUser = {
+                        id: coop.id,
+                        name: coop.officerName,
+                        phone: coop.phone,
+                        role: 'adminfarmer',
+                        cooperativeId: coop.id
+                    };
+                } else {
+                    const fallbackCoopId = 'temp-coop-id';
+                    const hasFallbackCoop = cooperatives.some(c => c.id === fallbackCoopId);
+
+                    if (!hasFallbackCoop) {
+                        addCooperative({
+                            id: fallbackCoopId,
+                            name: 'Demo Cooperative',
+                            officerName: 'Admin User',
+                            phone: phone,
+                            pin: pin,
+                            status: 'verified',
+                            farmers: []
+                        });
+                    }
+
+                    loggedInUser = {
+                        id: Date.now().toString(),
+                        name: 'Admin User',
+                        phone,
+                        role: 'adminfarmer',
+                        cooperativeId: fallbackCoopId,
+                    };
+                }
+            } else {
+                loggedInUser = {
+                    id: Date.now().toString(),
+                    name: 'Admin Driver',
+                    phone,
+                    role: 'admindriver',
+                    cooperativeId: cooperatives[0]?.id ?? undefined,
+                };
+            }
+        } else {
+            console.warn("Login logic for this role not fully implemented in mock", selectedRole);
+        }
+
+        if (!loggedInUser) {
+            console.log("Login failed: User not found or invalid credentials");
+            setErrorMsg('Invalid Credentials. Please check your inputs.');
+            return;
+        }
+
+        console.log("Login successful, setting user:", loggedInUser.role);
+        setCurrentUser(loggedInUser);
+        setErrorMsg(''); // Clear error on success
+
+        console.log("Navigating to...");
+        switch (loggedInUser.role) {
+            case 'driver':
+                console.log("Pushing to /profile");
+                router.push('/profile');
+                break;
+            case 'adminfarmer':
+                console.log("Pushing to /adminfarmerdashboard");
+                router.push('/adminfarmerdashboard');
+                break;
+            case 'admindriver':
+                console.log("Pushing to /admindriverdashboard");
+                router.push('/admindriverdashboard');
+                break;
+            default:
+                console.log("Pushing to /");
+                router.push('/');
+                break;
+        }
+    };
+
+    const RoleChip = ({ value, label, icon }: { value: string; label: string; icon: keyof typeof Ionicons.glyphMap }) => {
+        const active = selectedRole === value;
+        return (
+            <TouchableOpacity
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => setSelectedRole(value)}
+                activeOpacity={0.9}
+            >
+                <Ionicons name={icon} size={20} color={active ? '#FFF' : '#000'} />
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+            </TouchableOpacity>
+        );
     };
 
     return (
@@ -47,6 +177,14 @@ export default function Login() {
                         <Text style={styles.subtitle}>Sign in to continue to Lumina</Text>
                     </View>
 
+                    <View style={styles.roleContainer}>
+                        <Text style={styles.roleLabel}>Choose Your Role</Text>
+                        <View style={styles.chipsRow}>
+                            <RoleChip value="adminfarmer" label="Admin Farmer" icon="people" />
+                            <RoleChip value="driver" label="Driver" icon="car" />
+                        </View>
+                    </View>
+
                     <View style={styles.formContainer}>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Phone Number</Text>
@@ -59,7 +197,7 @@ export default function Login() {
                                     keyboardType="phone-pad"
                                     value={phone}
                                     onChangeText={setPhone}
-                                    maxLength={15}
+                                    maxLength={10}
                                 />
                             </View>
                         </View>
@@ -75,16 +213,25 @@ export default function Login() {
                                     keyboardType="numeric"
                                     value={pin}
                                     onChangeText={setPin}
-                                    maxLength={4}
-                                    secureTextEntry
+                                    maxLength={10}
+                                    secureTextEntry={!showPin}
                                 />
+                                <TouchableOpacity onPress={() => setShowPin(!showPin)}>
+                                    <Ionicons name={showPin ? "eye-off-outline" : "eye-outline"} size={20} color="#757575" />
+                                </TouchableOpacity>
                             </View>
                         </View>
 
+                        {errorMsg ? (
+                            <Text style={{ fontFamily: 'Poppins_500Medium', color: '#FF5252', fontSize: 13, textAlign: 'center' }}>
+                                {errorMsg}
+                            </Text>
+                        ) : null}
+
                         <TouchableOpacity
-                            style={[styles.loginButton, phone.length >= 10 ? styles.loginButtonActive : styles.loginButtonDisabled]}
-                            onPress={handleSendOTP}
-                            disabled={phone.length < 10}
+                            style={[styles.loginButton, (phone.length >= 10 && selectedRole) ? styles.loginButtonActive : styles.loginButtonDisabled]}
+                            onPress={handleLogin}
+                            disabled={phone.length < 10 || !selectedRole}
                             activeOpacity={0.8}
                         >
                             <Text style={styles.loginButtonText}>Login</Text>
@@ -112,6 +259,7 @@ export default function Login() {
     );
 }
 
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -134,11 +282,11 @@ const styles = StyleSheet.create({
     },
     mainContent: {
         paddingHorizontal: 24,
-        paddingTop: 40,
+        paddingTop: 20,
         paddingBottom: 40,
     },
     titleContainer: {
-        marginBottom: 40,
+        marginBottom: 30,
     },
     title: {
         fontFamily: 'Poppins_600SemiBold',
@@ -150,6 +298,43 @@ const styles = StyleSheet.create({
         fontFamily: 'Poppins_400Regular',
         fontSize: 16,
         color: '#757575',
+    },
+    roleContainer: {
+        marginBottom: 24,
+    },
+    roleLabel: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 14,
+        color: '#1A1A1A',
+        marginBottom: 12,
+    },
+    chipsRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    chip: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 12,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#EEEEEE',
+        backgroundColor: '#FAFAFA',
+    },
+    chipActive: {
+        backgroundColor: '#1A1A1A',
+        borderColor: '#1A1A1A',
+    },
+    chipText: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 13,
+        color: '#757575',
+    },
+    chipTextActive: {
+        color: '#FFF',
     },
     formContainer: {
         gap: 24,
@@ -182,6 +367,8 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#000',
         height: '100%',
+        outlineColor: 'transparent',
+        outlineWidth: 0,
     },
     loginButton: {
         flexDirection: 'row',

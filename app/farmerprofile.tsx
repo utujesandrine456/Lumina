@@ -1,21 +1,41 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
 import Animated, { FadeInDown, FlipInEasyX } from 'react-native-reanimated';
 
+
+
 export default function FarmerProfile() {
     const router = useRouter();
-    const { currentUser, farmers, trips } = useDriverStore();
-    
-    const farmer = farmers.find(f => f.id === currentUser?.id);
-    const farmerTrips = trips.filter(t => t.farmers.some(f => f.id === currentUser?.id));
+    const { id } = useLocalSearchParams<{ id: string }>();
+    const { currentUser, cooperatives, requests } = useDriverStore();
+    const targetFarmerId = id || currentUser?.id;
+    const farmer = cooperatives.flatMap(c => c.farmers).find(f => f.id === targetFarmerId);
+    const farmerTrips = (requests || []).filter(t => t.farmers && t.farmers.some(f => f.id === targetFarmerId));
 
     if (!farmer) {
         return (
             <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <Ionicons name="arrow-back" size={24} color="#000" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Farmer Profile</Text>
+                        <View style={{ width: 24 }} />
+                    </View>
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>Farmer not found.</Text>
+                    </View>
+                </SafeAreaView>
+            );
+        }
+
+        return (
+        <SafeAreaView style={styles.container}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()}>
                         <Ionicons name="arrow-back" size={24} color="#000" />
@@ -23,32 +43,9 @@ export default function FarmerProfile() {
                     <Text style={styles.headerTitle}>Farmer Profile</Text>
                     <View style={{ width: 24 }} />
                 </View>
-                <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>Farmer not found. Please register first.</Text>
-                    <TouchableOpacity 
-                        style={styles.registerButton}
-                        onPress={() => router.push('/farmerregistration')}
-                    >
-                        <Text style={styles.registerButtonText}>Register Now</Text>
-                    </TouchableOpacity>
-                </View>
-            </SafeAreaView>
-        );
-    }
-
-    return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                            <Ionicons name="arrow-back" size={24} color="#000" />
-                        </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Farmer Profile</Text>
-                    <View style={{ width: 24 }} />
-                    </View>
 
                 <Animated.View entering={FlipInEasyX.delay(200).springify()} style={styles.profileCard}>
-                        <View style={styles.avatarContainer}>
+                    <View style={styles.avatarContainer}>
                         <Ionicons name="person-circle" size={80} color="#000" />
                     </View>
                     <Text style={styles.farmerName}>{farmer.name}</Text>
@@ -60,7 +57,7 @@ export default function FarmerProfile() {
                     <View style={styles.infoRow}>
                         <Ionicons name="location-outline" size={20} color="#000" />
                         <Text style={styles.infoLabel}>Village / Cell:</Text>
-                        <Text style={styles.infoValue}>{farmer.village}</Text>
+                        <Text style={styles.infoValue}>{farmer.location || 'Not specified'}</Text>
                     </View>
                     <View style={styles.infoRow}>
                         <Ionicons name="call-outline" size={20} color="#000" />
@@ -72,14 +69,14 @@ export default function FarmerProfile() {
                 <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.section}>
                     <Text style={styles.sectionTitle}>Crop Types</Text>
                     <View style={styles.cropsContainer}>
-                        {farmer.crops.map((crop, index) => (
+                        {farmer.crops.map((crop: any, index: number) => (
                             <Animated.View
-                                key={crop}
+                                key={typeof crop === 'string' ? crop : crop.name || index}
                                 entering={FadeInDown.delay(500 + index * 50).springify()}
                                 style={styles.cropTag}
                             >
                                 <Ionicons name="leaf" size={16} color="#000" />
-                                <Text style={styles.cropTagText}>{crop}</Text>
+                                <Text style={styles.cropTagText}>{typeof crop === 'string' ? crop : crop.name}</Text>
                             </Animated.View>
                         ))}
                     </View>
@@ -105,7 +102,7 @@ export default function FarmerProfile() {
                                     {trip.pickupLocation} → {trip.destination}
                                 </Text>
                                 <Text style={styles.tripDate}>
-                                    {new Date(trip.bookingTime).toLocaleDateString()}
+                                    {trip.bookingTime ? new Date(trip.bookingTime).toLocaleDateString() : 'Date N/A'}
                                 </Text>
                             </View>
                         ))
@@ -120,7 +117,7 @@ const getStatusColor = (status: string) => {
     switch (status) {
         case 'pending': return '#F5F5F5';
         case 'accepted': return '#E0E0E0';
-        case 'in-transit': return '#D6D6D6';
+        case 'in-progress': return '#D6D6D6';
         case 'delivered': return '#000';
         default: return '#F5F5F5';
     }
@@ -130,7 +127,7 @@ const getStatusText = (status: string) => {
     switch (status) {
         case 'pending': return 'Pending';
         case 'accepted': return 'Accepted';
-        case 'in-transit': return 'In Transit';
+        case 'in-progress': return 'In Progress';
         case 'delivered': return 'Delivered';
         default: return status;
     }

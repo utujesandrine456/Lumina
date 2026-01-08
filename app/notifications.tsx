@@ -17,7 +17,7 @@ import { MonoText } from '@/components/StyledText';
 
 const { width } = Dimensions.get('window');
 
-// Sample notification data
+
 const notificationsData = [
   {
     id: '1',

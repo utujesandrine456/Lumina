@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
 import * as Location from 'expo-location';
-import CooperativeBottomBar from '@/components/CooperativeBottomBar';
+import CooperativeBottomBar from '@/components/FarmerBottomBar';
 
 const { width } = Dimensions.get('window');
 
@@ -22,7 +22,8 @@ export default function CooperativeDashboard() {
     const activeRequests = requests.filter(r => r.status !== 'completed' && r.status !== 'rejected').length;
 
     useEffect(() => {
-        if (!currentUser || currentUser.role !== 'cooperative') {
+        if (!currentUser || currentUser.role !== 'adminfarmer') {
+            router.replace('/login');
         }
     }, [currentUser]);
 
@@ -50,7 +51,7 @@ export default function CooperativeDashboard() {
                 <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
                     <View>
                         <Text style={styles.greeting}>Welcome Back,</Text>
-                        <Text style={styles.userName}>{currentUser?.name || 'Officer'}</Text>
+                        <Text style={styles.userName}>{currentUser?.name || 'Admin User'}</Text>
                         <Text style={styles.coopName}>{currentCoop?.name}</Text>
                     </View>
                     <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>

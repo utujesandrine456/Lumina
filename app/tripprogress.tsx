@@ -10,13 +10,13 @@ import * as Location from 'expo-location';
 export default function TripProgress() {
     const router = useRouter();
     const { tripId } = useLocalSearchParams<{ tripId: string }>();
-    const { trips, updateTrip } = useDriverStore();
-    
-    const trip = trips.find(t => t.id === tripId);
+    const { requests, updateRequest } = useDriverStore();
+    const trip = (requests || []).find(t => t.id === tripId);
     const [isActive, setIsActive] = useState(false);
     const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const pulseScale = useSharedValue(1);
 
+    
     useEffect(() => {
         if (isActive) {
             (async () => {
@@ -33,9 +33,7 @@ export default function TripProgress() {
             })();
 
             pulseScale.value = withRepeat(
-                withTiming(1.2, { duration: 1000 }),
-                -1,
-                true
+                withTiming(1.2, { duration: 1000 }), -1, true
             );
         } else {
             pulseScale.value = withTiming(1, { duration: 300 });
@@ -66,7 +64,7 @@ export default function TripProgress() {
     const handleStartStop = () => {
         if (!isActive) {
             setIsActive(true);
-            updateTrip(trip.id, { status: 'in-transit' });
+            updateRequest(trip.id, { status: 'in-progress' });
         } else {
             setIsActive(false);
         }
@@ -104,18 +102,18 @@ export default function TripProgress() {
 
                     <View style={styles.statusContainer}>
                         <Animated.View style={[styles.statusIndicator, animatedPulseStyle, isActive && styles.statusIndicatorActive]}>
-                            <Ionicons 
-                                name={isActive ? "play-circle" : "pause-circle"} 
-                                size={64} 
-                                color={isActive ? "#000" : "#757575"} 
+                            <Ionicons
+                                name={isActive ? "play-circle" : "pause-circle"}
+                                size={64}
+                                color={isActive ? "#000" : "#757575"}
                             />
                         </Animated.View>
                         <Text style={[styles.statusText, isActive && styles.statusTextActive]}>
                             {isActive ? 'Trip Active' : 'Trip Paused'}
                         </Text>
                         <Text style={styles.statusDescription}>
-                            {isActive 
-                                ? 'Your location is being tracked' 
+                            {isActive
+                                ? 'Your location is being tracked'
                                 : 'Tap Start to begin tracking your trip'}
                         </Text>
                     </View>
@@ -136,20 +134,20 @@ export default function TripProgress() {
                         style={[styles.startStopButton, isActive && styles.startStopButtonActive]}
                         onPress={handleStartStop}
                     >
-                        <Ionicons 
-                            name={isActive ? "stop-circle" : "play-circle"} 
-                            size={24} 
-                            color="#FFF" 
+                        <Ionicons
+                            name={isActive ? "stop-circle" : "play-circle"}
+                            size={24}
+                            color="#FFF"
                         />
                         <Text style={styles.startStopButtonText}>
                             {isActive ? 'Stop Trip' : 'Start Trip'}
                         </Text>
                     </TouchableOpacity>
 
-                    {trip.status === 'in-transit' && (
+                    {trip.status === 'in-progress' && (
                         <TouchableOpacity
                             style={styles.deliveryButton}
-                            onPress={() => router.push({ pathname: '/deliveryconfirmation', params: { tripId: trip.id } })}
+                            onPress={() => router.push({ pathname: '/delivery', params: { tripId: trip.id } })}
                         >
                             <Ionicons name="checkmark-circle" size={24} color="#FFF" />
                             <Text style={styles.deliveryButtonText}>Confirm Delivery</Text>

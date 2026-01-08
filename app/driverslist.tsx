@@ -1,92 +1,177 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
-import BottomBar from '@/components/DriverBottomBar';
+import FarmerBottomBar from '@/components/FarmerBottomBar';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function DriversList() {
     const router = useRouter();
-    const { drivers = [] } = useDriverStore();
+    const { drivers = [], currentUser, removeDriver } = useDriverStore();
+    const isAdmin = currentUser?.role === 'admindriver';
 
-    // Filter only available and verified drivers
-    const availableDrivers = drivers.filter(d => d.available && d.verified);
+    const displayedDrivers = useMemo(() => {
+        if (isAdmin) return drivers;
+        return drivers.filter(d => d.available && d.verified);
+    }, [drivers, isAdmin]);
 
-    const renderDriver = ({ item }: { item: any }) => {
+    const handleBack = () => {
+        switch (currentUser?.role) {
+            case 'adminfarmer':
+                router.replace('/adminfarmerdashboard');
+                break;
+            case 'admindriver':
+                router.replace('/admindriverdashboard');
+                break;
+            case 'driver':
+                router.replace('/driverdashboard');
+                break;
+            default:
+                if (router.canGoBack()) {
+                    router.back();
+                } else {
+                    router.replace('/');
+                }
+        }
+    };
+
+    const handleDelete = (id: string, name: string) => {
+        Alert.alert(
+            "Delete Driver",
+            `Are you sure you want to remove ${name}?`,
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => removeDriver(id)
+                }
+            ]
+        );
+    };
+
+    const renderDriver = ({ item, index }: { item: any, index: number }) => {
         return (
-            <TouchableOpacity
-                style={styles.driverCard}
-                onPress={() => { }} // Could go to detailed driver profile
-                activeOpacity={0.9}
-            >
-                <View style={styles.driverHeader}>
-                    <View style={styles.driverAvatar}>
-                        <Ionicons name="person" size={24} color="#555" />
-                    </View>
-                    <View style={styles.driverInfo}>
-                        <Text style={styles.driverName}>{item.name}</Text>
-                        <View style={styles.ratingRow}>
-                            <Ionicons name="star" size={14} color="#000" />
-                            <Text style={styles.ratingText}>{(item.rating || 5.0).toFixed(1)}</Text>
-                            <Text style={styles.dotSeparator}>•</Text>
-                            <Text style={styles.vehicleText}>{item.vehicleType || 'Truck'}</Text>
+            <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
+                <TouchableOpacity
+                    style={styles.driverCard}
+                    onPress={() => { }}
+                    activeOpacity={0.9}
+                >
+                    <View style={styles.cardHeader}>
+                        <View style={styles.driverAvatar}>
+                            <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
+                        </View>
+                        <View style={styles.headerInfo}>
+                            <Text style={styles.driverName}>{item.name}</Text>
+                            <View style={styles.ratingContainer}>
+                                <Ionicons name="star" size={14} color="#FFD700" />
+                                <Text style={styles.ratingText}>{(item.rating || 5.0).toFixed(1)}</Text>
+                            </View>
+                        </View>
+                        <View style={[
+                            styles.statusBadge,
+                            item.available ? styles.statusOnline : styles.statusOffline
+                        ]}>
+                            <View style={[
+                                styles.statusDot,
+                                item.available ? { backgroundColor: '#22C55E' } : { backgroundColor: '#EF4444' }
+                            ]} />
+                            <Text style={[
+                                styles.statusText,
+                                item.available ? { color: '#15803d' } : { color: '#b91c1c' }
+                            ]}>
+                                {item.available ? 'Online' : 'Offline'}
+                            </Text>
                         </View>
                     </View>
-                    <View style={styles.statusBadge}>
-                        <View style={styles.statusDot} />
-                        <Text style={styles.statusText}>Available</Text>
-                    </View>
-                </View>
 
-                <View style={styles.divider} />
+                    <View style={styles.cardDetails}>
+                        <View style={styles.detailItem}>
+                            <View style={styles.detailIcon}>
+                                <Ionicons name="car-outline" size={18} color="#555" />
+                            </View>
+                            <View>
+                                <Text style={styles.detailLabel}>Vehicle</Text>
+                                <Text style={styles.detailValue}>{item.vehicleType || 'Truck'}</Text>
+                            </View>
+                        </View>
+                        <View style={styles.verticalDivider} />
+                        <View style={styles.detailItem}>
+                            <View style={styles.detailIcon}>
+                                <Ionicons name="card-outline" size={18} color="#555" />
+                            </View>
+                            <View>
+                                <Text style={styles.detailLabel}>Plate No.</Text>
+                                <Text style={styles.detailValue}>{item.plateNumber}</Text>
+                            </View>
+                        </View>
+                    </View>
 
-                <View style={styles.cardFooter}>
-                    <View style={styles.footerItem}>
-                        <Ionicons name="call-outline" size={16} color="#555" />
-                        <Text style={styles.footerText}>{item.phone}</Text>
+                    <View style={styles.cardFooter}>
+                        <TouchableOpacity style={styles.callButton}>
+                            <Ionicons name="call" size={18} color="#FFF" />
+                            <Text style={styles.callButtonText}>Call Driver</Text>
+                        </TouchableOpacity>
+
+                        {isAdmin && (
+                            <View style={styles.adminActions}>
+                                <TouchableOpacity
+                                    style={styles.iconButton}
+                                    onPress={() => router.push({ pathname: '/driver/[id]', params: { id: item.id } })}
+                                >
+                                    <Ionicons name="create-outline" size={20} color="#1A1A1A" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.iconButton, { backgroundColor: '#FEE2E2' }]}
+                                    onPress={() => handleDelete(item.id, item.name)}
+                                >
+                                    <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
-                    <View style={styles.footerItem}>
-                        <Ionicons name="cube-outline" size={16} color="#555" />
-                        <Text style={styles.footerText}>{item.capacity || '1000'} kg</Text>
-                    </View>
-                    <View style={styles.footerItem}>
-                        <Text style={styles.plateNumber}>{item.plateNumber}</Text>
-                    </View>
-                </View>
-            </TouchableOpacity>
+                </TouchableOpacity>
+            </Animated.View>
         );
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
+                <TouchableOpacity onPress={handleBack} style={styles.backButton} activeOpacity={0.7}>
+                    <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                 </TouchableOpacity>
-                <Text style={styles.title}>Available Drivers</Text>
-                <View style={{ width: 44 }} />
+                <View>
+                    <Text style={styles.title}>All Drivers</Text>
+                    <Text style={styles.subtitle}>{displayedDrivers.length} drivers available</Text>
+                </View>
+                <View style={styles.placeholder} />
             </View>
 
-            {availableDrivers.length === 0 ? (
+            {displayedDrivers.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <View style={styles.emptyIconContainer}>
-                        <Ionicons name="car-sport-outline" size={48} color="#BDBDBD" />
+                        <Ionicons name="search" size={40} color="#000" />
                     </View>
-                    <Text style={styles.emptyTitle}>No Drivers Available</Text>
+                    <Text style={styles.emptyTitle}>No Drivers Found</Text>
                     <Text style={styles.emptyText}>
-                        There are currently no drivers marked as available in your area.
+                        {isAdmin ? 'No drivers registered yet.' : 'There are currently no drivers marked as available in your area.'}
                     </Text>
                 </View>
             ) : (
                 <FlatList
-                    data={availableDrivers}
+                    data={displayedDrivers}
                     renderItem={renderDriver}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
                 />
             )}
+
+            <FarmerBottomBar />
         </SafeAreaView>
     );
 }
@@ -94,15 +179,14 @@ export default function DriversList() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#FAFAFA',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 24,
-        paddingBottom: 20,
-        paddingTop: 10,
+        paddingVertical: 16,
         backgroundColor: '#FFF',
     },
     backButton: {
@@ -112,142 +196,204 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#E5E5E5',
+    },
+    placeholder: {
+        width: 44,
     },
     title: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 18,
-        color: '#000',
+        fontSize: 20,
+        color: '#1A1A1A',
+        textAlign: 'center',
+    },
+    subtitle: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 14,
+        color: '#757575',
+        textAlign: 'center',
     },
     listContent: {
         padding: 24,
         paddingBottom: 100,
     },
     driverCard: {
-        backgroundColor: '#FFF',
-        borderRadius: 20,
-        padding: 16,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: '#EEEEEE',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
-        shadowRadius: 12,
-        elevation: 2,
+        shadowRadius: 15,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
     },
-    driverHeader: {
+    cardHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 20,
     },
     driverAvatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: '#F5F5F5',
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#1A1A1A',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: 16,
     },
-    driverInfo: {
+    avatarText: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 24,
+        color: '#FFF',
+    },
+    headerInfo: {
         flex: 1,
     },
     driverName: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 16,
-        color: '#000',
+        fontSize: 18,
+        color: '#1A1A1A',
+        marginBottom: 4,
     },
-    ratingRow: {
+    ratingContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 2,
+        gap: 4,
+        backgroundColor: '#FFFBEB',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 8,
+        alignSelf: 'flex-start',
     },
     ratingText: {
         fontFamily: 'Poppins_500Medium',
         fontSize: 12,
-        color: '#000',
-        marginLeft: 4,
-    },
-    dotSeparator: {
-        marginHorizontal: 8,
-        color: '#BDBDBD',
-    },
-    vehicleText: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 12,
-        color: '#757575',
+        color: '#B45309',
     },
     statusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F0FDF4',
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 20,
         borderWidth: 1,
+    },
+    statusOnline: {
+        backgroundColor: '#F0FDF4',
         borderColor: '#DCFCE7',
+    },
+    statusOffline: {
+        backgroundColor: '#FEF2F2',
+        borderColor: '#FEE2E2',
     },
     statusDot: {
         width: 6,
         height: 6,
         borderRadius: 3,
-        backgroundColor: '#000',
         marginRight: 6,
     },
     statusText: {
         fontFamily: 'Poppins_500Medium',
-        fontSize: 10,
-        color: '#000',
+        fontSize: 12,
     },
-    divider: {
-        height: 1,
-        backgroundColor: '#F5F5F5',
-        marginBottom: 12,
+    cardDetails: {
+        flexDirection: 'row',
+        backgroundColor: '#FAFAFA',
+        borderRadius: 16,
+        padding: 16,
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    detailItem: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    verticalDivider: {
+        width: 1,
+        backgroundColor: '#E5E5E5',
+        marginHorizontal: 16,
+    },
+    detailIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#FFFFFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 1,
+    },
+    detailLabel: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 10,
+        color: '#757575',
+        marginBottom: 2,
+    },
+    detailValue: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 14,
+        color: '#1A1A1A',
     },
     cardFooter: {
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        gap: 12,
     },
-    footerItem: {
+    callButton: {
+        flex: 1,
+        backgroundColor: '#1A1A1A',
+        borderRadius: 14,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        justifyContent: 'center',
+        paddingVertical: 14,
+        gap: 8,
     },
-    footerText: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 12,
-        color: '#555',
-    },
-    plateNumber: {
+    callButtonText: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 12,
-        color: '#000',
+        fontSize: 14,
+        color: '#FFF',
+    },
+    adminActions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    iconButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 14,
         backgroundColor: '#F5F5F5',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 6,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     emptyContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 40,
+        padding: 32,
         marginTop: -60,
     },
     emptyIconContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#F9F9F9',
+        width: 88,
+        height: 88,
+        borderRadius: 44,
+        backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 24,
     },
     emptyTitle: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 18,
-        color: '#000',
+        fontSize: 20,
+        color: '#1A1A1A',
         marginBottom: 8,
     },
     emptyText: {
@@ -256,6 +402,7 @@ const styles = StyleSheet.create({
         color: '#757575',
         textAlign: 'center',
         lineHeight: 22,
+        maxWidth: 260,
     },
 });
 

@@ -9,10 +9,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 export default function AdminDashboard() {
     const router = useRouter();
     const { drivers, updateDriver } = useDriverStore();
-    
     const [activeTab, setActiveTab] = useState<'cooperatives' | 'drivers' | 'reports'>('drivers');
-
-    // Mock cooperatives data - in real app, this would come from store
     const cooperatives = [
         { id: '1', name: 'Musanze Cooperative', farmers: 25, status: 'approved' },
         { id: '2', name: 'Rubavu Cooperative', farmers: 18, status: 'pending' },
@@ -26,11 +23,9 @@ export default function AdminDashboard() {
     };
 
     const rejectDriver = (driverId: string) => {
-        // In real app, remove or mark as rejected
     };
 
     const approveCooperative = (coopId: string) => {
-        // In real app, update cooperative status
     };
 
     const renderDriver = ({ item }: { item: any }) => (

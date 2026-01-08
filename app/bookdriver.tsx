@@ -3,142 +3,149 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'rea
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useDriverStore } from '@/constants/store';
+import { useDriverStore, TransportRequest, Driver } from '@/constants/store';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function BookDriver() {
-    const router = useRouter();
-    const { driverId } = useLocalSearchParams();
-    const { drivers, trips, updateTrip, updateDriver } = useDriverStore();
-    
-    const driver = drivers.find(d => d.id === driverId);
-    const [pickupTime, setPickupTime] = useState(new Date());
-    const [showTimePicker, setShowTimePicker] = useState(false);
+  const router = useRouter();
+  const { driverId } = useLocalSearchParams<{ driverId: string }>();
+  const { drivers, requests, updateRequest, updateDriver } = useDriverStore();
 
-    if (!driver) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <Text style={styles.title}>Driver Not Found</Text>
-                    <View style={{ width: 24 }} />
-                </View>
-            </SafeAreaView>
-        );
+  const driver: Driver | undefined = drivers.find(d => d.id === driverId);
+  const [pickupTime, setPickupTime] = useState(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  if (!driver) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Driver Not Found</Text>
+          <View style={{ width: 24 }} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const handleBook = () => {
+    const pendingRequest = requests
+      .filter((r: TransportRequest) => r.status === 'pending')
+      .sort(
+        (a: TransportRequest, b: TransportRequest) =>
+          new Date(b.bookingTime ?? 0).getTime() - new Date(a.bookingTime ?? 0).getTime()
+      )[0];
+
+    if (!pendingRequest) {
+      Alert.alert('Error', 'No pending request found');
+      return;
     }
 
-    const handleBook = () => {
-        // Find the most recent pending trip (awaiting driver acceptance)
-        const pendingTrip = trips.filter(t => t.status === 'pending').sort((a, b) => 
-            new Date(b.bookingTime).getTime() - new Date(a.bookingTime).getTime()
-        )[0];
+updateRequest(pendingRequest.id, {
+  driverId: driver.id,
+  status: 'accepted',
+  acceptedAt: new Date().toISOString(),
+  priceLocked: true,
+  chatOpen: true,
+  chat: [
+    ...((pendingRequest.chat ?? []) as {
+      id: string;
+      sender: string;
+      text: string;
+      timestamp: string;
+    }[]),
+    {
+      id: `${Date.now()}`,
+      sender: 'adminfarmer',
+      text: 'Driver accepted. Chat is now open for coordination.',
+      timestamp: new Date().toISOString(),
+    },
+  ],
+});
 
-        if (!pendingTrip) {
-            Alert.alert('Error', 'No pending trip found');
-            return;
-        }
 
-        updateTrip(pendingTrip.id, {
-            driverId: driver.id,
-            driver: driver,
-            status: 'accepted',
-            acceptedAt: new Date().toISOString(),
-            priceLocked: true,
-            chatOpen: true,
-            chat: [
-                ...(pendingTrip.chat || []),
-                {
-                    id: `${Date.now()}`,
-                    sender: 'cooperative',
-                    text: 'Driver accepted. Chat is now open for coordination.',
-                    timestamp: new Date().toISOString(),
-                },
-            ],
-        });
 
-        // Update driver availability
-        updateDriver(driver.id, { availability: false });
 
-        Alert.alert('Success', 'Driver booked successfully!', [
-            { text: 'OK', onPress: () => router.push('/trips') }
-        ]);
-    };
+    updateDriver(driver.id, { available: false });
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <Text style={styles.title}>Book Driver</Text>
-                    <View style={{ width: 24 }} />
-                </View>
+    Alert.alert('Success', 'Driver booked successfully!', [
+      { text: 'OK', onPress: () => router.push('/trips') },
+    ]);
+  };
 
-                <View style={styles.driverCard}>
-                    <View style={styles.driverHeader}>
-                        <Ionicons name="person-circle" size={64} color="#000" />
-                        <View style={styles.driverInfo}>
-                            <Text style={styles.driverName}>{driver.name}</Text>
-                            <Text style={styles.plateNumber}>{driver.plateNumber}</Text>
-                            <View style={styles.ratingContainer}>
-                                <Ionicons name="star" size={20} color="#000" />
-                                <Text style={styles.rating}>{driver.rating.toFixed(1)}</Text>
-                            </View>
-                        </View>
-                    </View>
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Book Driver</Text>
+          <View style={{ width: 24 }} />
+        </View>
 
-                    <View style={styles.details}>
-                        <View style={styles.detailRow}>
-                            <Ionicons name="cube-outline" size={20} color="#000" />
-                            <Text style={styles.detailText}>Capacity: {driver.capacity} kg</Text>
-                        </View>
-                        <View style={styles.detailRow}>
-                            <Ionicons name="checkmark-circle-outline" size={20} color="#000" />
-                            <Text style={styles.detailText}>
-                                {driver.verified ? 'Verified Driver' : 'Unverified'}
-                            </Text>
-                        </View>
-                    </View>
-                </View>
+        <View style={styles.driverCard}>
+          <View style={styles.driverHeader}>
+            <Ionicons name="person-circle" size={64} color="#000" />
+            <View style={styles.driverInfo}>
+              <Text style={styles.driverName}>{driver.name}</Text>
+              <Text style={styles.plateNumber}>{driver.plateNumber}</Text>
+              <View style={styles.ratingContainer}>
+                <Ionicons name="star" size={20} color="#000" />
+                <Text style={styles.rating}>{driver.rating?.toFixed(1) ?? '0.0'}</Text>
+              </View>
+            </View>
+          </View>
 
-                <View style={styles.form}>
-                    <Text style={styles.label}>Pickup Time</Text>
-                    <TouchableOpacity
-                        style={styles.timeButton}
-                        onPress={() => setShowTimePicker(true)}
-                    >
-                        <Text style={styles.timeText}>
-                            {pickupTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
-                        <Ionicons name="time-outline" size={20} color="#000" />
-                    </TouchableOpacity>
+          <View style={styles.details}>
+            <View style={styles.detailRow}>
+              <Ionicons name="cube-outline" size={20} color="#000" />
+              <Text style={styles.detailText}>Capacity: {driver.capacity ?? 0} kg</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Ionicons name="checkmark-circle-outline" size={20} color="#000" />
+              <Text style={styles.detailText}>
+                {driver.verified ? 'Verified Driver' : 'Unverified'}
+              </Text>
+            </View>
+          </View>
+        </View>
 
-                    {showTimePicker && (
-                        <DateTimePicker
-                            value={pickupTime}
-                            mode="time"
-                            display="default"
-                            onChange={(event, selectedTime) => {
-                                setShowTimePicker(false);
-                                if (selectedTime) {
-                                    setPickupTime(selectedTime);
-                                }
-                            }}
-                        />
-                    )}
+        <View style={styles.form}>
+          <Text style={styles.label}>Pickup Time</Text>
+          <TouchableOpacity
+            style={styles.timeButton}
+            onPress={() => setShowTimePicker(true)}
+          >
+            <Text style={styles.timeText}>
+              {pickupTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+            <Ionicons name="time-outline" size={20} color="#000" />
+          </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.bookButton} onPress={handleBook}>
-                        <Text style={styles.bookButtonText}>Confirm Booking</Text>
-                        <Ionicons name="checkmark-circle" size={20} color="#FFF" />
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
-        </SafeAreaView>
-    );
+          {showTimePicker && (
+            <DateTimePicker
+              value={pickupTime}
+              mode="time"
+              display="default"
+              onChange={(event, selectedTime) => {
+                setShowTimePicker(false);
+                if (selectedTime) setPickupTime(selectedTime);
+              }}
+            />
+          )}
+
+          <TouchableOpacity style={styles.bookButton} onPress={handleBook}>
+            <Text style={styles.bookButtonText}>Confirm Booking</Text>
+            <Ionicons name="checkmark-circle" size={20} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
+
 
 const styles = StyleSheet.create({
     container: {

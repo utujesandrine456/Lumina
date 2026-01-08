@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
 import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
 
+
+
 export default function OTPScreen() {
     const router = useRouter();
 
@@ -45,12 +47,12 @@ export default function OTPScreen() {
             const pastedValues = value.slice(0, 6).split('');
             const newOtp = [...otp];
             pastedValues.forEach((val, i) => {
-                if (index + i < 6) {
+                if (index + i < 11) {
                     newOtp[index + i] = val;
                 }
             });
             setOtp(newOtp);
-            const nextIndex = Math.min(index + pastedValues.length, 5);
+            const nextIndex = Math.min(index + pastedValues.length, 11);
             inputRefs.current[nextIndex]?.focus();
 
             if (newOtp.every(d => d !== '')) {
@@ -63,7 +65,7 @@ export default function OTPScreen() {
         newOtp[index] = value;
         setOtp(newOtp);
 
-        if (value && index < 5) {
+        if (value && index < 11) {
             inputRefs.current[index + 1]?.focus();
         }
 
@@ -96,9 +98,9 @@ export default function OTPScreen() {
     const handleSuccess = () => {
         const safeRole = role as any;
 
-        if (role === 'cooperative') {
+        if (role === 'adminfarmer') {
             const coopId = `coop-${phone}`;
-            setCurrentUser({ id: coopId, name: name || 'Cooperative Officer', phone, role: 'cooperative' });
+            setCurrentUser({ id: coopId, name: name || 'Cooperative Officer', phone, role: 'adminfarmer' });
             addCooperative({
                 id: coopId,
                 name: coopName || 'Cooperative',
@@ -110,7 +112,7 @@ export default function OTPScreen() {
                 farmers: [],
             });
 
-            router.push('/cooperativedashboard');
+            router.push('/admindriverdashboard');
         } else if (role === 'driver') {
             const existing = drivers.find((d) => d.phone === phone);
             const driver = existing ?? {
@@ -142,6 +144,7 @@ export default function OTPScreen() {
         Alert.alert('Code Sent', 'A new verification code has been sent.');
     };
 
+    
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -300,6 +303,8 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontFamily: 'Poppins_600SemiBold',
         color: '#1A1A1A',
+        outlineColor: 'transparent',
+        outlineWidth: 0,
     },
     verifyButton: {
         width: '100%',

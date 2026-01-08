@@ -12,9 +12,9 @@ import Animated, { FadeInDown, BounceIn } from 'react-native-reanimated';
 export default function PickupConfirmation() {
     const router = useRouter();
     const { tripId } = useLocalSearchParams<{ tripId: string }>();
-    const { trips, updateTrip } = useDriverStore();
-    
-    const trip = trips.find(t => t.id === tripId);
+    const { requests, updateRequest } = useDriverStore();
+
+    const trip = (requests || []).find(t => t.id === tripId);
     const [photo, setPhoto] = useState<string | null>(null);
     const [weight, setWeight] = useState('');
 
@@ -85,12 +85,12 @@ export default function PickupConfirmation() {
             return;
         }
 
-        updateTrip(tripId, {
+        updateRequest(tripId, {
             pickupPhoto: photo,
             pickupWeight: parseFloat(weight),
-            pickupTimestamp: new Date().toISOString(),
-            pickupGPS: coords,
-            status: 'in-transit',
+            pickupTimestamp: Date.now(), // Changed to number to match store type
+            pickupCoordinates: coords, // Changed to pickupCoordinates to match store type
+            status: 'in-progress', // Changed status to valid value
         });
 
         Alert.alert('Success', 'Pickup confirmed!', [

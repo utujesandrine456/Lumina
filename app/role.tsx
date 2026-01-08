@@ -1,97 +1,34 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Platform, Animated, Easing } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Dimensions, 
+  Animated, 
+  Easing
+} from 'react-native';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
-const AnimatedBubble = ({ style, size, duration = 4000, delay = 0, colors }: { style: any, size: number, duration?: number, delay?: number, colors: readonly [string, string, ...string[]] }) => {
-    const translateY = useRef(new Animated.Value(0)).current;
-    const scale = useRef(new Animated.Value(1)).current;
-
-    useEffect(() => {
-        const floatAnimation = Animated.loop(
-            Animated.sequence([
-                Animated.timing(translateY, {
-                    toValue: -20,
-                    duration: duration,
-                    easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                    delay: delay,
-                }),
-                Animated.timing(translateY, {
-                    toValue: 0,
-                    duration: duration,
-                    easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
-            ])
-        );
-
-        const breatheAnimation = Animated.loop(
-            Animated.sequence([
-                Animated.timing(scale, {
-                    toValue: 1.05,
-                    duration: duration * 1.2,
-                    easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                    delay: delay,
-                }),
-                Animated.timing(scale, {
-                    toValue: 1,
-                    duration: duration * 1.2,
-                    easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
-            ])
-        );
-
-        floatAnimation.start();
-        breatheAnimation.start();
-
-        return () => {
-            floatAnimation.stop();
-            breatheAnimation.stop();
-        };
-    }, []);
-
-    return (
-        <Animated.View style={[
-            style,
-            {
-                width: size,
-                height: size,
-                borderRadius: size / 2,
-                transform: [{ translateY }, { scale }],
-                overflow: 'hidden',
-            }
-        ]}>
-            <LinearGradient
-                colors={colors}
-                style={{ flex: 1 }}
-                start={{ x: 0.2, y: 0.2 }}
-                end={{ x: 0.8, y: 0.8 }}
-            />
-        </Animated.View>
-    );
-};
-
 export default function RoleScreen() {
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const slideAnim = useRef(new Animated.Value(50)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
 
     useEffect(() => {
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 800,
+                duration: 600,
                 useNativeDriver: true,
             }),
             Animated.timing(slideAnim, {
                 toValue: 0,
-                duration: 800,
+                duration: 700,
+                easing: Easing.out(Easing.back(1)),
                 useNativeDriver: true,
             })
         ]).start();
@@ -99,176 +36,194 @@ export default function RoleScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.backgroundContainer}>
-                <AnimatedBubble
-                    size={280}
-                    colors={['#000', '#000']}
-                    style={{ position: 'absolute', top: -80, left: -60 }}
-                    duration={6000}
-                    delay={0}
-                />
-                <AnimatedBubble
-                    size={240}
-                    colors={['#000', '#000']}
-                    style={{ position: 'absolute', top: 0, right: -40 }}
-                    duration={7000}
-                    delay={1000}
-                />
+            <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }],},]}>
+                <View style={styles.heroBackground} />
+                <Text style={styles.title}>Choose Your Role</Text>
+                <Text style={styles.subtitle}>How would you like to join Lumina?</Text>
+            </Animated.View>
+
+            <View style={styles.cardsContainer}>
+                <Link href="/register" asChild>
+                    <TouchableOpacity activeOpacity={0.7}>
+                        <Animated.View style={[
+                            styles.card,
+                            styles.cardElevated,
+                            {
+                                opacity: fadeAnim,
+                                transform: [{
+                                    translateY: slideAnim.interpolate({
+                                        inputRange: [0, 30],
+                                        outputRange: [0, 40]
+                                    })
+                                }]
+                            }
+                        ]}>
+                            <View style={[styles.iconContainer, styles.iconDark]}>
+                                <Ionicons name="people" size={28} color="#FFFFFF" />
+                            </View>
+                            <View style={styles.cardContent}>
+                                <Text style={styles.cardTitle}>Cooperative Officer</Text>
+                                <Text style={styles.cardDescription}>
+                                    Register farmers, book drivers, manage transport operations.
+                                </Text>
+                            </View>
+                            <View style={styles.chevronContainer}>
+                                <Ionicons name="chevron-forward" size={22} color="#000" />
+                            </View>
+                        </Animated.View>
+                    </TouchableOpacity>
+                </Link>
+
+                <Link href="/register" asChild>
+                    <TouchableOpacity activeOpacity={0.7}>
+                        <Animated.View style={[
+                            styles.card,
+                            styles.cardElevated,
+                            {
+                                opacity: fadeAnim,
+                                transform: [{
+                                    translateY: slideAnim.interpolate({
+                                        inputRange: [0, 30],
+                                        outputRange: [0, 60]
+                                    })
+                                }]
+                            }
+                        ]}>
+                            <View style={[styles.iconContainer, styles.iconDark]}>
+                                <Ionicons name="car" size={28} color="#FFFFFF" />
+                            </View>
+                            <View style={styles.cardContent}>
+                                <Text style={styles.cardTitle}>Cooperative Driver</Text>
+                                <Text style={styles.cardDescription}>
+                                    Receive trip requests, update trip status and manage your schedule.
+                                </Text>
+                            </View>
+                            <View style={styles.chevronContainer}>
+                                <Ionicons name="chevron-forward" size={22} color="#000" />
+                            </View>
+                        </Animated.View>
+                    </TouchableOpacity>
+                </Link>
             </View>
-
-            <View style={styles.contentContainer}>
-                <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-                    <Text style={styles.title}>Choose Your Role</Text>
-                    <Text style={styles.subtitle}>How would you like to join Lumina?</Text>
-                </Animated.View>
-
-                <View style={styles.cardsContainer}>
-                    <Link href="/register" asChild>
-                        <TouchableOpacity activeOpacity={0.8}>
-                            <Animated.View style={[
-                                styles.card,
-                                {
-                                    opacity: fadeAnim,
-                                    transform: [{
-                                        translateY: slideAnim.interpolate({
-                                            inputRange: [0, 50],
-                                            outputRange: [0, 80]
-                                        })
-                                    }]
-                                }
-                            ]}>
-                                <View style={[styles.iconContainer, { backgroundColor: '#fff', borderWidth: 1, borderBlockColor: '#000' }]}>
-                                    <Ionicons name="people" size={32} color="#000" />
-                                </View>
-                                <View style={styles.cardContent}>
-                                    <Text style={styles.cardTitle}>Cooperative Officer</Text>
-                                    <Text style={styles.cardDescription}>Register farmers, book drivers, manage transport.</Text>
-                                </View>
-                                <Ionicons name="chevron-forward" size={24} color="#000" />
-                            </Animated.View>
-                        </TouchableOpacity>
-                    </Link>
-
-                    <Link href="/register" asChild>
-                        <TouchableOpacity activeOpacity={0.8}>
-                            <Animated.View style={[
-                                styles.card,
-                                {
-                                    opacity: fadeAnim,
-                                    transform: [{
-                                        translateY: slideAnim.interpolate({
-                                            inputRange: [0, 50],
-                                            outputRange: [0, 100]
-                                        })
-                                    }]
-                                }
-                            ]}>
-                                <View style={[styles.iconContainer, { backgroundColor: '#fff', borderWidth: 1, borderBlockColor: '#000' }]}>
-                                    <Ionicons name="car" size={32} color="#000" />
-                                </View>
-                                <View style={styles.cardContent}>
-                                    <Text style={styles.cardTitle}>Cooperative Driver</Text>
-                                    <Text style={styles.cardDescription}>Receive trip requests, update trip status and register drivers.</Text>
-                                </View>
-                                <Ionicons name="chevron-forward" size={24} color="#000" />
-                            </Animated.View>
-                        </TouchableOpacity>
-                    </Link>
-                </View>
-
-                <Animated.View style={[styles.footer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-                    <Text style={styles.footerText}>Enjoy Services With Lumina</Text>
-                </Animated.View>
+            
+            <View style={{position: 'absolute', bottom: 10,left: 0,right: 0, flexDirection: 'row',justifyContent: 'space-between',paddingHorizontal: 20}}>
+                <View style={{width: 100, height: 100, backgroundColor: 'black',borderRadius: 50, left: -40, top: 40}}/>
+                <View style={{width: 100, height: 100,backgroundColor: 'black',borderRadius: 50, right: -40, top: 40}}/>
             </View>
-        </SafeAreaView>
+            
+        </SafeAreaView> 
     );
 }
+
+
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#F9FAFB',
     },
-    backgroundContainer: {
-        ...StyleSheet.absoluteFillObject,
-        overflow: 'hidden',
-        zIndex: -1,
+
+    heroBackground: {
+        position: 'absolute',
+        width: width * 1.4,
+        height: height * 0.55,
+        backgroundColor: '#000',
+        borderBottomLeftRadius: 300,
+        borderBottomRightRadius: 300,
+        top: -height * 0.3,
     },
-    contentContainer: {
-        flex: 1,
-        paddingHorizontal: 24,
-        justifyContent: 'center',
-    },
+
     header: {
-        marginBottom: 120,
+        width: '100%',
+        paddingTop: 60,
+        paddingBottom: 50,
         alignItems: 'center',
-    },
-    title: {
-        fontFamily: 'Poppins_700Bold',
-        fontSize: 28,
-        color: '#fff',
-        textAlign: 'center',
+        justifyContent: 'center',
         marginBottom: 10,
     },
+
+    title: {
+        fontFamily: 'Poppins_700Bold',
+        fontSize: 34,
+        color: '#FFFFFF',
+        marginBottom: 6,
+        textAlign: 'center',
+        letterSpacing: 0.3,
+    },
+
     subtitle: {
         fontFamily: 'Poppins_400Regular',
-        fontSize: 16,
-        color: '#ccc',
+        fontSize: 15,
+        color: 'rgba(255,255,255,0.75)',
         textAlign: 'center',
+        lineHeight: 20,
     },
+
     cardsContainer: {
+        width: '100%',
+        paddingHorizontal: 24,
+        marginTop: 30,
         gap: 20,
-        marginBottom: 60,
     },
+
     card: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#FFFFFF',
-        padding: 20,
-        borderRadius: 24,
+        padding: 18,
+        borderRadius: 26,
+        minHeight: 150,
         borderWidth: 1,
-        borderColor: '#F0F0F0',
-        boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.05)',
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 12,
+        borderColor: 'rgba(0,0,0,0.04)',
     },
+
+    cardElevated: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.08,
+        shadowRadius: 20,
+        elevation: 8,
+    },
+
     iconContainer: {
-        width: 64,
-        height: 64,
-        borderRadius: 15,
+        width: 60,
+        height: 60,
+        borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
+        marginRight: 18,
     },
+
+    iconDark: {
+        backgroundColor: '#000',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 6,
+    },
+
     cardContent: {
         flex: 1,
     },
+
     cardTitle: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 18,
-        color: '#1A1A1A',
-        marginBottom: 4,
+        fontSize: 19,
+        color: '#000',
+        marginBottom: 6,
     },
+
     cardDescription: {
         fontFamily: 'Poppins_400Regular',
         fontSize: 13,
-        color: '#757575',
+        color: '#6B7280',
         lineHeight: 18,
     },
-    footer: {
-        position: 'absolute',
-        bottom: 40,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-    },
-    footerText: {
-        fontFamily: 'Satisfy_400Regular',
-        fontSize: 28,
-        color: '#1A1A1A',
-        textAlign: 'center',
+
+    chevronContainer: {
+        padding: 10,
+        borderRadius: 14,
+        backgroundColor: 'rgba(0,0,0,0.04)',
     },
 });

@@ -68,6 +68,7 @@ export default function DriverJobs() {
                 <Ionicons name="cash-outline" size={18} color="#000" />
                 <Text style={styles.metaText}>{item.totalPrice?.toFixed(0)} Frw</Text>
             </View>
+            
             <View style={styles.metaRow}>
                 <Ionicons name="navigate-outline" size={18} color="#000" />
                 <Text style={styles.metaText}>{item.distance?.toFixed(1)} km</Text>

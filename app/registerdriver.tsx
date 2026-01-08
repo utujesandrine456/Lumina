@@ -14,7 +14,9 @@ export default function RegisterDriver() {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [pin, setPin] = useState('');
   const [idNumber, setIdNumber] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
   const [plateNumber, setPlateNumber] = useState('');
   const [capacity, setCapacity] = useState('');
   const [useGps, setUseGps] = useState(true);
@@ -24,7 +26,7 @@ export default function RegisterDriver() {
 
   const pickupRoleLabel = useMemo(() => {
     if (currentUser?.role === 'admin') return 'Admin';
-    if (currentUser?.role === 'cooperative') return 'Cooperative Officer';
+    if (currentUser?.role === 'adminfarmer') return 'Cooperative Officer';
     return 'User';
   }, [currentUser?.role]);
 
@@ -39,8 +41,13 @@ export default function RegisterDriver() {
   };
 
   const handleSubmit = async () => {
-    if (!name || !phone || !plateNumber || !capacity) {
-      Alert.alert('Missing Info', 'Please fill in Name, Phone, Plate Number, and Capacity.');
+    if (!name || !phone || !pin || !plateNumber || !capacity || !idNumber || !licenseNumber) {
+      Alert.alert('Missing Info', 'Please fill in all required fields, including PIN.');
+      return;
+    }
+
+    if (pin.length !== 4) {
+      Alert.alert('Invalid PIN', 'PIN must be exactly 4 digits.');
       return;
     }
 
@@ -58,7 +65,9 @@ export default function RegisterDriver() {
       id: `drv-${Date.now()}`,
       name,
       phone,
-      idNumber: idNumber || undefined,
+      pin,
+      idNumber,
+      licenseNumber,
       plateNumber,
       capacity: Number(capacity) || 0,
       rating: 0,
@@ -68,7 +77,13 @@ export default function RegisterDriver() {
     };
 
     addDriver(driver as any);
-    Alert.alert('Success', 'Driver registered successfully.', [{ text: 'OK', onPress: () => router.back() }]);
+    addDriver(driver as any);
+
+    if (canVerifyNow && verified) {
+      Alert.alert('Success', 'Driver registered and verified!', [{ text: 'OK', onPress: () => router.back() }]);
+    } else {
+      router.push('/driververification');
+    }
   };
 
   return (
@@ -99,8 +114,22 @@ export default function RegisterDriver() {
             onChangeText={setPhone}
           />
 
-          <Text style={styles.label}>National ID (optional)</Text>
-          <TextInput style={styles.input} placeholder="Enter National ID" value={idNumber} onChangeText={setIdNumber} />
+          <Text style={styles.label}>Access PIN (4 digits) *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Set a 4-digit PIN"
+            keyboardType="numeric"
+            value={pin}
+            onChangeText={setPin}
+            maxLength={4}
+            secureTextEntry
+          />
+
+          <Text style={styles.label}>National ID / Passport *</Text>
+          <TextInput style={styles.input} placeholder="Enter National ID or Passport" value={idNumber} onChangeText={setIdNumber} />
+
+          <Text style={styles.label}>Driving License Number *</Text>
+          <TextInput style={styles.input} placeholder="Enter License Number" value={licenseNumber} onChangeText={setLicenseNumber} />
 
           <Text style={styles.label}>Plate Number *</Text>
           <TextInput style={styles.input} placeholder="Enter plate number" value={plateNumber} onChangeText={setPlateNumber} />

@@ -5,9 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as Location from 'expo-location';
 import { calculateDistance, calculatePrice } from '@/utils/PriceCalculator';
 import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
+
+
 
 export default function CreateTransportRequest() {
     const router = useRouter();
@@ -157,7 +158,6 @@ export default function CreateTransportRequest() {
         } else {
             Alert.alert('Success', 'Transport request created! Now select a driver.');
         }
-        // Navigate to NearbyDrivers with the new request ID to allow selection
         router.push({ pathname: '/nearbydrivers', params: { requestId: trip.id } });
     };
 
@@ -180,25 +180,36 @@ export default function CreateTransportRequest() {
 
                 <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.form}>
                     <Text style={styles.sectionTitle}>Selected Farmers ({selectedFarmersData.length})</Text>
-                    {selectedFarmersData.map((farmer, index) => (
-                        <Animated.View
-                            key={farmer.id}
-                            entering={SlideInRight.delay(300 + index * 50).springify()}
-                            style={styles.farmerItem}
+                    {selectedFarmersData.length === 0 ? (
+                        <TouchableOpacity
+                            style={styles.selectButton}
+                            onPress={() => router.push('/farmerslist')}
                         >
-                            <Text style={styles.farmerName}>{farmer.name}</Text>
-                            <Text style={styles.farmerDetails}>
-                                {farmer.location && farmer.location !== 'Unknown' ? farmer.location : 'Location Pending'}
-                            </Text>
-                            <View style={styles.cropsRow}>
-                                {farmer.crops.map((crop) => (
-                                    <View key={crop.id} style={styles.cropTag}>
-                                        <Text style={styles.cropTagText}>{crop.name}</Text>
-                                    </View>
-                                ))}
-                            </View>
-                        </Animated.View>
-                    ))}
+                            <Ionicons name="people" size={20} color="#000" />
+                            <Text style={styles.selectButtonText}>Select Farmers from List</Text>
+                            <Ionicons name="arrow-forward" size={16} color="#000" />
+                        </TouchableOpacity>
+                    ) : (
+                        selectedFarmersData.map((farmer, index) => (
+                            <Animated.View
+                                key={farmer.id}
+                                entering={SlideInRight.delay(300 + index * 50).springify()}
+                                style={styles.farmerItem}
+                            >
+                                <Text style={styles.farmerName}>{farmer.name}</Text>
+                                <Text style={styles.farmerDetails}>
+                                    {farmer.location && farmer.location !== 'Unknown' ? farmer.location : 'Location Pending'}
+                                </Text>
+                                <View style={styles.cropsRow}>
+                                    {farmer.crops.map((crop) => (
+                                        <View key={crop.id} style={styles.cropTag}>
+                                            <Text style={styles.cropTagText}>{crop.name}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </Animated.View>
+                        ))
+                    )}
 
                     <Text style={styles.label}>Crop Type *</Text>
                     <View style={styles.cropSelector}>
@@ -565,5 +576,23 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 16,
         fontFamily: 'Poppins_600SemiBold',
+    },
+    selectButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#F5F5F5',
+        borderRadius: 12,
+        gap: 12,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        marginBottom: 8,
+        borderStyle: 'dashed',
+    },
+    selectButtonText: {
+        flex: 1,
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 14,
+        color: '#000',
     },
 });

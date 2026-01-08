@@ -4,26 +4,28 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import FarmerBottomBar from '@/components/FarmerBottomBar';
 
 export default function Trips() {
     const router = useRouter();
-    const { requests, drivers } = useDriverStore(); // Changed trips to requests
+    const { requests, drivers } = useDriverStore();
     const [filter, setFilter] = useState<'all' | 'pending' | 'ongoing' | 'completed'>('all');
 
-    const filteredTrips = (requests || []).filter(trip => { // Added safe access
+    const filteredTrips = (requests || []).filter(trip => {
         if (filter === 'all') return true;
         if (filter === 'pending') return trip.status === 'pending';
-        if (filter === 'ongoing') return trip.status === 'accepted' || trip.status === 'in-progress'; // Fixed status string
-        if (filter === 'completed') return trip.status === 'completed'; // Fixed status string
+        if (filter === 'ongoing') return trip.status === 'accepted' || trip.status === 'in-progress';
+        if (filter === 'completed') return trip.status === 'completed';
         return true;
     });
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'pending': return '#757575';
-            case 'accepted': return '#000';
-            case 'in-progress': return '#000'; // Fixed status string
-            case 'completed': return '#000'; // Fixed status string
+            case 'pending': return '#FF9800';
+            case 'accepted': return '#2196F3';
+            case 'in-progress': return '#2196F3';
+            case 'completed': return '#4CAF50';
+            case 'rejected': return '#F44336';
             default: return '#757575';
         }
     };
@@ -32,8 +34,9 @@ export default function Trips() {
         switch (status) {
             case 'pending': return 'Pending';
             case 'accepted': return 'Accepted';
-            case 'in-progress': return 'In Progress'; // Fixed status string
-            case 'completed': return 'Completed'; // Fixed status string
+            case 'in-progress': return 'In Transit';
+            case 'completed': return 'Delivered';
+            case 'rejected': return 'Cancelled';
             default: return status;
         }
     };
@@ -41,11 +44,12 @@ export default function Trips() {
     const renderTrip = ({ item }: { item: any }) => {
         const tripDriver = drivers.find(d => d.id === item.driverId);
         const farmerCount = item.farmers?.length || 0;
+        const statusColor = getStatusColor(item.status);
 
         return (
             <TouchableOpacity
-                // ... existing touchable code ...
                 style={styles.tripCard}
+                activeOpacity={0.9}
                 onPress={() => {
                     if (item.status === 'completed' && !item.rating) {
                         router.push({ pathname: '/ratedriver', params: { tripId: item.id } });
@@ -54,55 +58,66 @@ export default function Trips() {
                     }
                 }}
             >
-                <View style={styles.tripHeader}>
-                    <View style={styles.tripInfo}>
-                        <Ionicons name="cube-outline" size={24} color="#000" />
-                        <View style={styles.tripDetails}>
-                            <Text style={styles.tripId}>Trip #{item.id.slice(-6)}</Text>
-                            <Text style={styles.tripDate}>
-                                {new Date(item.bookingTime || item.createdAt).toLocaleDateString()}
-                            </Text>
-                        </View>
+                <View style={styles.cardHeader}>
+                    <View style={styles.dateContainer}>
+                        <Ionicons name="calendar-outline" size={14} color="#757575" />
+                        <Text style={styles.tripDate}>
+                            {new Date(item.bookingTime || item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </Text>
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(item.status)}20` }]}>
-                        <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+                    <View style={[styles.statusBadge, { backgroundColor: `${statusColor}15` }]}>
+                        <Text style={[styles.statusText, { color: statusColor }]}>
                             {getStatusText(item.status)}
                         </Text>
                     </View>
                 </View>
 
-                <View style={styles.route}>
-                    <View style={styles.routePoint}>
-                        <View style={styles.routeDot} />
-                        <Text style={styles.routeText}>{item.pickupLocation}</Text>
+                <View style={styles.divider} />
+
+                <View style={styles.routeContainer}>
+                    <View style={styles.routeItem}>
+                        <View style={[styles.routeDot, { borderColor: '#757575' }]} />
+                        <View style={styles.routeContent}>
+                            <Text style={styles.routeLabel}>Pickup</Text>
+                            <Text style={styles.routeAddress} numberOfLines={1}>{item.pickupLocation}</Text>
+                        </View>
                     </View>
-                    <View style={styles.routeLine} />
-                    <View style={styles.routePoint}>
-                        <View style={[styles.routeDot, { backgroundColor: '#000' }]} />
-                        <Text style={styles.routeText}>{item.destination}</Text>
+                    <View style={styles.routeConnector} />
+                    <View style={styles.routeItem}>
+                        <View style={[styles.routeDot, { borderColor: '#000', backgroundColor: '#000' }]} />
+                        <View style={styles.routeContent}>
+                            <Text style={styles.routeLabel}>Destination</Text>
+                            <Text style={styles.routeAddress} numberOfLines={1}>{item.destination}</Text>
+                        </View>
                     </View>
                 </View>
 
-                <View style={styles.tripStats}>
-                    <Text style={styles.statText}>{farmerCount} farmer{farmerCount !== 1 ? 's' : ''}</Text>
-                    <Text style={styles.statText}>•</Text>
-                    <Text style={styles.statText}>{item.totalWeight} kg</Text>
-                    {tripDriver && (
-                        <>
-                            <Text style={styles.statText}>•</Text>
-                            <Text style={styles.statText}>{tripDriver.name}</Text>
-                        </>
-                    )}
+                <View style={styles.statsRow}>
+                    <View style={styles.statBadge}>
+                        <Ionicons name="people-outline" size={14} color="#000" />
+                        <Text style={styles.statValue}>{farmerCount} Farmers</Text>
+                    </View>
+                    <View style={styles.statBadge}>
+                        <Ionicons name="scale-outline" size={14} color="#000" />
+                        <Text style={styles.statValue}>{item.totalWeight} kg</Text>
+                    </View>
                 </View>
 
-                {item.status === 'delivered' && !item.rating && (
-                    <TouchableOpacity
-                        style={styles.rateButton}
-                        onPress={() => router.push({ pathname: '/ratedriver', params: { tripId: item.id } })}
-                    >
-                        <Text style={styles.rateButtonText}>Rate Driver</Text>
-                        <Ionicons name="star-outline" size={16} color="#000" />
-                    </TouchableOpacity>
+                {tripDriver && (
+                    <View style={styles.driverRow}>
+                        <View style={styles.driverInfo}>
+                            <View style={styles.driverAvatar}>
+                                <Text style={styles.driverInitials}>{tripDriver.name.charAt(0)}</Text>
+                            </View>
+                            <View>
+                                <Text style={styles.driverLabel}>Assigned Driver</Text>
+                                <Text style={styles.driverName}>{tripDriver.name}</Text>
+                            </View>
+                        </View>
+                        <TouchableOpacity style={styles.callButton}>
+                            <Ionicons name="call" size={18} color="#000" />
+                        </TouchableOpacity>
+                    </View>
                 )}
             </TouchableOpacity>
         );
@@ -111,44 +126,40 @@ export default function Trips() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
+                <TouchableOpacity
+                    onPress={() => router.back()}
+                    style={styles.backButton}
+                >
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
-                <Text style={styles.title}>Trips</Text>
-                <View style={{ width: 24 }} />
+                <View style={styles.headerTitleContainer}>
+                    <Text style={styles.title}>Trips</Text>
+                </View>
             </View>
 
-            <View style={styles.filters}>
-                <TouchableOpacity
-                    style={[styles.filterButton, filter === 'all' && styles.filterButtonActive]}
-                    onPress={() => setFilter('all')}
-                >
-                    <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>All</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.filterButton, filter === 'pending' && styles.filterButtonActive]}
-                    onPress={() => setFilter('pending')}
-                >
-                    <Text style={[styles.filterText, filter === 'pending' && styles.filterTextActive]}>Pending</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.filterButton, filter === 'ongoing' && styles.filterButtonActive]}
-                    onPress={() => setFilter('ongoing')}
-                >
-                    <Text style={[styles.filterText, filter === 'ongoing' && styles.filterTextActive]}>Ongoing</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.filterButton, filter === 'completed' && styles.filterButtonActive]}
-                    onPress={() => setFilter('completed')}
-                >
-                    <Text style={[styles.filterText, filter === 'completed' && styles.filterTextActive]}>Completed</Text>
-                </TouchableOpacity>
+            <View style={styles.filterContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+                    {['all', 'pending', 'ongoing', 'completed'].map((f) => (
+                        <TouchableOpacity
+                            key={f}
+                            style={[styles.filterChip, filter === f && styles.filterChipActive]}
+                            onPress={() => setFilter(f as any)}
+                        >
+                            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
             </View>
 
             {filteredTrips.length === 0 ? (
                 <View style={styles.emptyContainer}>
-                    <Ionicons name="map-outline" size={64} color="#BDBDBD" />
-                    <Text style={styles.emptyText}>No trips found</Text>
+                    <View style={styles.emptyIconContainer}>
+                        <Ionicons name="map" size={40} color="#000" />
+                    </View>
+                    <Text style={styles.emptyTitle}>No trips found</Text>
+                    <Text style={styles.emptyText}>You haven't made any transport requests in this category yet.</Text>
                 </View>
             ) : (
                 <FlatList
@@ -159,6 +170,8 @@ export default function Trips() {
                     showsVerticalScrollIndicator={false}
                 />
             )}
+
+            <FarmerBottomBar />
         </SafeAreaView>
     );
 }
@@ -166,83 +179,100 @@ export default function Trips() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#F9FAFB',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
+        paddingHorizontal: 24,
+        paddingTop: 16,
+        paddingBottom: 20,
+        backgroundColor: '#FFF',
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    headerTitleContainer: {
+        flex: 1,
     },
     title: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 20,
-        color: '#000',
+        fontSize: 24,
+        color: '#1A1A1A',
+        lineHeight: 30,
+        textAlign: 'center',
     },
-    filters: {
-        flexDirection: 'row',
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        gap: 8,
+    subtitle: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 13,
+        color: '#9E9E9E',
+    },
+    filterContainer: {
+        backgroundColor: '#FFF',
+        paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
+        borderBottomColor: '#F0F0F0',
     },
-    filterButton: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
+    filterScroll: {
+        paddingHorizontal: 10,
+        gap: 8,
+    },
+    filterChip: {
+        paddingHorizontal: 18,
+        paddingVertical: 10,
+        borderRadius: 24,
+        backgroundColor: '#F5F5F5',
         borderWidth: 1,
-        borderColor: '#E0E0E0',
+        borderColor: '#EEEEEE',
     },
-    filterButtonActive: {
-        backgroundColor: '#000',
-        borderColor: '#000',
+    filterChipActive: {
+        backgroundColor: '#1A1A1A',
+        borderColor: '#1A1A1A',
     },
     filterText: {
         fontFamily: 'Poppins_500Medium',
-        fontSize: 14,
+        fontSize: 13,
         color: '#757575',
     },
     filterTextActive: {
         color: '#FFF',
     },
     listContent: {
-        padding: 20,
+        padding: 24,
+        gap: 16,
     },
     tripCard: {
         backgroundColor: '#FFF',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 12,
+        borderRadius: 24,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 4,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
+        borderColor: '#F0F0F0',
     },
-    tripHeader: {
+    cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         marginBottom: 16,
     },
-    tripInfo: {
+    dateContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
-    },
-    tripDetails: {
-        marginLeft: 12,
-    },
-    tripId: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 16,
-        color: '#000',
-        marginBottom: 4,
+        gap: 6,
     },
     tripDate: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 12,
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 13,
         color: '#757575',
     },
     statusBadge: {
@@ -251,78 +281,144 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     statusText: {
-        fontFamily: 'Poppins_500Medium',
-        fontSize: 12,
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 11,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-    route: {
+    divider: {
+        height: 1,
+        backgroundColor: '#F5F5F5',
         marginBottom: 16,
     },
-    routePoint: {
+    routeContainer: {
+        marginBottom: 16,
+    },
+    routeItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 8,
+    },
+    routeConnector: {
+        height: 16,
+        width: 2,
+        backgroundColor: '#E0E0E0',
+        marginLeft: 6,
+        marginVertical: 4,
     },
     routeDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
+        width: 14,
+        height: 14,
+        borderRadius: 7,
         borderWidth: 2,
-        borderColor: '#000',
         backgroundColor: '#FFF',
         marginRight: 12,
     },
-    routeLine: {
-        width: 2,
-        height: 20,
-        backgroundColor: '#E0E0E0',
-        marginLeft: 5,
-        marginBottom: 8,
-    },
-    routeText: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 14,
-        color: '#000',
+    routeContent: {
         flex: 1,
     },
-    tripStats: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        flexWrap: 'wrap',
-    },
-    statText: {
+    routeLabel: {
         fontFamily: 'Poppins_400Regular',
-        fontSize: 12,
-        color: '#757575',
+        fontSize: 11,
+        color: '#9E9E9E',
+        marginBottom: 2,
     },
-    rateButton: {
-        marginTop: 12,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#000',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 6,
-    },
-    rateButtonText: {
+    routeAddress: {
         fontFamily: 'Poppins_500Medium',
         fontSize: 14,
-        color: '#000',
+        color: '#1A1A1A',
+    },
+    statsRow: {
+        flexDirection: 'row',
+        gap: 10,
+        marginBottom: 4,
+    },
+    statBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F9FAFB',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        gap: 6,
+    },
+    statValue: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 13,
+        color: '#1A1A1A',
+    },
+    driverRow: {
+        marginTop: 16,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#F5F5F5',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    driverInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    driverAvatar: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#1A1A1A',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    driverInitials: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 14,
+        color: '#FFF',
+    },
+    driverLabel: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 11,
+        color: '#9E9E9E',
+    },
+    driverName: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 14,
+        color: '#1A1A1A',
+    },
+    callButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#F5F5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     emptyContainer: {
         flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 40,
+        marginTop: 40,
+    },
+    emptyIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 40,
+        marginBottom: 24,
+    },
+    emptyTitle: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 20,
+        color: '#1A1A1A',
+        marginBottom: 8,
     },
     emptyText: {
         fontFamily: 'Poppins_400Regular',
-        fontSize: 16,
+        fontSize: 14,
         color: '#757575',
-        marginTop: 16,
+        textAlign: 'center',
+        lineHeight: 22,
     },
 });
 

@@ -217,8 +217,8 @@ const styles = StyleSheet.create({
         zIndex: -1,
     },
     title: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 18,
+        fontFamily: 'Poppins_700Bold',
+        fontSize: 24,
         color: '#1A1A1A',
         letterSpacing: 0.5,
     },

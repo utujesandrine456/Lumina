@@ -5,11 +5,9 @@ import { useRef, useEffect } from 'react';
 import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 
 export default function NotFoundScreen() {
-  // Animation values
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Load fonts
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
@@ -17,9 +15,8 @@ export default function NotFoundScreen() {
     Poppins_700Bold,
   });
 
-  // Start animations
+
   useEffect(() => {
-    // Pulse animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -35,7 +32,6 @@ export default function NotFoundScreen() {
       ])
     ).start();
 
-    // Fade in animation
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
@@ -62,7 +58,6 @@ export default function NotFoundScreen() {
       
       <View style={styles.container}>
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          {/* 404 Number with animation */}
           <Animated.Text 
             style={[
               styles.errorNumber, 
@@ -71,19 +66,14 @@ export default function NotFoundScreen() {
           >
             404
           </Animated.Text>
-          
-          {/* Error Title */}
           <Text style={styles.title}>Page Not Found</Text>
           
-          {/* Error Description */}
           <Text style={styles.description}>
             The page you're looking for doesn't exist or has been moved.
           </Text>
           
-          {/* Decorative Line */}
           <View style={styles.divider} />
           
-          {/* Home Button */}
           <Link href="/" asChild>
             <TouchableOpacity style={styles.button}>
               <Text style={styles.buttonText}>Go to Home</Text>
@@ -150,9 +140,11 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   buttonText: {
+
     fontSize: 16,
     fontFamily: 'Poppins_600SemiBold',
     color: '#000',
     letterSpacing: 0.5,
   },
 });
+

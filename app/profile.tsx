@@ -1,27 +1,61 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, TextInput } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import DriverBottomBar from '@/components/DriverBottomBar';
-import CooperativeBottomBar from '@/components/CooperativeBottomBar';
+import CooperativeBottomBar from '@/components/FarmerBottomBar';
 import { useDriverStore } from '@/constants/store';
 
 export default function Profile() {
     const router = useRouter();
     const { currentUser, drivers, updateDriver, cooperatives } = useDriverStore();
     const isDriver = currentUser?.role === 'driver';
-    const isCoop = currentUser?.role === 'cooperative';
+    const isCoop = currentUser?.role === 'adminfarmer';
     const driver = useMemo(() => isDriver ? drivers.find(d => d.id === currentUser?.id) : null, [drivers, currentUser, isDriver]);
     const [availability, setAvailability] = useState(driver?.available ?? true);
     const coop = useMemo(() => isCoop ? cooperatives.find(c => c.id === currentUser?.id || c.id === currentUser?.cooperativeId) : null, [cooperatives, currentUser, isCoop]);
+    const [send, setSend] = useState(true);
 
     const toggleAvailability = () => {
         if (!isDriver || !driver) return;
         const next = !availability;
         setAvailability(next);
         updateDriver(driver.id, { available: next });
+    };
+
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editForm, setEditForm] = useState({
+        name: '',
+        phone: '',
+        vehicleType: '',
+        plateNumber: '',
+    });
+
+    const openEditModal = () => {
+        if (!currentUser) return;
+        setEditForm({
+            name: currentUser.name,
+            phone: currentUser.phone,
+            vehicleType: driver?.vehicleType || '',
+            plateNumber: driver?.plateNumber || '',
+        });
+        setShowEditModal(true);
+    };
+
+    const handleSaveProfile = () => {
+        if (!currentUser) return;
+
+        if (isDriver && driver) {
+            updateDriver(driver.id, {
+                name: editForm.name,
+                phone: editForm.phone,
+                vehicleType: editForm.vehicleType,
+                plateNumber: editForm.plateNumber,
+            });
+        }
+        setShowEditModal(false);
     };
 
     if (!currentUser) {
@@ -33,323 +67,569 @@ export default function Profile() {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={styles.backButton}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-                </TouchableOpacity>
-                <View style={styles.titleContainer}>
-                    <Text style={styles.title}>My Profile</Text>
-                </View>
-                <View style={styles.placeholderButton} />
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.card}>
-                    <View style={styles.avatarRow}>
-                        <View style={styles.avatarContainer}>
-                            <Ionicons name={isCoop ? "business" : "person"} size={40} color="#1A1A1A" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.name}>{isCoop ? coop?.name : currentUser.name}</Text>
-                            <Text style={styles.sub}>{isCoop ? 'Cooperative Account' : driver?.plateNumber || 'ID: ' + currentUser.id.slice(0, 6)}</Text>
-                            <Text style={styles.sub}>{currentUser.phone}</Text>
-                        </View>
-                        {isDriver && (
-                            <View style={styles.availabilityPill}>
-                                <View style={[styles.dot, { backgroundColor: availability ? '#4CAF50' : '#F44336' }]} />
-                                <Text style={styles.pillText}>{availability ? 'Online' : 'Offline'}</Text>
+        <View style={styles.container}>
+            <SafeAreaView edges={['top']} style={styles.safeArea}>
+                <View style={styles.header}>
+                    <View style={styles.headerTop}>
+                        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings')}>
+                            <View style={styles.menuIconInfo}>
+                                <Ionicons name="settings-outline" size={22} color="#1A1A1A" />
+                                <Text style={styles.menuText}>Settings</Text>
                             </View>
-                        )}
+                            <Ionicons name="chevron-forward" size={20} color="#CCCCCC" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Profile</Text>
+                        <TouchableOpacity style={styles.editButton} onPress={openEditModal}>
+                            <Ionicons name="pencil-outline" size={20} color="#000" />
+                        </TouchableOpacity>
                     </View>
 
+                    <Animated.View entering={FadeInUp.duration(500)} style={styles.profileSection}>
+                        <View style={styles.avatarContainer}>
+                            <View style={styles.avatar}>
+                                <Ionicons
+                                    name={isCoop ? "business" : "person"}
+                                    size={36}
+                                    color="#000"
+                                />
+                            </View>
+                            {isDriver && availability && (
+                                <View style={styles.onlineIndicator} />
+                            )}
+                        </View>
+                        <Text style={styles.name}>
+                            {isCoop ? coop?.name : currentUser.name}
+                        </Text>
+                        <Text style={styles.role}>
+                            {isCoop ? 'Cooperative Officer' : 'Professional Driver'}
+                        </Text>
+                    </Animated.View>
+                </View>
+
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                     {isDriver && (
-                        <>
-                            <View style={styles.divider} />
-                            <View style={styles.statsGrid}>
-                                <View style={styles.statItem}>
-                                    <Ionicons name="car-outline" size={20} color="#757575" />
-                                    <Text style={styles.statText}>{driver?.vehicleType || 'Truck'}</Text>
-                                </View>
-                                <View style={styles.statItem}>
-                                    <Ionicons name="cube-outline" size={20} color="#757575" />
-                                    <Text style={styles.statText}>{driver?.capacity || 'N/A'} kg</Text>
-                                </View>
-                                <View style={styles.statItem}>
-                                    <Ionicons name="star-outline" size={20} color="#757575" />
-                                    <Text style={styles.statText}>{(driver?.rating || 4.9).toFixed(1)}</Text>
-                                </View>
+                        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.statsGrid}>
+                            <View style={styles.statCard}>
+                                <Text style={styles.statNumber}>{(driver?.rating || 4.9).toFixed(1)}</Text>
+                                <Text style={styles.statLabel}>Rating</Text>
                             </View>
-                        </>
+                            <View style={styles.statCard}>
+                                <Text style={styles.statNumber}>
+                                    {driver ? useDriverStore.getState().getDriverRequests(driver.id).filter(r => r.status === 'completed').length : 0}
+                                </Text>
+                                <Text style={styles.statLabel}>Completed Trips</Text>
+                            </View>
+                            <View style={styles.statCard}>
+                                <Text style={styles.statNumber}>{driver?.capacity ? `${driver.capacity}kg` : 'N/A'}</Text>
+                                <Text style={styles.statLabel}>Capacity</Text>
+                            </View>
+                        </Animated.View>
                     )}
 
-                    {isCoop && (
-                        <>
-                            <View style={styles.divider} />
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Officer Name:</Text>
-                                <Text style={styles.infoValue}>{coop?.officerName || currentUser.name}</Text>
+                    <Animated.View entering={FadeInDown.delay(200).springify()}>
+                        <Text style={styles.sectionTitle}>Account Details</Text>
+                        <View style={styles.card}>
+                            <View style={styles.detailItem}>
+                                <View style={styles.detailIconContainer}>
+                                    <Ionicons name="call-outline" size={18} color="#000" />
+                                </View>
+                                <View style={styles.detailTextContainer}>
+                                    <Text style={styles.detailLabel}>Phone Number</Text>
+                                    <Text style={styles.detailValue}>{currentUser.phone}</Text>
+                                </View>
                             </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Location:</Text>
-                                <Text style={styles.infoValue}>{coop?.location || 'GPS not set'}</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.infoLabel}>Farmers:</Text>
-                                <Text style={styles.infoValue}>{coop?.farmers.length || 0}</Text>
-                            </View>
-                        </>
-                    )}
-                </Animated.View>
 
-                {isDriver && (
-                    <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.actionCard}>
-                        <View style={styles.rowBetween}>
-                            <View>
-                                <Text style={styles.actionTitle}>Job Availability</Text>
-                                <Text style={styles.actionSub}>Receive new requests</Text>
+                            <View style={styles.separator} />
+
+                            <View style={styles.detailItem}>
+                                <View style={styles.detailIconContainer}>
+                                    <Ionicons name="card-outline" size={18} color="#000" />
+                                </View>
+                                <View style={styles.detailTextContainer}>
+                                    <Text style={styles.detailLabel}>{isCoop ? 'Officer ID' : 'Driver ID'}</Text>
+                                    <Text style={styles.detailValue}>{currentUser.id.slice(0, 8).toUpperCase()}</Text>
+                                </View>
                             </View>
-                            <Switch
-                                value={availability}
-                                onValueChange={toggleAvailability}
-                                trackColor={{ false: '#E0E0E0', true: '#1A1A1A' }}
-                                thumbColor={'#FFF'}
-                            />
+
+                            {isDriver && (
+                                <>
+                                    <View style={styles.separator} />
+                                    <View style={styles.detailItem}>
+                                        <View style={styles.detailIconContainer}>
+                                            <Ionicons name="car-sport-outline" size={18} color="#000" />
+                                        </View>
+                                        <View style={styles.detailTextContainer}>
+                                            <Text style={styles.detailLabel}>Vehicle Type</Text>
+                                            <Text style={styles.detailValue}>{driver?.vehicleType || 'Not Set'}</Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.separator} />
+                                    <View style={styles.detailItem}>
+                                        <View style={styles.detailIconContainer}>
+                                            <Ionicons name="text-outline" size={18} color="#000" />
+                                        </View>
+                                        <View style={styles.detailTextContainer}>
+                                            <Text style={styles.detailLabel}>Plate Number</Text>
+                                            <Text style={styles.detailValue}>{driver?.plateNumber || 'Not Set'}</Text>
+                                        </View>
+                                    </View>
+                                </>
+                            )}
+
+                            {isCoop && (
+                                <>
+                                    <View style={styles.separator} />
+                                    <View style={styles.detailItem}>
+                                        <View style={styles.detailIconContainer}>
+                                            <Ionicons name="location-outline" size={18} color="#000" />
+                                        </View>
+                                        <View style={styles.detailTextContainer}>
+                                            <Text style={styles.detailLabel}>Location</Text>
+                                            <Text style={styles.detailValue}>{coop?.location || 'GPS not set'}</Text>
+                                        </View>
+                                    </View>
+                                </>
+                            )}
                         </View>
                     </Animated.View>
-                )}
 
-                <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.menuContainer}>
-                    <TouchableOpacity style={styles.menuItem} onPress={() => { /* Edit Profile */ }}>
-                        <View style={styles.menuIconInfo}>
-                            <Ionicons name="create-outline" size={22} color="#1A1A1A" />
-                            <Text style={styles.menuText}>Edit Profile</Text>
+                    {isDriver && (
+                        <Animated.View entering={FadeInDown.delay(300).springify()}>
+                            <Text style={styles.sectionTitle}>Preferences</Text>
+                            <View style={styles.card}>
+                                <View style={styles.settingItem}>
+                                    <View style={styles.settingLeft}>
+                                        <View style={[styles.settingIcon, { backgroundColor: '#f5f5f5' }]}>
+                                            <Ionicons name="notifications-outline" size={18} color="#000" />
+                                        </View>
+                                        <Text style={styles.settingText}>Notifications</Text>
+                                    </View>
+                                    <Switch
+                                        value={true}
+                                        trackColor={{ false: '#e0e0e0', true: '#000' }}
+                                        thumbColor={'#fff'}
+                                        ios_backgroundColor="#e0e0e0"
+                                    />
+                                </View>
+
+                                <View style={styles.separator} />
+
+                                <View style={styles.settingItem}>
+                                    <View style={styles.settingLeft}>
+                                        <View style={[styles.settingIcon, { backgroundColor: availability ? '#000' : '#f5f5f5' }]}>
+                                            <Ionicons
+                                                name="power-outline"
+                                                size={18}
+                                                color={availability ? '#fff' : '#000'}
+                                            />
+                                        </View>
+                                        <Text style={styles.settingText}>Available for Jobs</Text>
+                                    </View>
+                                    <Switch
+                                        value={availability}
+                                        onValueChange={toggleAvailability}
+                                        trackColor={{ false: '#e0e0e0', true: '#000' }}
+                                        thumbColor={'#fff'}
+                                        ios_backgroundColor="#e0e0e0"
+                                    />
+                                </View>
+                            </View>
+                        </Animated.View>
+                    )}
+
+                    <Animated.View entering={FadeInDown.delay(400).springify()}>
+                        <Text style={styles.sectionTitle}>Actions</Text>
+                        <View style={styles.card}>
+                            <TouchableOpacity
+                                style={styles.actionItem}
+                                onPress={() => router.push('/help')}
+                            >
+                                <View style={styles.actionLeft}>
+                                    <View style={[styles.actionIcon, { backgroundColor: '#f5f5f5' }]}>
+                                        <Ionicons name="help-circle-outline" size={18} color="#000" />
+                                    </View>
+                                    <Text style={styles.actionText}>Help & Support</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color="#000" />
+                            </TouchableOpacity>
+
+                            <View style={styles.separator} />
+
+                            <TouchableOpacity
+                                style={styles.actionItem}
+                                onPress={() => router.replace('/login')}
+                            >
+                                <View style={styles.actionLeft}>
+                                    <View style={[styles.actionIcon, { backgroundColor: '#f5f5f5' }]}>
+                                        <Ionicons name="log-out-outline" size={18} color="#000" />
+                                    </View>
+                                    <Text style={[styles.actionText, { color: '#000' }]}>Log Out</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color="#000" />
+                            </TouchableOpacity>
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color="#CCCCCC" />
-                    </TouchableOpacity>
+                    </Animated.View>
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <View style={styles.menuIconInfo}>
-                            <Ionicons name="settings-outline" size={22} color="#1A1A1A" />
-                            <Text style={styles.menuText}>Settings</Text>
+                    <View style={styles.footerSpace} />
+                </ScrollView>
+            </SafeAreaView>
+
+            {showEditModal && (
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Edit Profile</Text>
+                            <TouchableOpacity onPress={() => setShowEditModal(false)}>
+                                <Ionicons name="close" size={24} color="#000" />
+                            </TouchableOpacity>
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color="#CCCCCC" />
-                    </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.menuItem} onPress={() => router.replace('/login')}>
-                        <View style={styles.menuIconInfo}>
-                            <Ionicons name="log-out-outline" size={22} color="#FF5252" />
-                            <Text style={[styles.menuText, { color: '#FF5252' }]}>Log Out</Text>
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.inputLabel}>Full Name</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={editForm.name}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, name: text }))}
+                                placeholder="Enter your name"
+                            />
                         </View>
-                    </TouchableOpacity>
-                </Animated.View>
 
-            </ScrollView>
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.inputLabel}>Vehicle Type</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={editForm.vehicleType}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, vehicleType: text }))}
+                                placeholder="e.g. Truck, Van"
+                            />
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.inputLabel}>Plate Number</Text>
+                            <TextInput
+                                style={styles.input}
+                                value={editForm.plateNumber}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, plateNumber: text }))}
+                                placeholder="e.g. RAA 123 B"
+                            />
+                        </View>
+
+                        <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
+                            <Text style={styles.saveButtonText}>Save Changes</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
+
             {isDriver ? <DriverBottomBar /> : <CooperativeBottomBar />}
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#fff',
     },
-    scrollContent: {
-        paddingBottom: 100,
-        paddingHorizontal: 24,
+    safeArea: {
+        flex: 1,
     },
     header: {
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+        paddingHorizontal: 20,
+        paddingBottom: 24,
+    },
+    headerTop: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingVertical: 16,
-        backgroundColor: '#FFFFFF',
-        borderBottomWidth: 1,
-        borderBottomColor: '#F5F5F5',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 10,
-        elevation: 2,
-        zIndex: 10,
+        paddingTop: 12,
+        paddingBottom: 20,
     },
     backButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#F5F5F5',
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#f5f5f5',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    editButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#f5f5f5',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    headerTitle: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 20,
+        color: '#000',
+        letterSpacing: -0.3,
+    },
+    profileSection: {
+        alignItems: 'center',
+    },
+    avatarContainer: {
+        position: 'relative',
+        marginBottom: 16,
+    },
+    avatar: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#f5f5f5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#000',
+    },
+    onlineIndicator: {
+        position: 'absolute',
+        bottom: 4,
+        right: 4,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: '#000',
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
+    name: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 24,
+        color: '#000',
+        textAlign: 'center',
+        marginBottom: 4,
+        letterSpacing: -0.5,
+    },
+    role: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+    },
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 100,
+    },
+    statsGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 24,
+    },
+    statCard: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+        borderRadius: 16,
+        padding: 16,
+        marginHorizontal: 4,
+        alignItems: 'center',
+    },
+    statNumber: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 20,
+        color: '#000',
+        marginBottom: 4,
+    },
+    statLabel: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 12,
+        color: '#666',
+        letterSpacing: 0.5,
+    },
+    sectionTitle: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 16,
+        color: '#000',
+        marginBottom: 12,
+        letterSpacing: -0.2,
+    },
+    card: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#EEEEEE',
+        borderColor: '#f0f0f0',
+        padding: 20,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    placeholderButton: {
-        width: 44,
+    detailItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
-    titleContainer: {
+    detailIconContainer: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#f5f5f5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    detailTextContainer: {
+        flex: 1,
+    },
+    detailLabel: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 12,
+        color: '#666',
+        marginBottom: 2,
+        letterSpacing: 0.3,
+    },
+    detailValue: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 15,
+        color: '#000',
+        letterSpacing: -0.2,
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#f0f0f0',
+        marginVertical: 16,
+        marginLeft: 48,
+    },
+    settingItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    settingLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    settingIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    settingText: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 15,
+        color: '#000',
+        letterSpacing: -0.2,
+    },
+    actionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    actionLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    actionIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    actionText: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 15,
+        color: '#000',
+        letterSpacing: -0.2,
+    },
+    footerSpace: {
+        height: 40,
+    },
+    modalOverlay: {
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+        zIndex: 1000,
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 24,
+        height: '60%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    modalTitle: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 20,
+        color: '#000',
+    },
+    inputGroup: {
+        marginBottom: 20,
+    },
+    inputLabel: {
+        fontFamily: 'Poppins_500Medium',
+        fontSize: 14,
+        color: '#1A1A1A',
+        marginBottom: 8,
+    },
+    input: {
+        backgroundColor: '#f5f5f5',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 16,
+        color: '#000',
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    saveButton: {
+        backgroundColor: '#000',
+        borderRadius: 16,
+        height: 56,
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: -1,
-    },
-    title: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 18,
-        color: '#1A1A1A',
-        letterSpacing: 0.5,
-    },
-    card: {
-        marginTop: 24,
-        backgroundColor: '#FFF',
-        borderRadius: 24,
-        padding: 24,
-        borderWidth: 1,
-        borderColor: '#F0F0F0',
+        marginTop: 12,
         shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 16,
-        shadowOffset: { width: 0, height: 8 },
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
         elevation: 3,
     },
-    avatarRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-    },
-    avatarContainer: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        backgroundColor: '#F5F5F5',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#EEEEEE',
-    },
-    name: {
+    saveButtonText: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 18,
-        color: '#1A1A1A',
-    },
-    sub: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 13,
-        color: '#757575',
-    },
-    availabilityPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: '#FAFAFA',
-        borderWidth: 1,
-        borderColor: '#EEEEEE',
-        borderRadius: 12,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-    },
-    dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-    },
-    pillText: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 11,
-        color: '#1A1A1A',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#F0F0F0',
-        marginVertical: 20,
-    },
-    statsGrid: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 8,
-    },
-    statItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    statText: {
-        fontFamily: 'Poppins_500Medium',
-        fontSize: 13,
-        color: '#444',
-    },
-    infoRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    infoLabel: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 14,
-        color: '#757575',
-    },
-    infoValue: {
-        fontFamily: 'Poppins_500Medium',
-        fontSize: 14,
-        color: '#1A1A1A',
-    },
-    actionCard: {
-        marginTop: 16,
-        backgroundColor: '#FFF',
-        borderRadius: 20,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: '#F0F0F0',
-        shadowColor: '#000',
-        shadowOpacity: 0.03,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 2,
-    },
-    rowBetween: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    actionTitle: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 15,
-        color: '#1A1A1A',
-    },
-    actionSub: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 12,
-        color: '#999',
-    },
-    menuContainer: {
-        marginTop: 32,
-        gap: 0,
+        fontSize: 16,
+        color: '#fff',
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F9F9F9',
+        backgroundColor: '#f5f5f5',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 20,
+        gap: 8,
     },
     menuIconInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 16,
+        gap: 6,
     },
     menuText: {
         fontFamily: 'Poppins_500Medium',
-        fontSize: 15,
+        fontSize: 14,
         color: '#1A1A1A',
     },
 });

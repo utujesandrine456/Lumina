@@ -8,9 +8,9 @@ import { useDriverStore } from '@/constants/store';
 export default function RateDriver() {
     const router = useRouter();
     const { tripId } = useLocalSearchParams();
-    const { trips, rateDriver, updateDriver } = useDriverStore();
-    
-    const trip = trips.find(t => t.id === tripId);
+    const { requests, rateDriver } = useDriverStore();
+
+    const trip = (requests || []).find(t => t.id === tripId);
     const [rating, setRating] = useState<'good' | 'average' | 'bad' | null>(null);
     const [comment, setComment] = useState('');
 
@@ -37,16 +37,6 @@ export default function RateDriver() {
         const ratingValue = rating === 'good' ? 5 : rating === 'average' ? 3 : 1;
         rateDriver(tripId as string, ratingValue, comment);
 
-        // Update driver's average rating
-        const driver = trip.driver!;
-        const driverTrips = trips.filter(t => t.driverId === driver.id && t.rating);
-        const newAverageRating = driverTrips.length > 0
-            ? (driverTrips.reduce((sum, t) => sum + (t.rating || 0), 0) + ratingValue) / (driverTrips.length + 1)
-            : ratingValue;
-
-        updateDriver(driver.id, { rating: newAverageRating });
-
-        // If rating is bad, consider suspending driver
         if (rating === 'bad') {
             Alert.alert(
                 'Rating Submitted',

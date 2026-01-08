@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, Alert, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, Alert, Platform, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,42 +13,44 @@ export default function RegisterFarmer() {
     const [name, setName] = useState('');
     const [crops, setCrops] = useState('');
     const [phone, setPhone] = useState('');
+    const [location, setLocation] = useState('');
+
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const handleSubmit = () => {
-        if (!name || !phone || !crops) {
+        console.log("Submit pressed");
+        if (!name || !phone || !crops || !location) {
+            console.log("Missing fields");
             Alert.alert('Missing Fields', 'Please fill in all required fields.');
             return;
         }
 
         const coopId = currentUser?.cooperativeId || currentUser?.id;
+        console.log("CoopID:", coopId);
 
         if (!coopId) {
             Alert.alert('Error', 'You must be logged in as a cooperative officer.');
             return;
         }
 
-        addFarmerToCoop(coopId, {
-            id: Date.now().toString(),
-            cooperativeId: coopId,
-            name,
-            phone,
-            crops: crops.split(',').map(c => ({ id: Math.random().toString(), name: c.trim() })),
-            location: 'Unknown'
-        });
-
-        if (Platform.OS === 'web' || Platform.OS === 'windows') {
-            window.alert('Farmer registered successfully!');
-            router.back();
-        } else {
-            Alert.alert(
-                'Success',
-                'Farmer registered successfully!',
-                [
-                    { text: 'OK', onPress: () => router.back() }
-                ]
-            );
+        try {
+            console.log("Adding farmer...");
+            addFarmerToCoop(coopId, {
+                id: Date.now().toString(),
+                cooperativeId: coopId,
+                name,
+                phone,
+                crops: crops.split(',').map(c => ({ id: Math.random().toString(), name: c.trim() })),
+                location: location
+            });
+            console.log("Farmer added, showing success");
+            setShowSuccessModal(true);
+        } catch (error) {
+            console.error("Error adding farmer:", error);
+            Alert.alert('Error', 'Failed to register farmer');
         }
     };
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -87,6 +89,15 @@ export default function RegisterFarmer() {
                         placeholderTextColor="#999"
                     />
 
+                    <Text style={styles.label}>Location *</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="e.g., Musanze, District"
+                        value={location}
+                        onChangeText={setLocation}
+                        placeholderTextColor="#999"
+                    />
+
                     <Text style={styles.label}>Crops Type *</Text>
                     <TextInput
                         style={styles.input}
@@ -103,9 +114,32 @@ export default function RegisterFarmer() {
                     </TouchableOpacity>
                 </Animated.View>
             </ScrollView>
+
+            {showSuccessModal && (
+                <View style={[StyleSheet.absoluteFill, styles.modalOverlay]}>
+                    <Animated.View entering={FadeInDown.springify()} style={styles.modalContent}>
+                        <View style={styles.successIcon}>
+                            <Ionicons name="checkmark-sharp" size={40} color="#FFF" />
+                        </View>
+                        <Text style={styles.modalTitle}>Registration Successful!</Text>
+                        <Text style={styles.modalMessage}>Farmer {name} has been added to your cooperative list.</Text>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => {
+                                setShowSuccessModal(false);
+                                router.back();
+                            }}
+                        >
+                            <Text style={styles.modalButtonText}>Done</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+                </View>
+            )}
         </SafeAreaView>
     );
 }
+
+
 
 const styles = StyleSheet.create({
     container: {
@@ -204,6 +238,62 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     submitButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontFamily: 'Poppins_600SemiBold',
+    },
+    modalOverlay: {
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+        zIndex: 1000,
+    },
+    modalContent: {
+        backgroundColor: '#FFF',
+        borderRadius: 24,
+        padding: 32,
+        width: '100%',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    successIcon: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#1A1A1A',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 20,
+        color: '#1A1A1A',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontFamily: 'Poppins_400Regular',
+        fontSize: 14,
+        color: '#757575',
+        textAlign: 'center',
+        marginBottom: 32,
+        lineHeight: 22,
+    },
+    modalButton: {
+        backgroundColor: '#1A1A1A',
+        paddingVertical: 16,
+        paddingHorizontal: 32,
+        borderRadius: 16,
+        width: '100%',
+        alignItems: 'center',
+    },
+    modalButtonText: {
         color: '#FFF',
         fontSize: 16,
         fontFamily: 'Poppins_600SemiBold',

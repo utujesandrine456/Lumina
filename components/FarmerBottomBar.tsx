@@ -3,12 +3,12 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 
-export default function CooperativeBottomBar() {
+export default function FarmerBottomBar() {
   const router = useRouter();
   const pathname = usePathname();
 
   const tabs: { name: string, route: string, icon: keyof typeof Ionicons.glyphMap; }[] = [
-    { name: "Dashboard", icon: "home-outline", route: "/cooperativedashboard" },
+    { name: "Dashboard", icon: "home-outline", route: "/adminfarmerdashboard" },
     { name: "Farmers", icon: "people-outline", route: "/farmerslist" },
     { name: "Drivers", icon: "car-outline", route: "/nearbydrivers" },
     { name: "Trips", icon: "map-outline", route: "/trips" },

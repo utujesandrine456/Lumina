@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
-import { View, Text, Alert } from 'react-native';
+import { useEffect } from 'react';
+import { View, Text } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -11,6 +11,7 @@ import {
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
 import { Satisfy_400Regular } from '@expo-google-fonts/satisfy';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,7 +41,7 @@ export default function Layout() {
 
 
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
@@ -48,15 +49,16 @@ export default function Layout() {
         <Stack.Screen name="PhoneVerificationScreen" />
         <Stack.Screen name="CFarmerDashboardScreen" />
         <Stack.Screen name="AddFarmerScreen" />
-        <Stack.Screen name="FarmerListScreen" />
-        <Stack.Screen name="CreateRequestScreen" />
-        <Stack.Screen name="ChatScreen" />
-        <Stack.Screen name="CDriverDashboardScreen" />
+        <Stack.Screen name="farmerlist" />
+        <Stack.Screen name="createtransportrequest" />
+        <Stack.Screen name="chat" />
+        <Stack.Screen name="admindriverdashboard" />
         <Stack.Screen name="driverdashboard" />
         <Stack.Screen name="profile" />
-        <Stack.Screen name="deliveryconfirmation" />
+        <Stack.Screen name="driverslist" />
+        <Stack.Screen name="settings" />
         <Stack.Screen name="help" />
       </Stack>
-    </>
+    </ErrorBoundary>
   );
 }

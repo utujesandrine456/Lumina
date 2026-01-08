@@ -4,25 +4,25 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
-import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming, withRepeat, withSequence } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { formatDateTime } from '@/utils/DateUtils';
 
 export default function BookingStatus() {
     const router = useRouter();
     const { tripId } = useLocalSearchParams<{ tripId: string }>();
-    const { trips, updateTrip } = useDriverStore();
-    
-    const trip = trips.find(t => t.id === tripId);
+    const requests = useDriverStore((s) => s.requests);
+    const trip = requests.find(r => r.id === tripId);
+    const drivers = useDriverStore(s => s.drivers);
+    const tripDriver = trip?.driverId ? drivers.find(d => d.id === trip.driverId) : undefined;
     const progress = useSharedValue(0);
 
     useEffect(() => {
         if (trip) {
-            // Animate progress bar based on status
             let targetProgress = 0;
             if (trip.status === 'pending') targetProgress = 0.25;
             else if (trip.status === 'accepted') targetProgress = 0.5;
-            else if (trip.status === 'in-transit') targetProgress = 0.75;
-            else if (trip.status === 'delivered') targetProgress = 1;
+            else if (trip.status === 'in-progress') targetProgress = 0.75;
+            else if (trip.status === 'completed') targetProgress = 1;
 
             progress.value = withTiming(targetProgress, { duration: 1000 });
         }
@@ -64,14 +64,14 @@ export default function BookingStatus() {
                     color: '#000',
                     description: 'Driver accepted. Price is locked. Coordinate pickup.',
                 };
-            case 'in-transit':
+            case 'in-progress':
                 return {
                     label: 'In Transit',
                     icon: 'car-outline',
                     color: '#000',
                     description: 'Cargo is being transported to destination',
                 };
-            case 'delivered':
+            case 'completed':
                 return {
                     label: 'Delivered',
                     icon: 'checkmark-circle',
@@ -93,9 +93,9 @@ export default function BookingStatus() {
     const handleAction = () => {
         if (trip.status === 'accepted') {
             router.push({ pathname: '/pickupconfirmation', params: { tripId: trip.id } });
-        } else if (trip.status === 'in-transit') {
-            router.push({ pathname: '/deliveryconfirmation', params: { tripId: trip.id } });
-        } else if (trip.status === 'delivered' && !trip.rating) {
+        } else if (trip.status === 'in-progress') {
+            router.push({ pathname: '/delivery', params: { tripId: trip.id } });
+        } else if (trip.status === 'completed' && !trip.rating) {
             router.push({ pathname: '/ratedriver', params: { tripId: trip.id } });
         }
     };
@@ -165,16 +165,16 @@ export default function BookingStatus() {
                                     <View style={[styles.progressStepDot, trip.status !== 'pending' && styles.progressStepDotCompleted]} />
                                     <Text style={styles.progressStepLabel}>Pending</Text>
                                 </View>
-                                <View style={[styles.progressStep, (trip.status === 'accepted' || trip.status === 'in-transit' || trip.status === 'delivered') && styles.progressStepCompleted]}>
-                                    <View style={[styles.progressStepDot, (trip.status === 'accepted' || trip.status === 'in-transit' || trip.status === 'delivered') && styles.progressStepDotCompleted]} />
+                                <View style={[styles.progressStep, (trip.status === 'accepted' || trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepCompleted]}>
+                                    <View style={[styles.progressStepDot, (trip.status === 'accepted' || trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepDotCompleted]} />
                                     <Text style={styles.progressStepLabel}>Accepted</Text>
                                 </View>
-                                <View style={[styles.progressStep, (trip.status === 'in-transit' || trip.status === 'delivered') && styles.progressStepCompleted]}>
-                                    <View style={[styles.progressStepDot, (trip.status === 'in-transit' || trip.status === 'delivered') && styles.progressStepDotCompleted]} />
+                                <View style={[styles.progressStep, (trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepCompleted]}>
+                                    <View style={[styles.progressStepDot, (trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepDotCompleted]} />
                                     <Text style={styles.progressStepLabel}>In Transit</Text>
                                 </View>
-                                <View style={[styles.progressStep, trip.status === 'delivered' && styles.progressStepCompleted]}>
-                                    <View style={[styles.progressStepDot, trip.status === 'delivered' && styles.progressStepDotCompleted]} />
+                                <View style={[styles.progressStep, trip.status === 'completed' && styles.progressStepCompleted]}>
+                                    <View style={[styles.progressStepDot, trip.status === 'completed' && styles.progressStepDotCompleted]} />
                                     <Text style={styles.progressStepLabel}>Delivered</Text>
                                 </View>
                             </View>
@@ -189,7 +189,7 @@ export default function BookingStatus() {
                                 <Text style={styles.driverPlate}>{trip.driver.plateNumber}</Text>
                                 <View style={styles.ratingRow}>
                                     <Ionicons name="star" size={16} color="#000" />
-                                    <Text style={styles.rating}>{trip.driver.rating.toFixed(1)}</Text>
+                                    <Text style={styles.rating}>{trip.driver.rating?.toFixed(1)}</Text>
                                 </View>
                             </View>
                         </View>
@@ -199,7 +199,7 @@ export default function BookingStatus() {
                         <View style={styles.timestampCard}>
                             <Text style={styles.timestampLabel}>Pickup Confirmed</Text>
                             <Text style={styles.timestampValue}>
-                                {formatDateTime(trip.pickupTimestamp)}
+                                {formatDateTime(new Date(trip.pickupTimestamp))}
                             </Text>
                             {trip.pickupWeight && (
                                 <Text style={styles.timestampWeight}>
@@ -213,7 +213,7 @@ export default function BookingStatus() {
                         <View style={styles.timestampCard}>
                             <Text style={styles.timestampLabel}>Delivery Confirmed</Text>
                             <Text style={styles.timestampValue}>
-                                {formatDateTime(trip.deliveryTimestamp)}
+                                {formatDateTime(new Date(trip.deliveryTimestamp))}
                             </Text>
                             {trip.deliveryWeight && (
                                 <Text style={styles.timestampWeight}>
@@ -223,7 +223,8 @@ export default function BookingStatus() {
                         </View>
                     )}
 
-                    {(trip.status === 'accepted' || trip.status === 'in-transit') && (
+
+                    {(trip.status === 'accepted' || trip.status === 'in-progress') && (
                         <TouchableOpacity style={styles.actionButton} onPress={handleAction}>
                             <Text style={styles.actionButtonText}>
                                 {trip.status === 'accepted' ? 'Confirm Pickup' : 'Confirm Delivery'}
