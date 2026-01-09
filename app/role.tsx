@@ -105,12 +105,7 @@ export default function RoleScreen() {
                     </TouchableOpacity>
                 </Link>
             </View>
-            
-            <View style={{position: 'absolute', bottom: 10,left: 0,right: 0, flexDirection: 'row',justifyContent: 'space-between',paddingHorizontal: 20}}>
-                <View style={{width: 100, height: 100, backgroundColor: 'black',borderRadius: 50, left: -40, top: 40}}/>
-                <View style={{width: 100, height: 100,backgroundColor: 'black',borderRadius: 50, right: -40, top: 40}}/>
-            </View>
-            
+                        
         </SafeAreaView> 
     );
 }

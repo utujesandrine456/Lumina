@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
-import { useRouter, Link, useLocalSearchParams } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore, CurrentUser } from '@/constants/store';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -8,158 +8,78 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Login() {
     const router = useRouter();
-    const params = useLocalSearchParams();
-    const [selectedRole, setSelectedRole] = useState<string | null>(
-        (params.role as string) || null
-    );
-
     const [phone, setPhone] = useState('');
     const [pin, setPin] = useState('');
     const [showPin, setShowPin] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
-    const { setCurrentUser, drivers, cooperatives, addCooperative, addDriver } = useDriverStore();
+    const { setCurrentUser, findUserByCredentials } = useDriverStore();
 
 
     const handleLogin = () => {
         setErrorMsg('');
-
-        if (!selectedRole) {
-            setErrorMsg('Please select a role first');
-            return;
-        }
 
         if (!phone || phone.length < 10) {
             setErrorMsg('Please enter a valid phone number');
             return;
         }
 
-        let loggedInUser: CurrentUser | null = null;
-
-        if (selectedRole === 'driver') {
-            console.log("Searching for driver with phone:", phone, "and pin:", pin);
-            let driver = drivers.find(d => d.phone === phone && d.pin === pin);
-
-            if (!driver && (phone === '0785805869' || phone.endsWith('123'))) {
-                const newDriver = {
-                    id: 'demo-driver-' + Date.now(),
-                    name: 'John Doe',
-                    phone: phone,
-                    pin: pin || '1234',
-                    nationalId: '1199080000000000',
-                    licenseNumber: 'R1234567',
-                    plateNumber: 'RAA 123 B',
-                    vehicleType: 'Truck',
-                    available: true,
-                    verified: true,
-                    role: 'driver' as const,
-                };
-                addDriver(newDriver);
-                driver = newDriver;
-            }
-
-            if (driver) {
-                loggedInUser = {
-                    id: driver.id,
-                    name: driver.name,
-                    phone: driver.phone,
-                    role: 'driver',
-                    cooperativeId: driver.cooperativeId
-                };
-            } else {
-                console.log("Driver not found in store. Available drivers:", drivers.map(d => d.phone));
-            }
-            
-        } else if (selectedRole === 'adminfarmer' || selectedRole === 'admindriver') {
-            if (selectedRole === 'adminfarmer') {
-                const coop = cooperatives.find(c => c.phone === phone && c.pin === pin);
-                if (coop) {
-                    loggedInUser = {
-                        id: coop.id,
-                        name: coop.officerName,
-                        phone: coop.phone,
-                        role: 'adminfarmer',
-                        cooperativeId: coop.id
-                    };
-                } else {
-                    const fallbackCoopId = 'temp-coop-id';
-                    const hasFallbackCoop = cooperatives.some(c => c.id === fallbackCoopId);
-
-                    if (!hasFallbackCoop) {
-                        addCooperative({
-                            id: fallbackCoopId,
-                            name: 'Demo Cooperative',
-                            officerName: 'Admin User',
-                            phone: phone,
-                            pin: pin,
-                            status: 'verified',
-                            farmers: []
-                        });
-                    }
-
-                    loggedInUser = {
-                        id: Date.now().toString(),
-                        name: 'Admin User',
-                        phone,
-                        role: 'adminfarmer',
-                        cooperativeId: fallbackCoopId,
-                    };
-                }
-            } else {
-                loggedInUser = {
-                    id: Date.now().toString(),
-                    name: 'Admin Driver',
-                    phone,
-                    role: 'admindriver',
-                    cooperativeId: cooperatives[0]?.id ?? undefined,
-                };
-            }
-        } else {
-            console.warn("Login logic for this role not fully implemented in mock", selectedRole);
-        }
-
-        if (!loggedInUser) {
-            console.log("Login failed: User not found or invalid credentials");
-            setErrorMsg('Invalid Credentials. Please check your inputs.');
+        if (!pin) {
+            setErrorMsg('Please enter your PIN');
             return;
         }
 
-        console.log("Login successful, setting user:", loggedInUser.role);
-        setCurrentUser(loggedInUser);
-        setErrorMsg(''); // Clear error on success
+        const result = findUserByCredentials(phone, pin);
 
-        console.log("Navigating to...");
+        if (!result) {
+            setErrorMsg('Invalid credentials. Please try again.');
+            return;
+        }
+
+        let loggedInUser: CurrentUser;
+
+        if (result.role === 'driver') {
+            const driver = result.data as any;
+            loggedInUser = {
+                id: driver.id,
+                name: driver.name,
+                phone: driver.phone,
+                role: 'driver',
+                cooperativeId: driver.cooperativeId
+            };
+        } else if (result.role === 'adminfarmer') {
+            const coop = result.data as any;
+            loggedInUser = {
+                id: coop.id,
+                name: coop.officerName,
+                phone: coop.phone,
+                role: 'adminfarmer',
+                cooperativeId: coop.id
+            };
+        } else {
+            const driver = result.data as any;
+            loggedInUser = {
+                id: driver.id,
+                name: driver.name,
+                phone: driver.phone,
+                role: 'admindriver',
+                cooperativeId: driver.cooperativeId
+            };
+        }
+
+        setCurrentUser(loggedInUser);
+
+
         switch (loggedInUser.role) {
             case 'driver':
-                console.log("Pushing to /profile");
-                router.push('/profile');
+                router.push('/driverdashboard');
                 break;
             case 'adminfarmer':
-                console.log("Pushing to /adminfarmerdashboard");
                 router.push('/adminfarmerdashboard');
                 break;
             case 'admindriver':
-                console.log("Pushing to /admindriverdashboard");
                 router.push('/admindriverdashboard');
                 break;
-            default:
-                console.log("Pushing to /");
-                router.push('/');
-                break;
         }
-    };
-
-    const RoleChip = ({ value, label, icon }: { value: string; label: string; icon: keyof typeof Ionicons.glyphMap }) => {
-        const active = selectedRole === value;
-        return (
-            <TouchableOpacity
-                style={[styles.chip, active && styles.chipActive]}
-                onPress={() => setSelectedRole(value)}
-                activeOpacity={0.9}
-            >
-                <Ionicons name={icon} size={20} color={active ? '#FFF' : '#000'} />
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
-            </TouchableOpacity>
-        );
     };
 
     return (
@@ -175,14 +95,6 @@ export default function Login() {
                     <View style={styles.titleContainer}>
                         <Text style={styles.title}>Welcome Back</Text>
                         <Text style={styles.subtitle}>Sign in to continue to Lumina</Text>
-                    </View>
-
-                    <View style={styles.roleContainer}>
-                        <Text style={styles.roleLabel}>Choose Your Role</Text>
-                        <View style={styles.chipsRow}>
-                            <RoleChip value="adminfarmer" label="Admin Farmer" icon="people" />
-                            <RoleChip value="driver" label="Driver" icon="car" />
-                        </View>
                     </View>
 
                     <View style={styles.formContainer}>
@@ -229,9 +141,9 @@ export default function Login() {
                         ) : null}
 
                         <TouchableOpacity
-                            style={[styles.loginButton, (phone.length >= 10 && selectedRole) ? styles.loginButtonActive : styles.loginButtonDisabled]}
+                            style={[styles.loginButton, (phone.length >= 10 && pin.length >= 4) ? styles.loginButtonActive : styles.loginButtonDisabled]}
                             onPress={handleLogin}
-                            disabled={phone.length < 10 || !selectedRole}
+                            disabled={phone.length < 10 || pin.length < 4}
                             activeOpacity={0.8}
                         >
                             <Text style={styles.loginButtonText}>Login</Text>

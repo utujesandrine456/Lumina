@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert, RefreshControl } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,29 +21,53 @@ function NearbyDriversContent() {
     const { requestId } = useLocalSearchParams();
 
 
-    useEffect(() => {
+    const [refreshing, setRefreshing] = useState(false);
+    const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+
+    const loadDrivers = () => {
         const available = drivers.filter(d => d.available);
         setNearbyDrivers(available);
+    };
+
+    useEffect(() => {
+        loadDrivers();
     }, [drivers, setNearbyDrivers]);
 
-    const handleDriverSelect = (driver: any) => {
+    const onRefresh = async () => {
+        setRefreshing(true);
+        setTimeout(() => {
+            loadDrivers();
+            setRefreshing(false);
+        }, 1500);
+    };
+
+    const handleDriverSelect = (driverId: string) => {
+        setSelectedDriverId(driverId === selectedDriverId ? null : driverId);
+    };
+
+    const confirmSelection = () => {
+        if (!selectedDriverId) return;
+
         if (!requestId) {
             Alert.alert('Error', 'No active request found.');
             return;
         }
 
+        const driver = nearbyDrivers.find(d => d.id === selectedDriverId);
+        if (!driver) return;
+
         updateRequest(requestId as string, {
             driverId: driver.id,
-            status: 'pending'
+            status: 'pending' 
         });
 
         Alert.alert(
             'Request Sent',
-            `Your request has been sent to ${driver.name}. You will be notified when they accept.`,
+            `Your request has been sent to ${driver.name}. You can track the status in Trips.`,
             [
                 {
-                    text: 'Go to Dashboard',
-                    onPress: () => router.push('/adminfarmerdashboard')
+                    text: 'Go to Trips',
+                    onPress: () => router.push('/trips')
                 }
             ]
         );
@@ -51,44 +75,49 @@ function NearbyDriversContent() {
 
     const renderDriver = ({ item }: { item: any }) => {
         const distance = item.distance || (Math.random() * 5);
+        const isSelected = selectedDriverId === item.id;
 
         return (
             <TouchableOpacity
-                style={styles.driverCard}
-                onPress={() => handleDriverSelect(item)}
+                style={[
+                    styles.driverCard,
+                    isSelected && { backgroundColor: '#000', borderColor: '#000' }
+                ]}
+                onPress={() => handleDriverSelect(item.id)}
+                activeOpacity={0.9}
             >
                 <View style={styles.driverHeader}>
                     <View style={styles.driverInfo}>
-                        <View style={styles.avatarCircle}>
-                            <Ionicons name="person" size={24} color="#FFF" />
+                        <View style={[styles.avatarCircle, isSelected && { backgroundColor: '#FFF' }]}>
+                            <Ionicons name="person" size={24} color={isSelected ? "#000" : "#FFF"} />
                         </View>
                         <View style={styles.driverDetails}>
-                            <Text style={styles.driverName}>{item.name}</Text>
-                            <Text style={styles.plateNumber}>{item.plateNumber} • {item.vehicleType || 'Truck'}</Text>
+                            <Text style={[styles.driverName, isSelected && { color: '#FFF' }]}>{item.name}</Text>
+                            <Text style={[styles.plateNumber, isSelected && { color: '#CCC' }]}>{item.plateNumber} • {item.vehicleType || 'Truck'}</Text>
                         </View>
                     </View>
-                    <View style={styles.ratingContainer}>
+                    <View style={[styles.ratingContainer, isSelected && { backgroundColor: '#333' }]}>
                         <Ionicons name="star" size={14} color="#FFD700" />
-                        <Text style={styles.rating}>{(item.rating || 5.0).toFixed(1)}</Text>
+                        <Text style={[styles.rating, isSelected && { color: '#FFF' }]}>{(item.rating || 5.0).toFixed(1)}</Text>
                     </View>
                 </View>
 
                 <View style={styles.driverStats}>
-                    <View style={styles.statBadge}>
-                        <Ionicons name="cube-outline" size={16} color="#666" />
-                        <Text style={styles.statText}>{item.capacity || '1000'} kg</Text>
+                    <View style={[styles.statBadge, isSelected && { backgroundColor: '#333' }]}>
+                        <Ionicons name="cube-outline" size={16} color={isSelected ? "#FFF" : "#666"} />
+                        <Text style={[styles.statText, isSelected && { color: '#FFF' }]}>{item.capacity || '1000'} kg</Text>
                     </View>
-                    <View style={styles.statBadge}>
-                        <Ionicons name="location-outline" size={16} color="#666" />
-                        <Text style={styles.statText}>
+                    <View style={[styles.statBadge, isSelected && { backgroundColor: '#333' }]}>
+                        <Ionicons name="location-outline" size={16} color={isSelected ? "#FFF" : "#666"} />
+                        <Text style={[styles.statText, isSelected && { color: '#FFF' }]}>
                             {distance.toFixed(1)} km away
                         </Text>
                     </View>
                 </View>
 
-                <View style={styles.availabilityBadge}>
+                <View style={[styles.availabilityBadge, isSelected && { borderTopColor: '#333' }]}>
                     <View style={[styles.availabilityDot, { backgroundColor: '#4CAF50' }]} />
-                    <Text style={styles.availabilityText}>Available Now</Text>
+                    <Text style={[styles.availabilityText, isSelected && { color: '#4CAF50' }]}>Available Now</Text>
                 </View>
             </TouchableOpacity>
         );
@@ -124,7 +153,19 @@ function NearbyDriversContent() {
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    }
                 />
+            )}
+
+            {selectedDriverId && (
+                <View style={styles.footer}>
+                    <TouchableOpacity style={styles.confirmButton} onPress={confirmSelection}>
+                        <Text style={styles.confirmButtonText}>Confirm Selection</Text>
+                        <Ionicons name="arrow-forward" size={20} color="#FFF" />
+                    </TouchableOpacity>
+                </View>
             )}
 
             <FarmerBottomBar />
@@ -290,6 +331,26 @@ const styles = StyleSheet.create({
         fontFamily: 'Poppins_400Regular',
         fontSize: 14,
         color: '#999',
+    },
+    footer: {
+        padding: 24,
+        backgroundColor: '#FFF',
+        borderTopWidth: 1,
+        borderTopColor: '#F0F0F0',
+    },
+    confirmButton: {
+        backgroundColor: '#000',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 16,
+        borderRadius: 16,
+        gap: 8,
+    },
+    confirmButtonText: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 16,
+        color: '#FFF',
     },
 });
 

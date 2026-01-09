@@ -17,9 +17,10 @@ export default function OTPScreen() {
     const name = params.name as string;
     const coopName = params.coopName as string;
     const pin = params.pin as string;
+    const location = params.location as string;
 
     const { setCurrentUser, drivers, addDriver, addCooperative } = useDriverStore();
-    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [otp, setOtp] = useState(['', '', '', '', '', ' ']);
     const [timer, setTimer] = useState(60);
     const [canResend, setCanResend] = useState(false);
     const inputRefs = useRef<(TextInput | null)[]>([]);
@@ -100,20 +101,20 @@ export default function OTPScreen() {
 
         if (role === 'adminfarmer') {
             const coopId = `coop-${phone}`;
-            setCurrentUser({ id: coopId, name: name || 'Cooperative Officer', phone, role: 'adminfarmer' });
+            setCurrentUser({ id: coopId, name: name || 'Cooperative Officer', phone, role: 'adminfarmer', cooperativeId: coopId });
             addCooperative({
                 id: coopId,
                 name: coopName || 'Cooperative',
                 officerName: name || 'Officer',
-                location: '',
+                location: location || '',
                 phone: phone || '',
                 pin: pin || '',
                 status: 'pending',
                 farmers: [],
             });
 
-            router.push('/admindriverdashboard');
-        } else if (role === 'driver') {
+            router.push('/adminfarmerdashboard');
+        } else if (role === 'admindriver') {
             const existing = drivers.find((d) => d.phone === phone);
             const driver = existing ?? {
                 id: `drv-${Date.now()}`,
@@ -125,11 +126,11 @@ export default function OTPScreen() {
                 rating: 0,
                 availability: true,
                 verified: false,
-            } as any; 
+            } as any;
 
             if (!existing) addDriver(driver);
             setCurrentUser({ id: driver.id, name: driver.name || 'Driver', phone: phone || '', role: 'driver' });
-            router.push('/driverdashboard');
+            router.push('/admindriverdashboard');
         } else {
             setCurrentUser({ id: `user-${Date.now()}`, name: name || 'User', phone: phone || '', role: safeRole || 'user' });
             Alert.alert("Success", "Account verified!");
@@ -144,7 +145,7 @@ export default function OTPScreen() {
         Alert.alert('Code Sent', 'A new verification code has been sent.');
     };
 
-    
+
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -204,6 +205,7 @@ export default function OTPScreen() {
         </SafeAreaView>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {

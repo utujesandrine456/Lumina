@@ -10,7 +10,7 @@ export default function BottomBar() {
   const tabs: { name: string, route: string, icon: keyof typeof Ionicons.glyphMap; }[] = [
     { name: "Dashboard", icon: "home-outline", route: "/driverdashboard" },
     { name: "Jobs", icon: "briefcase-outline", route: "/driverjobs" },
-    { name: "Trips", icon: "map-outline", route: "/trips" },
+    { name: "Requests", icon: "map-outline", route: "/requests" },
     { name: "Profile", icon: "person-outline", route: "/profile" },
   ];
 

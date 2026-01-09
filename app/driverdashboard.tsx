@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
 import * as Location from 'expo-location';
-import DriverBottomBar from '@/components/DriverBottomBar';
+import BottomBar from '@/components/DriverBottomBar';
 
 const { width } = Dimensions.get('window');
 
@@ -19,22 +19,42 @@ export default function DriverDashboard() {
 
     useEffect(() => {
         let subscription: Location.LocationSubscription | null = null;
+        let isMounted = true;
 
         const startTracking = async () => {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') return;
+            try {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (!isMounted) return;
+                if (status !== 'granted') return;
 
-            subscription = await Location.watchPositionAsync(
-                { accuracy: Location.Accuracy.High, distanceInterval: 50 },
-                (loc) => {
-                    if (currentUser?.id) {
-                        updateDriverLocation(currentUser.id, {
-                            latitude: loc.coords.latitude,
-                            longitude: loc.coords.longitude
-                        });
+                const sub = await Location.watchPositionAsync(
+                    { accuracy: Location.Accuracy.High, distanceInterval: 50 },
+                    (loc) => {
+                        if (currentUser?.id) {
+                            updateDriverLocation(currentUser.id, {
+                                latitude: loc.coords.latitude,
+                                longitude: loc.coords.longitude
+                            });
+                        }
                     }
+                );
+
+                if (!isMounted) {
+                    // Component unmounted while we were waiting for the promise
+                    if (sub) {
+                        try {
+                            sub.remove();
+                        } catch (e) {
+                            console.warn("Error removing subscription:", e);
+                        }
+                    }
+                    return;
                 }
-            );
+
+                subscription = sub;
+            } catch (error) {
+                console.warn("Error starting location tracking:", error);
+            }
         };
 
         if (isAvailable) {
@@ -42,7 +62,14 @@ export default function DriverDashboard() {
         }
 
         return () => {
-            if (subscription) subscription.remove();
+            isMounted = false;
+            if (subscription) {
+                try {
+                    subscription.remove();
+                } catch (e) {
+                    console.warn("Error removing subscription:", e);
+                }
+            }
         };
     }, [isAvailable, currentUser]);
 
@@ -156,7 +183,8 @@ export default function DriverDashboard() {
                 </Animated.View>
 
             </ScrollView>
-            <DriverBottomBar />
+
+            <BottomBar />
         </SafeAreaView>
     );
 }

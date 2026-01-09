@@ -4,13 +4,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import DriverBottomBar from '@/components/DriverBottomBar';
-import CooperativeBottomBar from '@/components/FarmerBottomBar';
 import { useDriverStore } from '@/constants/store';
+import BottomBar from '@/components/DriverBottomBar';
 
 export default function Profile() {
     const router = useRouter();
-    const { currentUser, drivers, updateDriver, cooperatives } = useDriverStore();
+    const { currentUser, drivers, updateDriver, cooperatives, updateCooperative } = useDriverStore();
     const isDriver = currentUser?.role === 'driver';
     const isCoop = currentUser?.role === 'adminfarmer';
     const driver = useMemo(() => isDriver ? drivers.find(d => d.id === currentUser?.id) : null, [drivers, currentUser, isDriver]);
@@ -31,15 +30,17 @@ export default function Profile() {
         phone: '',
         vehicleType: '',
         plateNumber: '',
+        location: '',
     });
 
     const openEditModal = () => {
         if (!currentUser) return;
         setEditForm({
-            name: currentUser.name,
-            phone: currentUser.phone,
+            name: isCoop ? (coop?.name || currentUser.name) : currentUser.name,
+            phone: isCoop ? (coop?.phone || currentUser.phone) : currentUser.phone,
             vehicleType: driver?.vehicleType || '',
             plateNumber: driver?.plateNumber || '',
+            location: coop?.location || '',
         });
         setShowEditModal(true);
     };
@@ -54,6 +55,18 @@ export default function Profile() {
                 vehicleType: editForm.vehicleType,
                 plateNumber: editForm.plateNumber,
             });
+            useDriverStore.setState(state => ({
+                currentUser: state.currentUser ? { ...state.currentUser, name: editForm.name, phone: editForm.phone } : null
+            }));
+        } else if (isCoop && coop) {
+            updateCooperative(coop.id, {
+                name: editForm.name,
+                phone: editForm.phone,
+                location: editForm.location,
+            });
+            useDriverStore.setState(state => ({
+                currentUser: state.currentUser ? { ...state.currentUser, name: editForm.name, phone: editForm.phone } : null
+            }));
         }
         setShowEditModal(false);
     };
@@ -71,6 +84,13 @@ export default function Profile() {
             <SafeAreaView edges={['top']} style={styles.safeArea}>
                 <View style={styles.header}>
                     <View style={styles.headerTop}>
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            style={styles.backButton}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+                        </TouchableOpacity>
                         <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings')}>
                             <View style={styles.menuIconInfo}>
                                 <Ionicons name="settings-outline" size={22} color="#1A1A1A" />
@@ -262,11 +282,11 @@ export default function Profile() {
                             >
                                 <View style={styles.actionLeft}>
                                     <View style={[styles.actionIcon, { backgroundColor: '#f5f5f5' }]}>
-                                        <Ionicons name="log-out-outline" size={18} color="#000" />
+                                        <Ionicons name="log-out-outline" size={18} color="#ff0000ff" />
                                     </View>
-                                    <Text style={[styles.actionText, { color: '#000' }]}>Log Out</Text>
+                                    <Text style={[styles.actionText, { color: '#ff0000ff' }]}>Log Out</Text>
                                 </View>
-                                <Ionicons name="chevron-forward" size={18} color="#000" />
+                                <Ionicons name="chevron-forward" size={18} color="#ff0000ff" />
                             </TouchableOpacity>
                         </View>
                     </Animated.View>
@@ -295,37 +315,55 @@ export default function Profile() {
                             />
                         </View>
 
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Vehicle Type</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={editForm.vehicleType}
-                                onChangeText={(text) => setEditForm(prev => ({ ...prev, vehicleType: text }))}
-                                placeholder="e.g. Truck, Van"
-                            />
-                        </View>
+                        {isDriver && (
+                            <>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Vehicle Type</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        value={editForm.vehicleType}
+                                        onChangeText={(text) => setEditForm(prev => ({ ...prev, vehicleType: text }))}
+                                        placeholder="e.g. Truck, Van"
+                                    />
+                                </View>
 
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Plate Number</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={editForm.plateNumber}
-                                onChangeText={(text) => setEditForm(prev => ({ ...prev, plateNumber: text }))}
-                                placeholder="e.g. RAA 123 B"
-                            />
-                        </View>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Plate Number</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        value={editForm.plateNumber}
+                                        onChangeText={(text) => setEditForm(prev => ({ ...prev, plateNumber: text }))}
+                                        placeholder="e.g. RAA 123 B"
+                                    />
+                                </View>
+                            </>
+                        )}
+
+                        {isCoop && (
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>Location</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={editForm.location}
+                                    onChangeText={(text) => setEditForm(prev => ({ ...prev, location: text }))}
+                                    placeholder="e.g. Kigali, Rwanda"
+                                />
+                            </View>
+                        )}
 
                         <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
                             <Text style={styles.saveButtonText}>Save Changes</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
-            )}
+            )
+            }
 
-            {isDriver ? <DriverBottomBar /> : <CooperativeBottomBar />}
-        </View>
+            {isDriver && <BottomBar />}
+        </View >
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {

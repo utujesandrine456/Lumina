@@ -1,42 +1,70 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, FlatList, Linking, Alert, RefreshControl } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
-import FarmerBottomBar from '@/components/FarmerBottomBar';
+import { useRouter } from 'expo-router';
+import BottomBar from '@/components/DriverBottomBar';
 
-export default function Trips() {
+export default function DriverRequests() {
     const router = useRouter();
-    const { requests, drivers } = useDriverStore();
-    const [filter, setFilter] = useState<'all' | 'pending' | 'ongoing' | 'completed'>('all');
+    const { requests, currentUser, updateRequest, drivers } = useDriverStore();
     const [refreshing, setRefreshing] = useState(false);
+
+    const currentDriver = drivers.find(d => d.id === currentUser?.id);
+
+    const driverRequests = useMemo(
+        () => (requests || []).filter((r) => r.driverId === currentUser?.id),
+        [requests, currentUser?.id]
+    );
 
     const onRefresh = async () => {
         setRefreshing(true);
-        // Simulate refresh - normally you'd refetch data here
         setTimeout(() => {
             setRefreshing(false);
         }, 1500);
     };
 
-    const handleCall = (phoneNumber: string) => {
-        Linking.openURL(`tel:${phoneNumber}`).catch(() => {
-            Alert.alert('Error', 'Unable to open dialer');
-        });
+    const handleAccept = (requestId: string) => {
+        Alert.alert(
+            'Accept Request',
+            'Do you want to accept this transport request?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Accept',
+                    onPress: () => {
+                        updateRequest(requestId, {
+                            status: 'accepted',
+                        });
+                        Alert.alert('Success', 'Request accepted successfully!');
+                    }
+                }
+            ]
+        );
     };
 
-    const handleMessage = (tripId: string) => {
-        router.push({ pathname: '/chat', params: { tripId } });
+    const handleReject = (requestId: string) => {
+        Alert.alert(
+            'Reject Request',
+            'Are you sure you want to reject this request?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Reject',
+                    style: 'destructive',
+                    onPress: () => {
+                        updateRequest(requestId, {
+                            status: 'rejected',
+                            driverId: undefined,
+                        });
+                        Alert.alert('Rejected', 'Request has been rejected.');
+                    }
+                }
+            ]
+        );
     };
-
-    const filteredTrips = (requests || []).filter(trip => {
-        if (filter === 'all') return true;
-        if (filter === 'pending') return trip.status === 'pending';
-        if (filter === 'ongoing') return trip.status === 'accepted' || trip.status === 'in-progress';
-        if (filter === 'completed') return trip.status === 'completed';
-        return true;
-    });
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -54,34 +82,23 @@ export default function Trips() {
             case 'pending': return 'Pending';
             case 'accepted': return 'Accepted';
             case 'in-progress': return 'In Transit';
-            case 'completed': return 'Delivered';
-            case 'rejected': return 'Cancelled';
+            case 'completed': return 'Completed';
+            case 'rejected': return 'Rejected';
             default: return status;
         }
     };
 
-    const renderTrip = ({ item }: { item: any }) => {
-        const tripDriver = drivers.find(d => d.id === item.driverId);
-        const farmerCount = item.farmers?.length || 0;
+    const renderRequest = ({ item, index }: { item: any; index: number }) => {
         const statusColor = getStatusColor(item.status);
+        const isPending = item.status === 'pending';
 
         return (
-            <TouchableOpacity
-                style={styles.tripCard}
-                activeOpacity={0.9}
-                onPress={() => {
-                    if (item.status === 'completed' && !item.rating) {
-                        router.push({ pathname: '/ratedriver', params: { tripId: item.id } });
-                    } else {
-                        router.push({ pathname: '/bookingstatus', params: { tripId: item.id } });
-                    }
-                }}
-            >
+            <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={styles.card}>
                 <View style={styles.cardHeader}>
                     <View style={styles.dateContainer}>
                         <Ionicons name="calendar-outline" size={14} color="#757575" />
-                        <Text style={styles.tripDate}>
-                            {new Date(item.bookingTime || item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        <Text style={styles.dateText}>
+                            {new Date(item.bookingTime || item.createdAt).toLocaleDateString()}
                         </Text>
                     </View>
                     <View style={[styles.statusBadge, { backgroundColor: `${statusColor}15` }]}>
@@ -90,8 +107,6 @@ export default function Trips() {
                         </Text>
                     </View>
                 </View>
-
-                <View style={styles.divider} />
 
                 <View style={styles.routeContainer}>
                     <View style={styles.routeItem}>
@@ -111,90 +126,66 @@ export default function Trips() {
                     </View>
                 </View>
 
-                <View style={styles.statsRow}>
-                    <View style={styles.statBadge}>
-                        <Ionicons name="people-outline" size={14} color="#000" />
-                        <Text style={styles.statValue}>{farmerCount} Farmers</Text>
+                <View style={styles.detailsRow}>
+                    <View style={styles.detailBadge}>
+                        <Ionicons name="cube-outline" size={14} color="#000" />
+                        <Text style={styles.detailText}>{item.cropType}</Text>
                     </View>
-                    <View style={styles.statBadge}>
+                    <View style={styles.detailBadge}>
                         <Ionicons name="scale-outline" size={14} color="#000" />
-                        <Text style={styles.statValue}>{item.totalWeight} kg</Text>
+                        <Text style={styles.detailText}>{item.totalWeight || item.quantity} kg</Text>
                     </View>
                 </View>
 
-                {tripDriver && (
-                    <View style={styles.driverRow}>
-                        <View style={styles.driverInfo}>
-                            <View style={styles.driverAvatar}>
-                                <Text style={styles.driverInitials}>{tripDriver.name.charAt(0)}</Text>
-                            </View>
-                            <View>
-                                <Text style={styles.driverLabel}>Assigned Driver</Text>
-                                <Text style={styles.driverName}>{tripDriver.name}</Text>
-                            </View>
-                        </View>
-                        <View style={styles.actionButtons}>
-                            <TouchableOpacity
-                                style={styles.actionButton}
-                                onPress={() => handleMessage(item.id)}
-                            >
-                                <Ionicons name="chatbubble-outline" size={18} color="#000" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.actionButton, styles.callButton]}
-                                onPress={() => handleCall(tripDriver.phone)}
-                            >
-                                <Ionicons name="call" size={18} color="#FFF" />
-                            </TouchableOpacity>
-                        </View>
+                {isPending && (
+                    <View style={styles.actionButtons}>
+                        <TouchableOpacity
+                            style={styles.rejectButton}
+                            onPress={() => handleReject(item.id)}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="close-circle-outline" size={20} color="#F44336" />
+                            <Text style={styles.rejectText}>Reject</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.acceptButton}
+                            onPress={() => handleAccept(item.id)}
+                            activeOpacity={0.9}
+                        >
+                            <Ionicons name="checkmark-circle" size={20} color="#FFF" />
+                            <Text style={styles.acceptText}>Accept</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
-            </TouchableOpacity>
+            </Animated.View>
         );
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={styles.backButton}
-                >
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.title}>Trips</Text>
+                    <Text style={styles.title}>My Requests</Text>
+                    <Text style={styles.subtitle}>{driverRequests.length} requests</Text>
                 </View>
+                <View style={{ width: 40 }} />
             </View>
 
-            <View style={styles.filterContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-                    {['all', 'pending', 'ongoing', 'completed'].map((f) => (
-                        <TouchableOpacity
-                            key={f}
-                            style={[styles.filterChip, filter === f && styles.filterChipActive]}
-                            onPress={() => setFilter(f as any)}
-                        >
-                            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-                                {f.charAt(0).toUpperCase() + f.slice(1)}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>
-
-            {filteredTrips.length === 0 ? (
+            {driverRequests.length === 0 ? (
                 <View style={styles.emptyContainer}>
                     <View style={styles.emptyIconContainer}>
-                        <Ionicons name="map" size={40} color="#000" />
+                        <Ionicons name="document-text-outline" size={40} color="#BDBDBD" />
                     </View>
-                    <Text style={styles.emptyTitle}>No trips found</Text>
-                    <Text style={styles.emptyText}>You haven't made any transport requests in this category yet.</Text>
+                    <Text style={styles.emptyTitle}>No Requests Yet</Text>
+                    <Text style={styles.emptyText}>You haven't received any transport requests yet.</Text>
                 </View>
             ) : (
                 <FlatList
-                    data={filteredTrips}
-                    renderItem={renderTrip}
+                    data={driverRequests}
+                    renderItem={renderRequest}
                     keyExtractor={(item) => item.id}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
@@ -204,11 +195,10 @@ export default function Trips() {
                 />
             )}
 
-            <FarmerBottomBar />
+            <BottomBar />
         </SafeAreaView>
     );
 }
-
 
 const styles = StyleSheet.create({
     container: {
@@ -230,58 +220,26 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
     },
     headerTitleContainer: {
         flex: 1,
+        alignItems: 'center',
     },
     title: {
         fontFamily: 'Poppins_600SemiBold',
-        fontSize: 24,
+        fontSize: 20,
         color: '#1A1A1A',
-        lineHeight: 30,
-        textAlign: 'center',
     },
     subtitle: {
         fontFamily: 'Poppins_400Regular',
-        fontSize: 13,
+        fontSize: 12,
         color: '#9E9E9E',
-    },
-    filterContainer: {
-        backgroundColor: '#FFF',
-        paddingBottom: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    filterScroll: {
-        paddingHorizontal: 10,
-        gap: 8,
-    },
-    filterChip: {
-        paddingHorizontal: 18,
-        paddingVertical: 10,
-        borderRadius: 24,
-        backgroundColor: '#F5F5F5',
-        borderWidth: 1,
-        borderColor: '#EEEEEE',
-    },
-    filterChipActive: {
-        backgroundColor: '#1A1A1A',
-        borderColor: '#1A1A1A',
-    },
-    filterText: {
-        fontFamily: 'Poppins_500Medium',
-        fontSize: 13,
-        color: '#757575',
-    },
-    filterTextActive: {
-        color: '#FFF',
     },
     listContent: {
         padding: 24,
         gap: 16,
     },
-    tripCard: {
+    card: {
         backgroundColor: '#FFF',
         borderRadius: 24,
         padding: 20,
@@ -304,7 +262,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 6,
     },
-    tripDate: {
+    dateText: {
         fontFamily: 'Poppins_500Medium',
         fontSize: 13,
         color: '#757575',
@@ -319,11 +277,6 @@ const styles = StyleSheet.create({
         fontSize: 11,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#F5F5F5',
-        marginBottom: 16,
     },
     routeContainer: {
         marginBottom: 16,
@@ -361,12 +314,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#1A1A1A',
     },
-    statsRow: {
+    detailsRow: {
         flexDirection: 'row',
         gap: 10,
-        marginBottom: 4,
+        marginBottom: 16,
     },
-    statBadge: {
+    detailBadge: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#F9FAFB',
@@ -375,69 +328,52 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         gap: 6,
     },
-    statValue: {
+    detailText: {
         fontFamily: 'Poppins_500Medium',
         fontSize: 13,
         color: '#1A1A1A',
     },
-    driverRow: {
-        marginTop: 16,
-        paddingTop: 16,
-        borderTopWidth: 1,
-        borderTopColor: '#F5F5F5',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    driverInfo: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    driverAvatar: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#1A1A1A',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    driverInitials: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 14,
-        color: '#FFF',
-    },
-    driverLabel: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 11,
-        color: '#9E9E9E',
-    },
-    driverName: {
-        fontFamily: 'Poppins_500Medium',
-        fontSize: 14,
-        color: '#1A1A1A',
-    },
     actionButtons: {
+        flexDirection: 'row',
+        gap: 10,
+        marginTop: 4,
+    },
+    rejectButton: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: '#F44336',
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
         flexDirection: 'row',
         gap: 8,
     },
-    actionButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#F5F5F5',
-        justifyContent: 'center',
-        alignItems: 'center',
+    rejectText: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 14,
+        color: '#F44336',
     },
-    callButton: {
+    acceptButton: {
+        flex: 1,
         backgroundColor: '#000',
+        borderRadius: 12,
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 8,
+    },
+    acceptText: {
+        fontFamily: 'Poppins_600SemiBold',
+        fontSize: 14,
+        color: '#FFF',
     },
     emptyContainer: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         padding: 40,
-        marginTop: 40,
     },
     emptyIconContainer: {
         width: 80,
@@ -462,4 +398,3 @@ const styles = StyleSheet.create({
         lineHeight: 22,
     },
 });
-

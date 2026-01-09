@@ -4,17 +4,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { useDriverStore } from '@/constants/store';
 
-type RoleOption = 'cooperative' | 'driver';
+
+type RoleOption = 'adminfarmer' | 'admindriver';
 
 const roleDetails: Record<RoleOption, { title: string; subtitle: string }> = {
-    cooperative: {
-        title: 'Register Cooperative Officer',
-        subtitle: 'Enter cooperative name, your name, phone, and a secure PIN.',
+    adminfarmer: {
+        title: 'Register Farmer',
+        subtitle: 'Enter farmer name, your name, phone, and a secure PIN.',
     },
-    driver: {
-        title: 'Register Cooperative Driver',
+    admindriver: {
+        title: 'Register Driver',
         subtitle: 'Drivers are registered by a cooperative. Provide coop name, your name, phone, and PIN.',
     },
 };
@@ -31,9 +31,8 @@ export default function Register() {
     const canSubmit = useMemo(() => {
         if (!role) return false;
         if (!name || phone.length < 10 || pin.length < 4) return false;
-        if (!coopName) return false;
         return true;
-    }, [role, name, phone, pin, coopName]);
+    }, [role, name, phone, pin]);
 
     const handleSubmit = () => {
         if (!canSubmit || !role) {
@@ -49,6 +48,7 @@ export default function Register() {
                 name,
                 coopName,
                 pin,
+                location,
             },
         });
     };
@@ -95,8 +95,8 @@ export default function Register() {
                 <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.card}>
                     <Text style={styles.sectionTitle}>Select Role</Text>
                     <View style={styles.chipsRow}>
-                        <RoleChip value="cooperative" label="Coop Officer" icon="people" />
-                        <RoleChip value="driver" label="Coop Driver" icon="car" />
+                        <RoleChip value="adminfarmer" label="Farmer" icon="people" />
+                        <RoleChip value="admindriver" label="Driver" icon="car" />
                     </View>
 
                     {role && (

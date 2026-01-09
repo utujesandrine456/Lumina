@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
 import * as Location from 'expo-location';
-import CooperativeBottomBar from '@/components/FarmerBottomBar';
+import FarmerBottomBar from '@/components/FarmerBottomBar';
 
 const { width } = Dimensions.get('window');
 
@@ -41,7 +41,7 @@ export default function CooperativeDashboard() {
     const quickActions = [
         { label: "Register Farmer", icon: "person-add-outline", route: "/registerfarmer" },
         { label: "Create Request", icon: "cube-outline", route: "/createtransportrequest" },
-        { label: "View Drivers", icon: "car-outline", route: "/driverslist" },
+        { label: "Nearby Drivers", icon: "car-outline", route: "/nearbydrivers" },
         { label: "All Farmers", icon: "people-outline", route: "/farmerslist" },
     ];
 
@@ -119,7 +119,7 @@ export default function CooperativeDashboard() {
                     )}
                 </Animated.View>
             </ScrollView>
-            <CooperativeBottomBar />
+            <FarmerBottomBar />
         </SafeAreaView>
     );
 }

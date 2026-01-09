@@ -10,7 +10,7 @@ export default function RegisterDriver() {
   const router = useRouter();
   const { addDriver, currentUser } = useDriverStore();
 
-  const canVerifyNow = currentUser?.role === 'admin';
+  const canVerifyNow = currentUser?.role === 'admindriver';
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -25,7 +25,7 @@ export default function RegisterDriver() {
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | undefined>(undefined);
 
   const pickupRoleLabel = useMemo(() => {
-    if (currentUser?.role === 'admin') return 'Admin';
+    if (currentUser?.role === 'admindriver') return 'Admin';
     if (currentUser?.role === 'adminfarmer') return 'Cooperative Officer';
     return 'User';
   }, [currentUser?.role]);

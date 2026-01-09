@@ -1,107 +1,9 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export type UserRole = 'adminfarmer' | 'driver' | 'admindriver';
-
-export interface Coordinates {
-  latitude: number;
-  longitude: number;
-}
-
-export interface Crop {
-  id: string;
-  name: string;
-}
-
-export interface Farmer {
-  id: string;
-  cooperativeId: string;
-  name: string;
-  phone: string;
-  crops: Crop[];
-  location?: string;
-}
-
-export interface Cooperative {
-  id: string;
-  name: string;
-  officerName: string;
-  phone: string;
-  pin: string;
-  location?: string;
-  farmers: Farmer[];
-  status: 'pending' | 'verified';
-}
-
-export interface Driver {
-  id: string;
-  cooperativeId?: string;
-  name: string;
-  phone: string;
-  pin: string;
-  nationalId: string;
-  licenseNumber: string;
-  vehicleType?: string;
-  plateNumber: string;
-  available: boolean;
-  verified: boolean;
-  coordinates?: Coordinates;
-  avatar?: string;
-  rating?: number;
-  capacity?: number;
-}
-
-export interface TransportRequest {
-  id: string;
-  cooperativeId: string;
-  farmers?: Farmer[];
-  cropType: string;
-  quantity: string;
-  totalWeight?: number;
-  pickupLocation: string;
-  pickupPhoto?: string;
-  destination: string;
-  pickupDate?: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'in-progress' | 'completed';
-  driverId?: string;
-  createdAt: number;
-  bookingTime?: string;
-
-  pricePerKg?: number;
-  pricePerKm?: number;
-  distance?: number;
-  totalPrice?: number;
-  priceLocked?: boolean;
-
-  pickupCoordinates?: Coordinates;
-  destinationCoordinates?: Coordinates;
-  chatOpen?: boolean;
-  chat?: {
-    id: string;
-    sender: string;
-    text: string;
-    timestamp: string;
-  }[];
-
-  driver?: Driver;
-  rating?: number;
-  ratingComment?: string;
-  pickupTimestamp?: number;
-  pickupWeight?: number;
-  deliveryTimestamp?: number;
-  deliveryWeight?: number;
-
-  acceptedAt?: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  requestId?: string;
-  senderId: string;
-  receiverId: string;
-  text: string;
-  timestamp: number;
-}
 
 export interface CurrentUser {
   id: string;
@@ -109,9 +11,79 @@ export interface CurrentUser {
   phone: string;
   role: UserRole;
   cooperativeId?: string;
-  pin?: number
 }
 
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
+export interface Farmer {
+  id: string;
+  name: string;
+  phone: string;
+  location: string;
+  cropType?: string;
+}
+
+export interface Cooperative {
+  id: string;
+  name: string;
+  officerName: string;
+  location?: string;
+  phone: string;
+  pin: string;
+  status: 'pending' | 'verified';
+  farmers: Farmer[];
+}
+
+export interface Driver {
+  id: string;
+  name: string;
+  phone: string;
+  pin?: string;
+  nationalId?: string;
+  licenseNumber?: string;
+  plateNumber?: string;
+  vehicleType?: string;
+  capacity?: number;
+  available?: boolean;
+  verified?: boolean;
+  rating?: number;
+  role?: 'driver';
+  cooperativeId?: string;
+  coordinates?: Coordinates;
+}
+
+export interface TransportRequest {
+  id: string;
+  farmerId: string;
+  farmerName: string;
+  cooperativeId?: string;
+  driverId?: string;
+  pickupLocation: string;
+  destination: string;
+  cropType: string;
+  quantity: string;
+  totalWeight?: string;
+  bookingTime?: string | number;
+  createdAt?: string | number;
+  harvestDate?: string;
+  status: 'pending' | 'accepted' | 'in-progress' | 'completed' | 'rejected';
+  priceLocked?: boolean;
+  chatOpen?: boolean;
+  rating?: number;
+  ratingComment?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  requestId: string;
+  senderId: string;
+  receiverId: string;
+  text: string;
+  timestamp: number;
+}
 
 
 interface AppState {
@@ -151,123 +123,146 @@ interface AppState {
   getCoopFarmers: (coopId: string) => Farmer[];
   getCoopRequests: (coopId: string) => TransportRequest[];
   getDriverRequests: (driverId: string) => TransportRequest[];
+
+  findUserByCredentials: (phone: string, pin: string) => { role: UserRole; data: Driver | Cooperative } | null;
 }
 
-export const useDriverStore = create<AppState>((set, get) => ({
-  currentUser: null,
-  cooperatives: [],
-  drivers: [],
-  requests: [],
-  messages: [],
-  selectedFarmers: [],
-  nearbyDrivers: [],
+export const useDriverStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      currentUser: null,
+      cooperatives: [],
+      drivers: [],
+      requests: [],
+      messages: [],
+      selectedFarmers: [],
+      nearbyDrivers: [],
 
-  setNearbyDrivers: (drivers) => set({ nearbyDrivers: drivers }),
-  setSelectedFarmers: (ids) => set({ selectedFarmers: ids }),
+      setNearbyDrivers: (drivers) => set({ nearbyDrivers: drivers }),
+      setSelectedFarmers: (ids) => set({ selectedFarmers: ids }),
 
-  setCurrentUser: (user) => set({ currentUser: user }),
-  logout: () => set({ currentUser: null }),
+      setCurrentUser: (user) => set({ currentUser: user }),
+      logout: () => set({ currentUser: null }),
 
-  addCooperative: (coop) => set((state) => ({ cooperatives: [...state.cooperatives, coop] })),
+      addCooperative: (coop) => set((state) => ({ cooperatives: [...state.cooperatives, coop] })),
 
-  updateCooperative: (id, updates) => set((state) => ({
-    cooperatives: state.cooperatives.map((c) => c.id === id ? { ...c, ...updates } : c)
-  })),
+      updateCooperative: (id, updates) => set((state) => ({
+        cooperatives: state.cooperatives.map((c) => c.id === id ? { ...c, ...updates } : c)
+      })),
 
-  addFarmerToCoop: (coopId, farmer) => set((state) => ({
-    cooperatives: state.cooperatives.map((c) => {
-      if (c.id === coopId) {
-        return { ...c, farmers: [...c.farmers, farmer] };
+      addFarmerToCoop: (coopId, farmer) => set((state) => ({
+        cooperatives: state.cooperatives.map((c) => {
+          if (c.id === coopId) {
+            return { ...c, farmers: [...c.farmers, farmer] };
+          }
+          return c;
+        })
+      })),
+
+      removeFarmerFromCoop: (coopId, farmerId) => set((state) => ({
+        cooperatives: state.cooperatives.map((c) => {
+          if (c.id === coopId) {
+            return { ...c, farmers: c.farmers.filter(f => f.id !== farmerId) };
+          }
+          return c;
+        })
+      })),
+
+      addDriver: (driver) => set((state) => ({ drivers: [...state.drivers, driver] })),
+
+      updateDriver: (id, updates) => set((state) => ({
+        drivers: state.drivers.map((d) => d.id === id ? { ...d, ...updates } : d)
+      })),
+
+      rateDriver: (requestId, rating, comment) => set((state) => {
+        const updatedRequests = state.requests.map(r =>
+          r.id === requestId ? { ...r, rating, ratingComment: comment } : r
+        );
+
+        const request = state.requests.find(r => r.id === requestId);
+        if (!request || !request.driverId) return { requests: updatedRequests };
+
+        const driverId = request.driverId;
+        const driverRequests = updatedRequests.filter(r => r.driverId === driverId && r.rating);
+
+        if (driverRequests.length === 0) return { requests: updatedRequests };
+
+        const total = driverRequests.reduce((sum, r) => sum + (r.rating || 0), 0);
+        const avg = total / driverRequests.length;
+
+        const updatedDrivers = state.drivers.map(d =>
+          d.id === driverId ? { ...d, rating: avg } : d
+        );
+
+        return {
+          requests: updatedRequests,
+          drivers: updatedDrivers
+        };
+      }),
+
+      setDriverAvailability: (id, available) => set((state) => ({
+        drivers: state.drivers.map((d) => d.id === id ? { ...d, available } : d)
+      })),
+
+      updateDriverLocation: (id, coords) => set((state) => ({
+        drivers: state.drivers.map((d) => d.id === id ? { ...d, coordinates: coords } : d)
+      })),
+
+      removeDriver: (id) => set((state) => ({
+        drivers: state.drivers.filter((d) => d.id !== id)
+      })),
+
+      createRequest: (request) => set((state) => ({ requests: [request, ...state.requests] })),
+
+      updateRequestStatus: (id, status, driverId) => set((state) => ({
+        requests: state.requests.map((r) =>
+          r.id === id ? { ...r, status, driverId: driverId ?? r.driverId } : r
+        )
+      })),
+
+      updateRequest: (id, updates) => set((state) => ({
+        requests: state.requests.map((r) =>
+          r.id === id ? { ...r, ...updates } : r
+        )
+      })),
+
+      addMessage: (msg) => set((state) => ({ messages: [...state.messages, msg] })),
+
+      getCoopFarmers: (coopId) => {
+        const coop = get().cooperatives.find(c => c.id === coopId);
+        return coop ? coop.farmers : [];
+      },
+
+      getCoopRequests: (coopId) => {
+        return get().requests.filter(r => r.cooperativeId === coopId);
+      },
+
+      getDriverRequests: (driverId) => {
+        return get().requests.filter(r =>
+          (r.status === 'pending') || (r.driverId === driverId)
+        );
+      },
+
+      findUserByCredentials: (phone, pin) => {
+        const coop = get().cooperatives.find(c => c.phone === phone && c.pin === pin);
+        if (coop) {
+          return { role: 'adminfarmer', data: coop };
+        }
+
+        const driver = get().drivers.find(d => d.phone === phone && d.pin === pin);
+        if (driver) {
+          if (driver.cooperativeId) {
+            return { role: 'admindriver', data: driver };
+          }
+          return { role: 'driver', data: driver };
+        }
+
+        return null;
       }
-      return c;
-    })
-  })),
-
-  removeFarmerFromCoop: (coopId, farmerId) => set((state) => ({
-    cooperatives: state.cooperatives.map((c) => {
-      if (c.id === coopId) {
-        return { ...c, farmers: c.farmers.filter(f => f.id !== farmerId) };
-      }
-      return c;
-    })
-  })),
-
-  addDriver: (driver) => set((state) => ({ drivers: [...state.drivers, driver] })),
-
-  updateDriver: (id, updates) => set((state) => ({
-    drivers: state.drivers.map((d) => d.id === id ? { ...d, ...updates } : d)
-  })),
-
-  rateDriver: (requestId, rating, comment) => set((state) => {
-    // 1. Update the request with the rating
-    const updatedRequests = state.requests.map(r =>
-      r.id === requestId ? { ...r, rating, ratingComment: comment } : r
-    );
-
-    // 2. Find the request to get the driverId
-    const request = state.requests.find(r => r.id === requestId);
-    if (!request || !request.driverId) return { requests: updatedRequests };
-
-    // 3. Recalculate driver average rating
-    const driverId = request.driverId;
-    const driverRequests = updatedRequests.filter(r => r.driverId === driverId && r.rating);
-
-    if (driverRequests.length === 0) return { requests: updatedRequests };
-
-    const total = driverRequests.reduce((sum, r) => sum + (r.rating || 0), 0);
-    const avg = total / driverRequests.length;
-
-    // 4. Update the driver
-    const updatedDrivers = state.drivers.map(d =>
-      d.id === driverId ? { ...d, rating: avg } : d
-    );
-
-    return {
-      requests: updatedRequests,
-      drivers: updatedDrivers
-    };
-  }),
-
-  setDriverAvailability: (id, available) => set((state) => ({
-    drivers: state.drivers.map((d) => d.id === id ? { ...d, available } : d)
-  })),
-
-  updateDriverLocation: (id, coords) => set((state) => ({
-    drivers: state.drivers.map((d) => d.id === id ? { ...d, coordinates: coords } : d)
-  })),
-
-  removeDriver: (id) => set((state) => ({
-    drivers: state.drivers.filter((d) => d.id !== id)
-  })),
-
-  createRequest: (request) => set((state) => ({ requests: [request, ...state.requests] })),
-
-  updateRequestStatus: (id, status, driverId) => set((state) => ({
-    requests: state.requests.map((r) =>
-      r.id === id ? { ...r, status, driverId: driverId ?? r.driverId } : r
-    )
-  })),
-
-  updateRequest: (id, updates) => set((state) => ({
-    requests: state.requests.map((r) =>
-      r.id === id ? { ...r, ...updates } : r
-    )
-  })),
-
-  addMessage: (msg) => set((state) => ({ messages: [...state.messages, msg] })),
-
-  getCoopFarmers: (coopId) => {
-    const coop = get().cooperatives.find(c => c.id === coopId);
-    return coop ? coop.farmers : [];
-  },
-
-  getCoopRequests: (coopId) => {
-    return get().requests.filter(r => r.cooperativeId === coopId);
-  },
-
-  getDriverRequests: (driverId) => {
-    return get().requests.filter(r =>
-      (r.status === 'pending') || (r.driverId === driverId)
-    );
-  }
-}));
+    }),
+    {
+      name: 'lumina-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);

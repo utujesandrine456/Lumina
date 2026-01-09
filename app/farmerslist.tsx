@@ -77,15 +77,11 @@ export default function FarmersList() {
         );
     };
 
-    const handleBack = () => {
-        router.replace('/adminfarmerdashboard');
-    };
-
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity
-                    onPress={handleBack}
+                    onPress={() => router.back()}
                     style={styles.backButton}
                     activeOpacity={0.7}
                 >

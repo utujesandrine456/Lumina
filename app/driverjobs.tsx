@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
 import { useRouter } from 'expo-router';
+import BottomBar from '@/components/DriverBottomBar';
 
 export default function DriverJobs() {
     const router = useRouter();
@@ -118,6 +119,8 @@ export default function DriverJobs() {
                     showsVerticalScrollIndicator={false}
                 />
             )}
+
+            <BottomBar />
         </SafeAreaView>
     );
 }

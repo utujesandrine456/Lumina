@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
 import FarmerBottomBar from '@/components/FarmerBottomBar';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import BottomBar from '@/components/DriverBottomBar';
 
 export default function DriversList() {
     const router = useRouter();
@@ -17,25 +18,6 @@ export default function DriversList() {
         return drivers.filter(d => d.available && d.verified);
     }, [drivers, isAdmin]);
 
-    const handleBack = () => {
-        switch (currentUser?.role) {
-            case 'adminfarmer':
-                router.replace('/adminfarmerdashboard');
-                break;
-            case 'admindriver':
-                router.replace('/admindriverdashboard');
-                break;
-            case 'driver':
-                router.replace('/driverdashboard');
-                break;
-            default:
-                if (router.canGoBack()) {
-                    router.back();
-                } else {
-                    router.replace('/');
-                }
-        }
-    };
 
     const handleDelete = (id: string, name: string) => {
         Alert.alert(
@@ -138,12 +120,17 @@ export default function DriversList() {
         );
     };
 
+    const handleBack = () => {
+        router.replace('/adminfarmerdashboard');
+    };
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={handleBack} style={styles.backButton} activeOpacity={0.7}>
-                    <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-                </TouchableOpacity>
+                <View>
+                    <TouchableOpacity onPress={handleBack} style={styles.backButton} activeOpacity={0.7}>
+                        <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+                    </TouchableOpacity>
+                </View>
                 <View>
                     <Text style={styles.title}>All Drivers</Text>
                     <Text style={styles.subtitle}>{displayedDrivers.length} drivers available</Text>
@@ -171,10 +158,11 @@ export default function DriversList() {
                 />
             )}
 
-            <FarmerBottomBar />
+            <BottomBar />
         </SafeAreaView>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {
