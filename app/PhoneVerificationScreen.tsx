@@ -14,10 +14,10 @@ import { useDriverStore } from '@/constants/store';
 export default function PhoneVerificationScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ phoneNumber?: string }>();
-  const setCurrentUser = useDriverStore((s) => s.setCurrentUser);
+  const setCurrentRole = useDriverStore((s) => s.setCurrentRole);
+
   const [otp, setOtp] = useState('');
   const [fade] = useState(new Animated.Value(0));
-
 
   useEffect(() => {
     Animated.timing(fade, {
@@ -29,20 +29,11 @@ export default function PhoneVerificationScreen() {
 
   const verifyAndGo = (role: 'c-farmer' | 'c-driver') => {
     if (!otp) return;
-
-    const userRole = role === 'c-farmer' ? 'adminfarmer' : 'admindriver';
-    setCurrentUser({
-      id: 'user-' + Date.now(),
-      name: role === 'c-farmer' ? 'Admin Farmer' : 'Admin Driver',
-      phone: params.phoneNumber || '0780000000',
-      role: userRole,
-      cooperativeId: 'coop-1' 
-    });
-
+    setCurrentRole(role);
     if (role === 'c-farmer') {
-      router.replace('/AdminFarmerDashboard');
+      router.replace('/CFarmerDashboardScreen');
     } else {
-      router.replace('/AdminDriverDashboard');
+      router.replace('/CDriverDashboardScreen');
     }
   };
 

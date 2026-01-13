@@ -6,13 +6,15 @@ import {
   StyleSheet, 
   Dimensions, 
   Animated, 
-  Easing
+  Easing,
+  Platform
 } from 'react-native';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
+const isWeb = Platform.OS === 'web';
 
 export default function RoleScreen() {
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -116,22 +118,27 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F9FAFB',
+        ...(isWeb && {
+            maxWidth: 400,
+            alignSelf: 'center',
+            width: '100%'
+        })
     },
 
     heroBackground: {
         position: 'absolute',
-        width: width * 1.4,
-        height: height * 0.55,
+        width: isWeb ? width : width * 1.4,
+        height: isWeb ? height * 0.4 : height * 0.55,
         backgroundColor: '#000',
         borderBottomLeftRadius: 300,
         borderBottomRightRadius: 300,
-        top: -height * 0.3,
+        top: isWeb ? -height * 0.2 : -height * 0.3,
     },
 
     header: {
         width: '100%',
-        paddingTop: 60,
-        paddingBottom: 50,
+        paddingTop: isWeb ? 40 : 60,
+        paddingBottom: isWeb ? 30 : 50,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 10,
@@ -139,7 +146,7 @@ const styles = StyleSheet.create({
 
     title: {
         fontFamily: 'Poppins_700Bold',
-        fontSize: 34,
+        fontSize: isWeb ? 28 : 34,
         color: '#FFFFFF',
         marginBottom: 6,
         textAlign: 'center',

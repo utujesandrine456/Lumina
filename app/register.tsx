@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+
+const isWeb = Platform.OS === 'web';
 
 
 type RoleOption = 'adminfarmer' | 'admindriver';
@@ -172,6 +174,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFFFFF',
+        ...(isWeb && {
+            maxWidth: 400,
+            alignSelf: 'center',
+            width: '100%'
+        })
     },
     scrollContent: {
         paddingBottom: 40,
@@ -309,6 +316,8 @@ const styles = StyleSheet.create({
         fontFamily: 'Poppins_400Regular',
         backgroundColor: '#FAFAFA',
         color: '#1A1A1A',
+        outlineWidth: 0,
+        outlineColor: 'transparent',
     },
     group: {
         marginTop: 0,
