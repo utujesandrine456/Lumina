@@ -14,7 +14,10 @@ import { useDriverStore } from '@/constants/store';
 export default function PhoneVerificationScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ phoneNumber?: string }>();
-  const setCurrentRole = useDriverStore((s) => s.setCurrentRole);
+  const setCurrentRole = useDriverStore((s: any) => s.setCurrentRole);
+  const setCurrentUser = useDriverStore((s: any) => s.setCurrentUser);
+  const cooperatives = useDriverStore((s: any) => s.cooperatives);
+  const currentCooperativeId = useDriverStore((s: any) => s.currentCooperativeId);
 
   const [otp, setOtp] = useState('');
   const [fade] = useState(new Animated.Value(0));
@@ -29,11 +32,26 @@ export default function PhoneVerificationScreen() {
 
   const verifyAndGo = (role: 'c-farmer' | 'c-driver') => {
     if (!otp) return;
+    
+    // Find the cooperative that was just registered
+    const coop = cooperatives.find((c: any) => c.id === currentCooperativeId);
+    
+    if (coop) {
+      // Set current user so they can login later
+      setCurrentUser({
+        id: coop.id,
+        name: coop.officerName,
+        phone: coop.phone,
+        role: role === 'c-farmer' ? 'adminfarmer' : 'admindriver',
+        cooperativeId: coop.id,
+      });
+    }
+    
     setCurrentRole(role);
     if (role === 'c-farmer') {
-      router.replace('/CFarmerDashboardScreen');
+      router.replace('/adminfarmerdashboard');
     } else {
-      router.replace('/CDriverDashboardScreen');
+      router.replace('/admindriverdashboard');
     }
   };
 

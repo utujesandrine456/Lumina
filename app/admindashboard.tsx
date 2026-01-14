@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function AdminDashboard() {
@@ -101,119 +102,121 @@ export default function AdminDashboard() {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <View>
-                    <Text style={styles.greeting}>Admin Dashboard</Text>
-                    <Text style={styles.subtitle}>Monitor system activity</Text>
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                    <View>
+                        <Text style={styles.greeting}>Admin Dashboard</Text>
+                        <Text style={styles.subtitle}>Monitor system activity</Text>
+                    </View>
+                    <TouchableOpacity
+                        onPress={() => router.push('/registerdriver')}
+                        style={styles.headerAction}
+                    >
+                        <Ionicons name="person-add-outline" size={22} color="#000" />
+                    </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                    onPress={() => router.push('/registerdriver')}
-                    style={styles.headerAction}
-                >
-                    <Ionicons name="person-add-outline" size={22} color="#000" />
-                </TouchableOpacity>
-            </View>
 
-            <View style={styles.tabs}>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === 'cooperatives' && styles.tabActive]}
-                    onPress={() => setActiveTab('cooperatives')}
-                >
-                    <Text style={[styles.tabText, activeTab === 'cooperatives' && styles.tabTextActive]}>
-                        Cooperatives
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === 'drivers' && styles.tabActive]}
-                    onPress={() => setActiveTab('drivers')}
-                >
-                    <Text style={[styles.tabText, activeTab === 'drivers' && styles.tabTextActive]}>
-                        Drivers
-                    </Text>
-                    {pendingDrivers.length > 0 && (
-                        <View style={styles.badge}>
-                            <Text style={styles.badgeText}>{pendingDrivers.length}</Text>
-                        </View>
-                    )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === 'reports' && styles.tabActive]}
-                    onPress={() => setActiveTab('reports')}
-                >
-                    <Text style={[styles.tabText, activeTab === 'reports' && styles.tabTextActive]}>
-                        Reports
-                    </Text>
-                </TouchableOpacity>
-            </View>
-
-            <ScrollView contentContainerStyle={styles.content}>
-                {activeTab === 'cooperatives' && (
-                    <>
-                        <Text style={styles.sectionTitle}>Pending Approval</Text>
-                        <FlatList
-                            data={cooperatives.filter(c => c.status === 'pending')}
-                            renderItem={renderCooperative}
-                            keyExtractor={(item) => item.id}
-                            scrollEnabled={false}
-                        />
-                        <Text style={styles.sectionTitle}>Approved</Text>
-                        <FlatList
-                            data={cooperatives.filter(c => c.status === 'approved')}
-                            renderItem={renderCooperative}
-                            keyExtractor={(item) => item.id}
-                            scrollEnabled={false}
-                        />
-                    </>
-                )}
-
-                {activeTab === 'drivers' && (
-                    <>
-                        <Text style={styles.sectionTitle}>Pending Verification ({pendingDrivers.length})</Text>
-                        {pendingDrivers.length === 0 ? (
-                            <View style={styles.emptyState}>
-                                <Ionicons name="checkmark-circle-outline" size={48} color="#BDBDBD" />
-                                <Text style={styles.emptyText}>All drivers verified</Text>
+                <View style={styles.tabs}>
+                    <TouchableOpacity
+                        style={[styles.tab, activeTab === 'cooperatives' && styles.tabActive]}
+                        onPress={() => setActiveTab('cooperatives')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'cooperatives' && styles.tabTextActive]}>
+                            Cooperatives
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tab, activeTab === 'drivers' && styles.tabActive]}
+                        onPress={() => setActiveTab('drivers')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'drivers' && styles.tabTextActive]}>
+                            Drivers
+                        </Text>
+                        {pendingDrivers.length > 0 && (
+                            <View style={styles.badge}>
+                                <Text style={styles.badgeText}>{pendingDrivers.length}</Text>
                             </View>
-                        ) : (
+                        )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tab, activeTab === 'reports' && styles.tabActive]}
+                        onPress={() => setActiveTab('reports')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'reports' && styles.tabTextActive]}>
+                            Reports
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                <ScrollView contentContainerStyle={styles.content}>
+                    {activeTab === 'cooperatives' && (
+                        <>
+                            <Text style={styles.sectionTitle}>Pending Approval</Text>
                             <FlatList
-                                data={pendingDrivers}
+                                data={cooperatives.filter(c => c.status === 'pending')}
+                                renderItem={renderCooperative}
+                                keyExtractor={(item) => item.id}
+                                scrollEnabled={false}
+                            />
+                            <Text style={styles.sectionTitle}>Approved</Text>
+                            <FlatList
+                                data={cooperatives.filter(c => c.status === 'approved')}
+                                renderItem={renderCooperative}
+                                keyExtractor={(item) => item.id}
+                                scrollEnabled={false}
+                            />
+                        </>
+                    )}
+
+                    {activeTab === 'drivers' && (
+                        <>
+                            <Text style={styles.sectionTitle}>Pending Verification ({pendingDrivers.length})</Text>
+                            {pendingDrivers.length === 0 ? (
+                                <View style={styles.emptyState}>
+                                    <Ionicons name="checkmark-circle-outline" size={48} color="#BDBDBD" />
+                                    <Text style={styles.emptyText}>All drivers verified</Text>
+                                </View>
+                            ) : (
+                                <FlatList
+                                    data={pendingDrivers}
+                                    renderItem={renderDriver}
+                                    keyExtractor={(item) => item.id}
+                                    scrollEnabled={false}
+                                />
+                            )}
+                            <Text style={styles.sectionTitle}>Verified Drivers ({verifiedDrivers.length})</Text>
+                            <FlatList
+                                data={verifiedDrivers}
                                 renderItem={renderDriver}
                                 keyExtractor={(item) => item.id}
                                 scrollEnabled={false}
                             />
-                        )}
-                        <Text style={styles.sectionTitle}>Verified Drivers ({verifiedDrivers.length})</Text>
-                        <FlatList
-                            data={verifiedDrivers}
-                            renderItem={renderDriver}
-                            keyExtractor={(item) => item.id}
-                            scrollEnabled={false}
-                        />
-                    </>
-                )}
+                        </>
+                    )}
 
-                {activeTab === 'reports' && (
-                    <View style={styles.reportsContainer}>
-                        <View style={styles.reportCard}>
-                            <Ionicons name="stats-chart-outline" size={32} color="#000" />
-                            <Text style={styles.reportTitle}>Total Trips</Text>
-                            <Text style={styles.reportValue}>0</Text>
+                    {activeTab === 'reports' && (
+                        <View style={styles.reportsContainer}>
+                            <View style={styles.reportCard}>
+                                <Ionicons name="stats-chart-outline" size={32} color="#000" />
+                                <Text style={styles.reportTitle}>Total Trips</Text>
+                                <Text style={styles.reportValue}>0</Text>
+                            </View>
+                            <View style={styles.reportCard}>
+                                <Ionicons name="people-outline" size={32} color="#000" />
+                                <Text style={styles.reportTitle}>Total Farmers</Text>
+                                <Text style={styles.reportValue}>0</Text>
+                            </View>
+                            <View style={styles.reportCard}>
+                                <Ionicons name="car-outline" size={32} color="#000" />
+                                <Text style={styles.reportTitle}>Active Drivers</Text>
+                                <Text style={styles.reportValue}>{verifiedDrivers.length}</Text>
+                            </View>
                         </View>
-                        <View style={styles.reportCard}>
-                            <Ionicons name="people-outline" size={32} color="#000" />
-                            <Text style={styles.reportTitle}>Total Farmers</Text>
-                            <Text style={styles.reportValue}>0</Text>
-                        </View>
-                        <View style={styles.reportCard}>
-                            <Ionicons name="car-outline" size={32} color="#000" />
-                            <Text style={styles.reportTitle}>Active Drivers</Text>
-                            <Text style={styles.reportValue}>{verifiedDrivers.length}</Text>
-                        </View>
-                    </View>
-                )}
-            </ScrollView>
-        </SafeAreaView>
+                    )}
+                </ScrollView>
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

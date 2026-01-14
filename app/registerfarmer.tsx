@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function RegisterFarmer() {
@@ -53,89 +54,91 @@ export default function RegisterFarmer() {
 
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={styles.backButton}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-                </TouchableOpacity>
-                <View style={styles.titleContainer}>
-                    <Text style={styles.title}>Register Farmer</Text>
-                </View>
-                <View style={styles.placeholderButton} />
-            </View>
-
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.form}>
-                    <Text style={styles.label}>Farmer Name *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter farmer name"
-                        value={name}
-                        onChangeText={setName}
-                        placeholderTextColor="#999"
-                    />
-
-                    <Text style={styles.label}>Phone Number *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter phone number"
-                        value={phone}
-                        onChangeText={setPhone}
-                        keyboardType="phone-pad"
-                        placeholderTextColor="#999"
-                    />
-
-                    <Text style={styles.label}>Location *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g., Musanze, District"
-                        value={location}
-                        onChangeText={setLocation}
-                        placeholderTextColor="#999"
-                    />
-
-                    <Text style={styles.label}>Crops Type *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g., Maize, Potatoes, Rice"
-                        value={crops}
-                        onChangeText={setCrops}
-                        placeholderTextColor="#999"
-                    />
-                    <Text style={styles.helperText}>Separate multiple crops with commas</Text>
-
-                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} activeOpacity={0.9}>
-                        <Text style={styles.submitButtonText}>Register Farmer</Text>
-                        <Ionicons name="person-add" size={20} color="#FFF" />
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={styles.backButton}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                     </TouchableOpacity>
-                </Animated.View>
-            </ScrollView>
+                    <View style={styles.titleContainer}>
+                        <Text style={styles.title}>Register Farmer</Text>
+                    </View>
+                    <View style={styles.placeholderButton} />
+                </View>
 
-            {showSuccessModal && (
-                <View style={[StyleSheet.absoluteFill, styles.modalOverlay]}>
-                    <Animated.View entering={FadeInDown.springify()} style={styles.modalContent}>
-                        <View style={styles.successIcon}>
-                            <Ionicons name="checkmark-sharp" size={40} color="#FFF" />
-                        </View>
-                        <Text style={styles.modalTitle}>Registration Successful!</Text>
-                        <Text style={styles.modalMessage}>Farmer {name} has been added to your cooperative list.</Text>
-                        <TouchableOpacity
-                            style={styles.modalButton}
-                            onPress={() => {
-                                setShowSuccessModal(false);
-                                router.back();
-                            }}
-                        >
-                            <Text style={styles.modalButtonText}>Done</Text>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.form}>
+                        <Text style={styles.label}>Farmer Name *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter farmer name"
+                            value={name}
+                            onChangeText={setName}
+                            placeholderTextColor="#999"
+                        />
+
+                        <Text style={styles.label}>Phone Number *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter phone number"
+                            value={phone}
+                            onChangeText={setPhone}
+                            keyboardType="phone-pad"
+                            placeholderTextColor="#999"
+                        />
+
+                        <Text style={styles.label}>Location *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="e.g., Musanze, District"
+                            value={location}
+                            onChangeText={setLocation}
+                            placeholderTextColor="#999"
+                        />
+
+                        <Text style={styles.label}>Crops Type *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="e.g., Maize, Potatoes, Rice"
+                            value={crops}
+                            onChangeText={setCrops}
+                            placeholderTextColor="#999"
+                        />
+                        <Text style={styles.helperText}>Separate multiple crops with commas</Text>
+
+                        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} activeOpacity={0.9}>
+                            <Text style={styles.submitButtonText}>Register Farmer</Text>
+                            <Ionicons name="person-add" size={20} color="#FFF" />
                         </TouchableOpacity>
                     </Animated.View>
-                </View>
-            )}
-        </SafeAreaView>
+                </ScrollView>
+
+                {showSuccessModal && (
+                    <View style={[StyleSheet.absoluteFill, styles.modalOverlay]}>
+                        <Animated.View entering={FadeInDown.springify()} style={styles.modalContent}>
+                            <View style={styles.successIcon}>
+                                <Ionicons name="checkmark-sharp" size={40} color="#FFF" />
+                            </View>
+                            <Text style={styles.modalTitle}>Registration Successful!</Text>
+                            <Text style={styles.modalMessage}>Farmer {name} has been added to your cooperative list.</Text>
+                            <TouchableOpacity
+                                style={styles.modalButton}
+                                onPress={() => {
+                                    setShowSuccessModal(false);
+                                    router.back();
+                                }}
+                            >
+                                <Text style={styles.modalButtonText}>Done</Text>
+                            </TouchableOpacity>
+                        </Animated.View>
+                    </View>
+                )}
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

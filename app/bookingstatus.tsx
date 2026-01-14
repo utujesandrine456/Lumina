@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { formatDateTime } from '@/utils/DateUtils';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function BookingStatus() {
     const router = useRouter();
@@ -101,152 +102,154 @@ export default function BookingStatus() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Booking Status</Text>
-                    <View style={{ width: 24 }} />
-                </View>
-
-                <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.content}>
-                    <View style={styles.tripCard}>
-                        <View style={styles.routeContainer}>
-                            <View style={styles.routePoint}>
-                                <View style={styles.routeDot} />
-                                <Text style={styles.routeLabel}>Pickup</Text>
-                                <Text style={styles.routeValue}>{trip.pickupLocation}</Text>
-                            </View>
-                            <View style={styles.routeLine} />
-                            <View style={styles.routePoint}>
-                                <View style={[styles.routeDot, styles.routeDotActive]} />
-                                <Text style={styles.routeLabel}>Destination</Text>
-                                <Text style={styles.routeValue}>{trip.destination}</Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.tripDetails}>
-                            <View style={styles.detailRow}>
-                                <Ionicons name="cube-outline" size={20} color="#000" />
-                                <Text style={styles.detailText}>{trip.cropType}</Text>
-                                <Text style={styles.detailValue}>{trip.totalWeight} kg</Text>
-                            </View>
-                            <View style={styles.detailRow}>
-                                <Ionicons name="location-outline" size={20} color="#000" />
-                                <Text style={styles.detailText}>Distance</Text>
-                                <Text style={styles.detailValue}>{trip.distance?.toFixed(2)} km</Text>
-                            </View>
-                            <View style={styles.detailRow}>
-                                <Ionicons name="cash-outline" size={20} color="#000" />
-                                <Text style={styles.detailText}>Total Price</Text>
-                                <Text style={styles.detailValue}>{trip.totalPrice?.toFixed(2)} Frw</Text>
-                            </View>
-                        </View>
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <Ionicons name="arrow-back" size={24} color="#000" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Booking Status</Text>
+                        <View style={{ width: 24 }} />
                     </View>
 
-                    <View style={styles.statusContainer}>
-                        <View style={styles.statusHeader}>
-                            <Ionicons name={statusInfo.icon as any} size={32} color={statusInfo.color} />
-                            <Text style={[styles.statusLabel, { color: statusInfo.color }]}>
-                                {statusInfo.label}
-                            </Text>
-                        </View>
-                        <Text style={styles.statusDescription}>{statusInfo.description}</Text>
-
-                        {/* Animated Progress Bar */}
-                        <View style={styles.progressBarContainer}>
-                            <View style={styles.progressBarBackground}>
-                                <Animated.View style={[styles.progressBarFill, animatedProgressStyle]} />
-                            </View>
-                            <View style={styles.progressSteps}>
-                                <View style={[styles.progressStep, trip.status !== 'pending' && styles.progressStepCompleted]}>
-                                    <View style={[styles.progressStepDot, trip.status !== 'pending' && styles.progressStepDotCompleted]} />
-                                    <Text style={styles.progressStepLabel}>Pending</Text>
+                    <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.content}>
+                        <View style={styles.tripCard}>
+                            <View style={styles.routeContainer}>
+                                <View style={styles.routePoint}>
+                                    <View style={styles.routeDot} />
+                                    <Text style={styles.routeLabel}>Pickup</Text>
+                                    <Text style={styles.routeValue}>{trip.pickupLocation}</Text>
                                 </View>
-                                <View style={[styles.progressStep, (trip.status === 'accepted' || trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepCompleted]}>
-                                    <View style={[styles.progressStepDot, (trip.status === 'accepted' || trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepDotCompleted]} />
-                                    <Text style={styles.progressStepLabel}>Accepted</Text>
-                                </View>
-                                <View style={[styles.progressStep, (trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepCompleted]}>
-                                    <View style={[styles.progressStepDot, (trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepDotCompleted]} />
-                                    <Text style={styles.progressStepLabel}>In Transit</Text>
-                                </View>
-                                <View style={[styles.progressStep, trip.status === 'completed' && styles.progressStepCompleted]}>
-                                    <View style={[styles.progressStepDot, trip.status === 'completed' && styles.progressStepDotCompleted]} />
-                                    <Text style={styles.progressStepLabel}>Delivered</Text>
+                                <View style={styles.routeLine} />
+                                <View style={styles.routePoint}>
+                                    <View style={[styles.routeDot, styles.routeDotActive]} />
+                                    <Text style={styles.routeLabel}>Destination</Text>
+                                    <Text style={styles.routeValue}>{trip.destination}</Text>
                                 </View>
                             </View>
-                        </View>
-                    </View>
 
-                    {trip.driver && (
-                        <View style={styles.driverCard}>
-                            <Ionicons name="person-circle" size={48} color="#000" />
-                            <View style={styles.driverInfo}>
-                                <Text style={styles.driverName}>{trip.driver.name}</Text>
-                                <Text style={styles.driverPlate}>{trip.driver.plateNumber}</Text>
-                                <View style={styles.ratingRow}>
-                                    <Ionicons name="star" size={16} color="#000" />
-                                    <Text style={styles.rating}>{trip.driver.rating?.toFixed(1)}</Text>
+                            <View style={styles.tripDetails}>
+                                <View style={styles.detailRow}>
+                                    <Ionicons name="cube-outline" size={20} color="#000" />
+                                    <Text style={styles.detailText}>{trip.cropType}</Text>
+                                    <Text style={styles.detailValue}>{trip.totalWeight} kg</Text>
+                                </View>
+                                <View style={styles.detailRow}>
+                                    <Ionicons name="location-outline" size={20} color="#000" />
+                                    <Text style={styles.detailText}>Distance</Text>
+                                    <Text style={styles.detailValue}>{trip.distance?.toFixed(2)} km</Text>
+                                </View>
+                                <View style={styles.detailRow}>
+                                    <Ionicons name="cash-outline" size={20} color="#000" />
+                                    <Text style={styles.detailText}>Total Price</Text>
+                                    <Text style={styles.detailValue}>{trip.totalPrice?.toFixed(2)} Frw</Text>
                                 </View>
                             </View>
                         </View>
-                    )}
 
-                    {trip.pickupTimestamp && (
-                        <View style={styles.timestampCard}>
-                            <Text style={styles.timestampLabel}>Pickup Confirmed</Text>
-                            <Text style={styles.timestampValue}>
-                                {formatDateTime(new Date(trip.pickupTimestamp))}
-                            </Text>
-                            {trip.pickupWeight && (
-                                <Text style={styles.timestampWeight}>
-                                    Weight: {trip.pickupWeight} kg
+                        <View style={styles.statusContainer}>
+                            <View style={styles.statusHeader}>
+                                <Ionicons name={statusInfo.icon as any} size={32} color={statusInfo.color} />
+                                <Text style={[styles.statusLabel, { color: statusInfo.color }]}>
+                                    {statusInfo.label}
                                 </Text>
-                            )}
-                        </View>
-                    )}
+                            </View>
+                            <Text style={styles.statusDescription}>{statusInfo.description}</Text>
 
-                    {trip.deliveryTimestamp && (
-                        <View style={styles.timestampCard}>
-                            <Text style={styles.timestampLabel}>Delivery Confirmed</Text>
-                            <Text style={styles.timestampValue}>
-                                {formatDateTime(new Date(trip.deliveryTimestamp))}
-                            </Text>
-                            {trip.deliveryWeight && (
-                                <Text style={styles.timestampWeight}>
-                                    Received: {trip.deliveryWeight} kg
+                            {/* Animated Progress Bar */}
+                            <View style={styles.progressBarContainer}>
+                                <View style={styles.progressBarBackground}>
+                                    <Animated.View style={[styles.progressBarFill, animatedProgressStyle]} />
+                                </View>
+                                <View style={styles.progressSteps}>
+                                    <View style={[styles.progressStep, trip.status !== 'pending' && styles.progressStepCompleted]}>
+                                        <View style={[styles.progressStepDot, trip.status !== 'pending' && styles.progressStepDotCompleted]} />
+                                        <Text style={styles.progressStepLabel}>Pending</Text>
+                                    </View>
+                                    <View style={[styles.progressStep, (trip.status === 'accepted' || trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepCompleted]}>
+                                        <View style={[styles.progressStepDot, (trip.status === 'accepted' || trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepDotCompleted]} />
+                                        <Text style={styles.progressStepLabel}>Accepted</Text>
+                                    </View>
+                                    <View style={[styles.progressStep, (trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepCompleted]}>
+                                        <View style={[styles.progressStepDot, (trip.status === 'in-progress' || trip.status === 'completed') && styles.progressStepDotCompleted]} />
+                                        <Text style={styles.progressStepLabel}>In Transit</Text>
+                                    </View>
+                                    <View style={[styles.progressStep, trip.status === 'completed' && styles.progressStepCompleted]}>
+                                        <View style={[styles.progressStepDot, trip.status === 'completed' && styles.progressStepDotCompleted]} />
+                                        <Text style={styles.progressStepLabel}>Delivered</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        </View>
+
+                        {trip.driver && (
+                            <View style={styles.driverCard}>
+                                <Ionicons name="person-circle" size={48} color="#000" />
+                                <View style={styles.driverInfo}>
+                                    <Text style={styles.driverName}>{trip.driver.name}</Text>
+                                    <Text style={styles.driverPlate}>{trip.driver.plateNumber}</Text>
+                                    <View style={styles.ratingRow}>
+                                        <Ionicons name="star" size={16} color="#000" />
+                                        <Text style={styles.rating}>{trip.driver.rating?.toFixed(1)}</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        )}
+
+                        {trip.pickupTimestamp && (
+                            <View style={styles.timestampCard}>
+                                <Text style={styles.timestampLabel}>Pickup Confirmed</Text>
+                                <Text style={styles.timestampValue}>
+                                    {formatDateTime(new Date(trip.pickupTimestamp))}
                                 </Text>
-                            )}
-                        </View>
-                    )}
+                                {trip.pickupWeight && (
+                                    <Text style={styles.timestampWeight}>
+                                        Weight: {trip.pickupWeight} kg
+                                    </Text>
+                                )}
+                            </View>
+                        )}
+
+                        {trip.deliveryTimestamp && (
+                            <View style={styles.timestampCard}>
+                                <Text style={styles.timestampLabel}>Delivery Confirmed</Text>
+                                <Text style={styles.timestampValue}>
+                                    {formatDateTime(new Date(trip.deliveryTimestamp))}
+                                </Text>
+                                {trip.deliveryWeight && (
+                                    <Text style={styles.timestampWeight}>
+                                        Received: {trip.deliveryWeight} kg
+                                    </Text>
+                                )}
+                            </View>
+                        )}
 
 
-                    {(trip.status === 'accepted' || trip.status === 'in-progress') && (
-                        <TouchableOpacity style={styles.actionButton} onPress={handleAction}>
-                            <Text style={styles.actionButtonText}>
-                                {trip.status === 'accepted' ? 'Confirm Pickup' : 'Confirm Delivery'}
-                            </Text>
-                            <Ionicons name="arrow-forward" size={20} color="#FFF" />
-                        </TouchableOpacity>
-                    )}
+                        {(trip.status === 'accepted' || trip.status === 'in-progress') && (
+                            <TouchableOpacity style={styles.actionButton} onPress={handleAction}>
+                                <Text style={styles.actionButtonText}>
+                                    {trip.status === 'accepted' ? 'Confirm Pickup' : 'Confirm Delivery'}
+                                </Text>
+                                <Ionicons name="arrow-forward" size={20} color="#FFF" />
+                            </TouchableOpacity>
+                        )}
 
-                    {trip.chatOpen && (
-                        <TouchableOpacity
-                            style={[styles.actionButton, { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#000' }]}
-                            onPress={() => router.push({ pathname: '/chat', params: { tripId: trip.id } })}
-                        >
-                            <Text style={[styles.actionButtonText, { color: '#000' }]}>
-                                Open Chat
-                            </Text>
-                            <Ionicons name="chatbubble-ellipses-outline" size={20} color="#000" />
-                        </TouchableOpacity>
-                    )}
-                </Animated.View>
-            </ScrollView>
-        </SafeAreaView>
+                        {trip.chatOpen && (
+                            <TouchableOpacity
+                                style={[styles.actionButton, { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#000' }]}
+                                onPress={() => router.push({ pathname: '/chat', params: { tripId: trip.id } })}
+                            >
+                                <Text style={[styles.actionButtonText, { color: '#000' }]}>
+                                    Open Chat
+                                </Text>
+                                <Ionicons name="chatbubble-ellipses-outline" size={20} color="#000" />
+                            </TouchableOpacity>
+                        )}
+                    </Animated.View>
+                </ScrollView>
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import Animated, { FadeInDown, FlipInEasyX } from 'react-native-reanimated';
 
 
@@ -20,96 +21,98 @@ export default function FarmerProfile() {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.header}>
-                        <TouchableOpacity onPress={() => router.back()}>
-                            <Ionicons name="arrow-back" size={24} color="#000" />
-                        </TouchableOpacity>
-                        <Text style={styles.headerTitle}>Farmer Profile</Text>
-                        <View style={{ width: 24 }} />
-                    </View>
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>Farmer not found.</Text>
-                    </View>
-                </SafeAreaView>
-            );
-        }
-
-        return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()}>
                         <Ionicons name="arrow-back" size={24} color="#000" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Farmer Profile</Text>
                     <View style={{ width: 24 }} />
                 </View>
+                <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>Farmer not found.</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
-                <Animated.View entering={FlipInEasyX.delay(200).springify()} style={styles.profileCard}>
-                    <View style={styles.avatarContainer}>
-                        <Ionicons name="person-circle" size={80} color="#000" />
+    return (
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <Ionicons name="arrow-back" size={24} color="#000" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Farmer Profile</Text>
+                        <View style={{ width: 24 }} />
                     </View>
-                    <Text style={styles.farmerName}>{farmer.name}</Text>
-                    <Text style={styles.farmerPhone}>{farmer.phone}</Text>
-                </Animated.View>
 
-                <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
-                    <Text style={styles.sectionTitle}>Personal Information</Text>
-                    <View style={styles.infoRow}>
-                        <Ionicons name="location-outline" size={20} color="#000" />
-                        <Text style={styles.infoLabel}>Village / Cell:</Text>
-                        <Text style={styles.infoValue}>{farmer.location || 'Not specified'}</Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                        <Ionicons name="call-outline" size={20} color="#000" />
-                        <Text style={styles.infoLabel}>Phone:</Text>
-                        <Text style={styles.infoValue}>{farmer.phone}</Text>
-                    </View>
-                </Animated.View>
-
-                <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.section}>
-                    <Text style={styles.sectionTitle}>Crop Types</Text>
-                    <View style={styles.cropsContainer}>
-                        {farmer.crops.map((crop: any, index: number) => (
-                            <Animated.View
-                                key={typeof crop === 'string' ? crop : crop.name || index}
-                                entering={FadeInDown.delay(500 + index * 50).springify()}
-                                style={styles.cropTag}
-                            >
-                                <Ionicons name="leaf" size={16} color="#000" />
-                                <Text style={styles.cropTagText}>{typeof crop === 'string' ? crop : crop.name}</Text>
-                            </Animated.View>
-                        ))}
-                    </View>
-                </Animated.View>
-
-                <Animated.View entering={FadeInDown.delay(600).springify()} style={styles.section}>
-                    <Text style={styles.sectionTitle}>Transport History</Text>
-                    {farmerTrips.length === 0 ? (
-                        <View style={styles.emptyTrips}>
-                            <Ionicons name="cube-outline" size={48} color="#BDBDBD" />
-                            <Text style={styles.emptyTripsText}>No transport history</Text>
+                    <Animated.View entering={FlipInEasyX.delay(200).springify()} style={styles.profileCard}>
+                        <View style={styles.avatarContainer}>
+                            <Ionicons name="person-circle" size={80} color="#000" />
                         </View>
-                    ) : (
-                        farmerTrips.map((trip) => (
-                            <View key={trip.id} style={styles.tripCard}>
-                                <View style={styles.tripHeader}>
-                                    <Text style={styles.tripId}>Trip #{trip.id.slice(-6)}</Text>
-                                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(trip.status) }]}>
-                                        <Text style={styles.statusText}>{getStatusText(trip.status)}</Text>
-                                    </View>
-                                </View>
-                                <Text style={styles.tripRoute}>
-                                    {trip.pickupLocation} → {trip.destination}
-                                </Text>
-                                <Text style={styles.tripDate}>
-                                    {trip.bookingTime ? new Date(trip.bookingTime).toLocaleDateString() : 'Date N/A'}
-                                </Text>
+                        <Text style={styles.farmerName}>{farmer.name}</Text>
+                        <Text style={styles.farmerPhone}>{farmer.phone}</Text>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
+                        <Text style={styles.sectionTitle}>Personal Information</Text>
+                        <View style={styles.infoRow}>
+                            <Ionicons name="location-outline" size={20} color="#000" />
+                            <Text style={styles.infoLabel}>Village / Cell:</Text>
+                            <Text style={styles.infoValue}>{farmer.location || 'Not specified'}</Text>
+                        </View>
+                        <View style={styles.infoRow}>
+                            <Ionicons name="call-outline" size={20} color="#000" />
+                            <Text style={styles.infoLabel}>Phone:</Text>
+                            <Text style={styles.infoValue}>{farmer.phone}</Text>
+                        </View>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.section}>
+                        <Text style={styles.sectionTitle}>Crop Types</Text>
+                        <View style={styles.cropsContainer}>
+                            {farmer.crops.map((crop: any, index: number) => (
+                                <Animated.View
+                                    key={typeof crop === 'string' ? crop : crop.name || index}
+                                    entering={FadeInDown.delay(500 + index * 50).springify()}
+                                    style={styles.cropTag}
+                                >
+                                    <Ionicons name="leaf" size={16} color="#000" />
+                                    <Text style={styles.cropTagText}>{typeof crop === 'string' ? crop : crop.name}</Text>
+                                </Animated.View>
+                            ))}
+                        </View>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInDown.delay(600).springify()} style={styles.section}>
+                        <Text style={styles.sectionTitle}>Transport History</Text>
+                        {farmerTrips.length === 0 ? (
+                            <View style={styles.emptyTrips}>
+                                <Ionicons name="cube-outline" size={48} color="#BDBDBD" />
+                                <Text style={styles.emptyTripsText}>No transport history</Text>
                             </View>
-                        ))
-                    )}
-                </Animated.View>
-            </ScrollView>
-        </SafeAreaView>
+                        ) : (
+                            farmerTrips.map((trip) => (
+                                <View key={trip.id} style={styles.tripCard}>
+                                    <View style={styles.tripHeader}>
+                                        <Text style={styles.tripId}>Trip #{trip.id.slice(-6)}</Text>
+                                        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(trip.status) }]}>
+                                            <Text style={styles.statusText}>{getStatusText(trip.status)}</Text>
+                                        </View>
+                                    </View>
+                                    <Text style={styles.tripRoute}>
+                                        {trip.pickupLocation} → {trip.destination}
+                                    </Text>
+                                    <Text style={styles.tripDate}>
+                                        {trip.bookingTime ? new Date(trip.bookingTime).toLocaleDateString() : 'Date N/A'}
+                                    </Text>
+                                </View>
+                            ))
+                        )}
+                    </Animated.View>
+                </ScrollView>
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

@@ -3,30 +3,33 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function DeliveryScreen() {
     const router = useRouter();
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Delivery</Text>
-                <View style={{ width: 40 }} />
-            </View>
-
-            <View style={styles.content}>
-                <View style={styles.iconContainer}>
-                    <Ionicons name="cube-outline" size={64} color="#1A1A1A" />
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Delivery</Text>
+                    <View style={{ width: 40 }} />
                 </View>
-                <Text style={styles.title}>Delivery Tracking</Text>
-                <Text style={styles.description}>
-                    Track your deliveries and manage transport requests in real-time.
-                </Text>
-            </View>
-        </SafeAreaView>
+
+                <View style={styles.content}>
+                    <View style={styles.iconContainer}>
+                        <Ionicons name="cube-outline" size={64} color="#1A1A1A" />
+                    </View>
+                    <Text style={styles.title}>Delivery Tracking</Text>
+                    <Text style={styles.description}>
+                        Track your deliveries and manage transport requests in real-time.
+                    </Text>
+                </View>
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

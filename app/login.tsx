@@ -55,13 +55,22 @@ export default function Login() {
                 role: 'adminfarmer',
                 cooperativeId: coop.id
             };
+        } else if (result.role === 'admindriver') {
+            const coop = result.data as any;
+            loggedInUser = {
+                id: coop.id,
+                name: coop.officerName,
+                phone: coop.phone,
+                role: 'admindriver',
+                cooperativeId: coop.id
+            };
         } else {
             const driver = result.data as any;
             loggedInUser = {
                 id: driver.id,
-                name: driver.name,
+                name: driver.fullName || driver.name,
                 phone: driver.phone,
-                role: 'admindriver',
+                role: 'driver',
                 cooperativeId: driver.cooperativeId
             };
         }
@@ -86,7 +95,7 @@ export default function Login() {
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
+                    <Ionicons name="arrow-back" size={24} color="#fff" />
                 </TouchableOpacity>
             </View>
 
@@ -94,7 +103,7 @@ export default function Login() {
                 <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.mainContent}>
                     <View style={styles.titleContainer}>
                         <Text style={styles.title}>Welcome Back</Text>
-                        <Text style={styles.subtitle}>Sign in to continue to Lumina</Text>
+                        <Text style={styles.subtitle}>Sign in to continue to Lumina Application</Text>
                     </View>
 
                     <View style={styles.formContainer}>
@@ -178,14 +187,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
     },
     header: {
-        paddingHorizontal: 24,
+        paddingHorizontal: 8,
         paddingTop: 10,
     },
     backButton: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#000000',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -204,12 +213,13 @@ const styles = StyleSheet.create({
         fontFamily: 'Poppins_600SemiBold',
         fontSize: 32,
         color: '#000',
-        marginBottom: 8,
+        textAlign: 'center',
     },
     subtitle: {
         fontFamily: 'Poppins_400Regular',
         fontSize: 16,
         color: '#757575',
+        textAlign: 'center',
     },
     roleContainer: {
         marginBottom: 24,

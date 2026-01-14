@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { getCurrentCoordinates } from '@/utils/getLocation';
 import * as ImagePicker from 'expo-image-picker';
 import { TextInput } from 'react-native';
@@ -99,79 +100,81 @@ export default function PickupConfirmation() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Confirm Pickup</Text>
-                    <View style={{ width: 24 }} />
-                </View>
-
-                <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.content}>
-                    <View style={styles.tripInfo}>
-                        <Text style={styles.tripRoute}>
-                            {trip.pickupLocation} → {trip.destination}
-                        </Text>
-                        <Text style={styles.tripDetails}>
-                            {trip.cropType} • {trip.totalWeight} kg
-                        </Text>
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <Ionicons name="arrow-back" size={24} color="#000" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Confirm Pickup</Text>
+                        <View style={{ width: 24 }} />
                     </View>
 
-                    <Text style={styles.sectionTitle}>Upload Pickup Photo *</Text>
-                    {photo ? (
-                        <Animated.View entering={BounceIn.springify()} style={styles.photoContainer}>
-                            <Image source={{ uri: photo }} style={styles.photo} />
-                            <TouchableOpacity
-                                style={styles.removePhotoButton}
-                                onPress={() => setPhoto(null)}
-                            >
-                                <Ionicons name="close-circle" size={24} color="#000" />
-                            </TouchableOpacity>
-                        </Animated.View>
-                    ) : (
-                        <View style={styles.photoPlaceholder}>
-                            <Ionicons name="camera-outline" size={48} color="#BDBDBD" />
-                            <Text style={styles.photoPlaceholderText}>No photo selected</Text>
-                            <View style={styles.photoButtons}>
-                                <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
-                                    <Ionicons name="camera" size={20} color="#000" />
-                                    <Text style={styles.photoButtonText}>Take Photo</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
-                                    <Ionicons name="image-outline" size={20} color="#000" />
-                                    <Text style={styles.photoButtonText}>Choose from Gallery</Text>
-                                </TouchableOpacity>
-                            </View>
+                    <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.content}>
+                        <View style={styles.tripInfo}>
+                            <Text style={styles.tripRoute}>
+                                {trip.pickupLocation} → {trip.destination}
+                            </Text>
+                            <Text style={styles.tripDetails}>
+                                {trip.cropType} • {trip.totalWeight} kg
+                            </Text>
                         </View>
-                    )}
 
-                    <Text style={styles.sectionTitle}>Confirm Weight (kg) *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter confirmed weight"
-                        keyboardType="numeric"
-                        value={weight}
-                        onChangeText={setWeight}
-                    />
-                    {trip.totalWeight && (
-                        <Text style={styles.expectedWeight}>
-                            Expected: {trip.totalWeight} kg
-                        </Text>
-                    )}
+                        <Text style={styles.sectionTitle}>Upload Pickup Photo *</Text>
+                        {photo ? (
+                            <Animated.View entering={BounceIn.springify()} style={styles.photoContainer}>
+                                <Image source={{ uri: photo }} style={styles.photo} />
+                                <TouchableOpacity
+                                    style={styles.removePhotoButton}
+                                    onPress={() => setPhoto(null)}
+                                >
+                                    <Ionicons name="close-circle" size={24} color="#000" />
+                                </TouchableOpacity>
+                            </Animated.View>
+                        ) : (
+                            <View style={styles.photoPlaceholder}>
+                                <Ionicons name="camera-outline" size={48} color="#BDBDBD" />
+                                <Text style={styles.photoPlaceholderText}>No photo selected</Text>
+                                <View style={styles.photoButtons}>
+                                    <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
+                                        <Ionicons name="camera" size={20} color="#000" />
+                                        <Text style={styles.photoButtonText}>Take Photo</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+                                        <Ionicons name="image-outline" size={20} color="#000" />
+                                        <Text style={styles.photoButtonText}>Choose from Gallery</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        )}
 
-                    <TouchableOpacity
-                        style={[styles.confirmButton, photo && weight && styles.confirmButtonActive]}
-                        onPress={handleConfirm}
-                        disabled={!photo || !weight}
-                    >
-                        <Ionicons name="checkmark-circle" size={24} color="#FFF" />
-                        <Text style={styles.confirmButtonText}>Confirm Pickup</Text>
-                    </TouchableOpacity>
-                </Animated.View>
-            </ScrollView>
-        </SafeAreaView>
+                        <Text style={styles.sectionTitle}>Confirm Weight (kg) *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter confirmed weight"
+                            keyboardType="numeric"
+                            value={weight}
+                            onChangeText={setWeight}
+                        />
+                        {trip.totalWeight && (
+                            <Text style={styles.expectedWeight}>
+                                Expected: {trip.totalWeight} kg
+                            </Text>
+                        )}
+
+                        <TouchableOpacity
+                            style={[styles.confirmButton, photo && weight && styles.confirmButtonActive]}
+                            onPress={handleConfirm}
+                            disabled={!photo || !weight}
+                        >
+                            <Ionicons name="checkmark-circle" size={24} color="#FFF" />
+                            <Text style={styles.confirmButtonText}>Confirm Pickup</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+                </ScrollView>
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

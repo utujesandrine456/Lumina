@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore, TransportRequest, Driver } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function BookDriver() {
@@ -42,27 +43,27 @@ export default function BookDriver() {
       return;
     }
 
-updateRequest(pendingRequest.id, {
-  driverId: driver.id,
-  status: 'accepted',
-  acceptedAt: new Date().toISOString(),
-  priceLocked: true,
-  chatOpen: true,
-  chat: [
-    ...((pendingRequest.chat ?? []) as {
-      id: string;
-      sender: string;
-      text: string;
-      timestamp: string;
-    }[]),
-    {
-      id: `${Date.now()}`,
-      sender: 'adminfarmer',
-      text: 'Driver accepted. Chat is now open for coordination.',
-      timestamp: new Date().toISOString(),
-    },
-  ],
-});
+    updateRequest(pendingRequest.id, {
+      driverId: driver.id,
+      status: 'accepted',
+      acceptedAt: new Date().toISOString(),
+      priceLocked: true,
+      chatOpen: true,
+      chat: [
+        ...((pendingRequest.chat ?? []) as {
+          id: string;
+          sender: string;
+          text: string;
+          timestamp: string;
+        }[]),
+        {
+          id: `${Date.now()}`,
+          sender: 'adminfarmer',
+          text: 'Driver accepted. Chat is now open for coordination.',
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    });
 
 
 
@@ -89,7 +90,7 @@ updateRequest(pendingRequest.id, {
           <View style={styles.driverHeader}>
             <Ionicons name="person-circle" size={64} color="#000" />
             <View style={styles.driverInfo}>
-              <Text style={styles.driverName}>{driver.name}</Text>
+              <Text style={styles.driverName}>{driver.fullName}</Text>
               <Text style={styles.plateNumber}>{driver.plateNumber}</Text>
               <View style={styles.ratingContainer}>
                 <Ionicons name="star" size={20} color="#000" />
@@ -148,116 +149,116 @@ updateRequest(pendingRequest.id, {
 
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#FFFFFF',
-    },
-    scrollContent: {
-        paddingBottom: 30,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
-    },
-    title: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 20,
-        color: '#000',
-    },
-    driverCard: {
-        backgroundColor: '#FFF',
-        borderRadius: 16,
-        padding: 20,
-        margin: 20,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-    },
-    driverHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    driverInfo: {
-        marginLeft: 16,
-        flex: 1,
-    },
-    driverName: {
-        fontFamily: 'Poppins_600SemiBold',
-        fontSize: 20,
-        color: '#000',
-        marginBottom: 4,
-    },
-    plateNumber: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 14,
-        color: '#757575',
-        marginBottom: 8,
-    },
-    ratingContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-    rating: {
-        fontFamily: 'Poppins_500Medium',
-        fontSize: 18,
-        color: '#000',
-    },
-    details: {
-        gap: 12,
-    },
-    detailRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    detailText: {
-        fontFamily: 'Poppins_400Regular',
-        fontSize: 14,
-        color: '#000',
-    },
-    form: {
-        paddingHorizontal: 20,
-    },
-    label: {
-        fontFamily: 'Poppins_500Medium',
-        fontSize: 16,
-        color: '#000',
-        marginBottom: 8,
-    },
-    timeButton: {
-        borderWidth: 1,
-        borderColor: '#B5B5B5',
-        borderRadius: 12,
-        padding: 14,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    timeText: {
-        fontSize: 15,
-        fontFamily: 'Poppins_400Regular',
-        color: '#000',
-    },
-    bookButton: {
-        backgroundColor: '#000',
-        paddingVertical: 16,
-        borderRadius: 12,
-        alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 8,
-    },
-    bookButtonText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontFamily: 'Poppins_600SemiBold',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollContent: {
+    paddingBottom: 30,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  title: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 20,
+    color: '#000',
+  },
+  driverCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    margin: 20,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  driverHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  driverInfo: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  driverName: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 20,
+    color: '#000',
+    marginBottom: 4,
+  },
+  plateNumber: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    color: '#757575',
+    marginBottom: 8,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  rating: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 18,
+    color: '#000',
+  },
+  details: {
+    gap: 12,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  detailText: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    color: '#000',
+  },
+  form: {
+    paddingHorizontal: 20,
+  },
+  label: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 16,
+    color: '#000',
+    marginBottom: 8,
+  },
+  timeButton: {
+    borderWidth: 1,
+    borderColor: '#B5B5B5',
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  timeText: {
+    fontSize: 15,
+    fontFamily: 'Poppins_400Regular',
+    color: '#000',
+  },
+  bookButton: {
+    backgroundColor: '#000',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  bookButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontFamily: 'Poppins_600SemiBold',
+  },
 });
 

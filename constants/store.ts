@@ -7,15 +7,17 @@ export interface Coordinates {
   longitude: number;
 }
 
-export interface Crop{
+export interface Crop {
   name: string;
 }
 
-export interface Farmer{
+export interface Farmer {
   id: string,
   name: string,
   phone: string,
   crops: Crop[],
+  cooperativeId?: string;
+  location?: string;
 }
 
 export interface Cooperative {
@@ -26,7 +28,9 @@ export interface Cooperative {
   phone: string;
   location: string;
   status: string;
-  farmers: Farmer[]
+  farmers: Farmer[];
+  tinNumber?: string;
+  role?: 'adminfarmer' | 'admindriver';
 }
 
 export interface TripFarmer {
@@ -54,19 +58,46 @@ export interface Driver {
   capacity?: number;
   vehicleModel?: string;
   rating?: number;
+  pin?: string;
 }
 
 export interface TransportRequest {
   id: string;
   cooperativeId: string;
-  farmerId: string;
+  farmerId?: string; // Made optional as we might have multiple farmers
+  farmers?: Farmer[]; // Added to support multiple farmers from CreateTransportRequest
   cropType: string;
   quantityKg: number;
+  totalWeight?: number; // Added from CreateTransportRequest
   destination: string;
+  pickupLocation: string; // Added
   pickupDate: string;
   status: 'pending' | 'accepted' | 'rejected' | 'in-progress' | 'completed';
+  pricePerKg?: number; // Added from CreateTransportRequest
+  pricePerKm?: number; // Added from CreateTransportRequest
+  distance?: number; // Added from CreateTransportRequest
+  totalPrice?: number; // Added from CreateTransportRequest
   driverId?: string;
   driverCoordinates?: Coordinates;
+  pickupCoordinates?: Coordinates; // Added
+  destinationCoordinates?: Coordinates; // Added
+  bookingTime?: string; // Added from CreateTransportRequest
+  createdAt?: number; // Added from CreateTransportRequest
+  pickupPhoto?: string;
+  deliveryPhoto?: string;
+  pickupTimestamp?: number;
+  deliveryTimestamp?: number;
+  pickupWeight?: number;
+  deliveryWeight?: number;
+  acceptedAt?: string;
+  priceLocked?: boolean;
+  chatOpen?: boolean;
+  chat?: {
+    id: string;
+    sender: string;
+    text: string;
+    timestamp: string;
+  }[];
 }
 
 export interface ChatMessage {
@@ -93,6 +124,7 @@ export interface CurrentUser {
   name: string;
   role: string;
   phone?: string;
+  cooperativeId?: string;
 }
 
 interface AppState {
@@ -148,11 +180,25 @@ interface AppState {
   addMessage: (message: ChatMessage) => void;
   setCurrentUser: (user: CurrentUser | null) => void;
   addCooperative: (cooperative: Cooperative) => void;
+  updateCooperative: (id: string, updates: Partial<Cooperative>) => void;
+
+  // Helper functions
+  getCoopFarmers: (coopId: string) => Farmer[];
+  getCoopRequests: (coopId: string) => TransportRequest[];
+  getDriverRequests: (driverId: string) => TransportRequest[];
+  addFarmerToCoop: (coopId: string, farmer: Farmer) => void;
+  createRequest: (request: any) => void;
+  updateRequest: (id: string, updates: Partial<TransportRequest>) => void;
+  findUserByCredentials: (phone: string, pin: string) => { role: string; data: any } | null;
+
+  // Selection state
+  selectedFarmers: string[];
+  setSelectedFarmers: (ids: string[]) => void;
 
   logout: () => void;
 }
 
-export const useDriverStore = create<AppState>((set) => ({
+export const useDriverStore = create<AppState>((set, get) => ({
   currentRole: null,
   currentCooperativeId: null,
   currentDriverId: null,
@@ -175,7 +221,11 @@ export const useDriverStore = create<AppState>((set) => ({
 
   registerCooperative: (coop) =>
     set((state) => ({
-      cooperatives: [...state.cooperatives, coop],
+      cooperatives: [...state.cooperatives, {
+        ...coop,
+        status: 'pending',
+        farmers: coop.farmers || [],
+      }],
       currentCooperativeId: coop.id,
     })),
 
@@ -255,14 +305,105 @@ export const useDriverStore = create<AppState>((set) => ({
     set((state) => ({ messages: [...state.messages, message] })),
 
   setCurrentUser: (user) => set({ currentUser: user }),
-  
+
   addCooperative: (cooperative) =>
     set((state) => ({ cooperatives: [...state.cooperatives, cooperative] })),
+
+  updateCooperative: (id, updates) =>
+    set((state) => ({
+      cooperatives: state.cooperatives.map((c) =>
+        c.id === id ? { ...c, ...updates } : c
+      ),
+    })),
+
+  // Helper functions - these access state via get()
+  getCoopFarmers: (coopId: string) => {
+    const state = get();
+    return state.farmers.filter((f: Farmer) => f.cooperativeId === coopId);
+  },
+
+  getCoopRequests: (coopId: string) => {
+    const state = get();
+    return state.requests.filter((r: TransportRequest) => r.cooperativeId === coopId);
+  },
+
+  getDriverRequests: (driverId: string) => {
+    const state = get();
+    return state.requests.filter((r: TransportRequest) => r.driverId === driverId);
+  },
+
+  findUserByCredentials: (phone: string, pin: string) => {
+    const state = get();
+
+    // Normalize phone number (remove spaces, ensure consistent format)
+    const normalizedPhone = phone.trim().replace(/\s+/g, '');
+
+    // Check cooperatives (for c-farmer and c-driver roles)
+    const coop = state.cooperatives.find(
+      (c: Cooperative) => {
+        const coopPhone = c.phone.trim().replace(/\s+/g, '');
+        return coopPhone === normalizedPhone && c.pin === pin;
+      }
+    );
+
+    if (coop) {
+      // Use the role stored on the cooperative (adminfarmer or admindriver)
+      return {
+        role: coop.role || 'adminfarmer',
+        data: coop,
+      };
+    }
+
+    // Check drivers (for regular drivers registered by admin)
+    const driver = state.drivers.find(
+      (d: Driver) => {
+        const driverPhone = d.phone.trim().replace(/\s+/g, '');
+        // Drivers registered by admin should have phone and PIN
+        return driverPhone === normalizedPhone && d.pin === pin;
+      }
+    );
+
+    if (driver) {
+      return {
+        role: 'driver',
+        data: driver,
+      };
+    }
+
+    return null;
+  },
+
+  addFarmerToCoop: (coopId, farmer) =>
+    set((state) => {
+      const newFarmer = { ...farmer, cooperativeId: coopId };
+      return {
+        farmers: [...state.farmers, newFarmer],
+        cooperatives: state.cooperatives.map((c) =>
+          c.id === coopId
+            ? { ...c, farmers: [...(c.farmers || []), newFarmer] }
+            : c
+        ),
+      };
+    }),
+
+  createRequest: (request) =>
+    set((state) => ({ requests: [...state.requests, request] })),
+
+  updateRequest: (id, updates) =>
+    set((state) => ({
+      requests: state.requests.map((r) =>
+        r.id === id ? { ...r, ...updates } : r
+      ),
+    })),
+
+  selectedFarmers: [],
+  setSelectedFarmers: (ids) => set({ selectedFarmers: ids }),
 
   logout: () =>
     set({
       currentRole: null,
       currentCooperativeId: null,
       currentDriverId: null,
+      selectedFarmers: [],
     }),
 }));

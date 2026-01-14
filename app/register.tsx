@@ -8,14 +8,14 @@ import { useRouter } from 'expo-router';
 const isWeb = Platform.OS === 'web';
 
 
-type RoleOption = 'adminfarmer' | 'admindriver';
+type RoleOption = 'c-farmer' | 'c-driver';
 
 const roleDetails: Record<RoleOption, { title: string; subtitle: string }> = {
-    adminfarmer: {
+    'c-farmer': {
         title: 'Register Farmer',
         subtitle: 'Enter farmer name, your name, phone, and a secure PIN.',
     },
-    admindriver: {
+    'c-driver': {
         title: 'Register Driver',
         subtitle: 'Drivers are registered by a cooperative. Provide coop name, your name, phone, and PIN.',
     },
@@ -29,12 +29,14 @@ export default function Register() {
     const [coopName, setCoopName] = useState('');
     const [pin, setPin] = useState('');
     const [location, setLocation] = useState('');
+    const [tinNumber, setTinNumber] = useState('');
 
     const canSubmit = useMemo(() => {
         if (!role) return false;
         if (!name || phone.length < 10 || pin.length < 4) return false;
+        if (!tinNumber || tinNumber.length < 9) return false;
         return true;
-    }, [role, name, phone, pin]);
+    }, [role, name, phone, pin, tinNumber]);
 
     const handleSubmit = () => {
         if (!canSubmit || !role) {
@@ -51,6 +53,7 @@ export default function Register() {
                 coopName,
                 pin,
                 location,
+                tinNumber,
             },
         });
     };
@@ -64,6 +67,16 @@ export default function Register() {
                 value={coopName}
                 onChangeText={setCoopName}
             />
+
+            <Text style={styles.label}>TIN Number *</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Enter cooperative TIN number"
+                value={tinNumber}
+                onChangeText={setTinNumber}
+                keyboardType="number-pad"
+                maxLength={12}
+            />
         </Animated.View>
     );
 
@@ -71,7 +84,7 @@ export default function Register() {
         const active = role === value;
         return (
             <TouchableOpacity style={[styles.chip, active && styles.chipActive]} onPress={() => setRole(value)} activeOpacity={0.9}>
-                <Ionicons name={icon} size={20} color={active ? '#FFF' : '#000'} />
+                <Ionicons name={icon} size={20} color={active ? '#fff' : '#000'} />
                 <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
             </TouchableOpacity>
         );
@@ -85,7 +98,7 @@ export default function Register() {
                     style={styles.backButton}
                     activeOpacity={0.7}
                 >
-                    <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+                    <Ionicons name="arrow-back" size={24} color="#fff" />
                 </TouchableOpacity>
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Create Account</Text>
@@ -97,8 +110,8 @@ export default function Register() {
                 <Animated.View entering={FadeInDown.delay(150).springify()} style={styles.card}>
                     <Text style={styles.sectionTitle}>Select Role</Text>
                     <View style={styles.chipsRow}>
-                        <RoleChip value="adminfarmer" label="Farmer" icon="people" />
-                        <RoleChip value="admindriver" label="Driver" icon="car" />
+                        <RoleChip value="c-farmer" label="Farmer" icon="people" />
+                        <RoleChip value="c-driver" label="Driver" icon="car" />
                     </View>
 
                     {role && (
@@ -188,27 +201,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 24,
+        paddingHorizontal: 8,
         paddingVertical: 16,
-        backgroundColor: '#FFFFFF',
-        borderBottomWidth: 1,
-        borderBottomColor: '#F5F5F5',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 10,
-        elevation: 2,
+        borderBottomWidth:1,
+        borderBottomColor:'#b8b8b8',
         zIndex: 10,
     },
     backButton: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#000',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#EEEEEE',
     },
     placeholderButton: {
         width: 44,
@@ -222,11 +227,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: -1,
+        color: '#000',
     },
     title: {
         fontFamily: 'Poppins_700Bold',
         fontSize: 24,
-        color: '#1A1A1A',
+        color: '#000',
         letterSpacing: 0.5,
     },
     card: {
@@ -263,21 +269,20 @@ const styles = StyleSheet.create({
         gap: 8,
         paddingVertical: 12,
         borderRadius: 16,
+        backgroundColor: '#ffff',
         borderWidth: 1,
-        borderColor: '#EEEEEE',
-        backgroundColor: '#FAFAFA',
+        borderColor: '#000',
     },
     chipActive: {
-        backgroundColor: '#1A1A1A',
-        borderColor: '#1A1A1A',
+        backgroundColor: '#000',
     },
     chipText: {
         fontFamily: 'Poppins_500Medium',
         fontSize: 13,
-        color: '#757575',
+        color: '#000',
     },
     chipTextActive: {
-        color: '#FFF',
+        color: '#fff',
     },
     roleInfo: {
         marginTop: 8,

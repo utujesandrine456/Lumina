@@ -1,17 +1,18 @@
 import { useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Dimensions, 
-  Animated, 
-  Easing,
-  Platform
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    Dimensions,
+    Animated,
+    Easing,
+    Platform
 } from 'react-native';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const { width, height } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
@@ -37,78 +38,80 @@ export default function RoleScreen() {
     }, []);
 
     return (
-        <SafeAreaView style={styles.container}>
-            <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }],},]}>
-                <View style={styles.heroBackground} />
-                <Text style={styles.title}>Choose Your Role</Text>
-                <Text style={styles.subtitle}>How would you like to join Lumina?</Text>
-            </Animated.View>
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }], },]}>
+                    <View style={styles.heroBackground} />
+                    <Text style={styles.title}>Choose Your Role</Text>
+                    <Text style={styles.subtitle}>How would you like to join Lumina?</Text>
+                </Animated.View>
 
-            <View style={styles.cardsContainer}>
-                <Link href="/register" asChild>
-                    <TouchableOpacity activeOpacity={0.7}>
-                        <Animated.View style={[
-                            styles.card,
-                            styles.cardElevated,
-                            {
-                                opacity: fadeAnim,
-                                transform: [{
-                                    translateY: slideAnim.interpolate({
-                                        inputRange: [0, 30],
-                                        outputRange: [0, 40]
-                                    })
-                                }]
-                            }
-                        ]}>
-                            <View style={[styles.iconContainer, styles.iconDark]}>
-                                <Ionicons name="people" size={28} color="#FFFFFF" />
-                            </View>
-                            <View style={styles.cardContent}>
-                                <Text style={styles.cardTitle}>Cooperative Officer</Text>
-                                <Text style={styles.cardDescription}>
-                                    Register farmers, book drivers, manage transport operations.
-                                </Text>
-                            </View>
-                            <View style={styles.chevronContainer}>
-                                <Ionicons name="chevron-forward" size={22} color="#000" />
-                            </View>
-                        </Animated.View>
-                    </TouchableOpacity>
-                </Link>
+                <View style={styles.cardsContainer}>
+                    <Link href="/register" asChild>
+                        <TouchableOpacity activeOpacity={0.7}>
+                            <Animated.View style={[
+                                styles.card,
+                                styles.cardElevated,
+                                {
+                                    opacity: fadeAnim,
+                                    transform: [{
+                                        translateY: slideAnim.interpolate({
+                                            inputRange: [0, 30],
+                                            outputRange: [0, 40]
+                                        })
+                                    }]
+                                }
+                            ]}>
+                                <View style={[styles.iconContainer, styles.iconDark]}>
+                                    <Ionicons name="people" size={28} color="#FFFFFF" />
+                                </View>
+                                <View style={styles.cardContent}>
+                                    <Text style={styles.cardTitle}>Cooperative Officer</Text>
+                                    <Text style={styles.cardDescription}>
+                                        Register farmers, book drivers, manage transport operations.
+                                    </Text>
+                                </View>
+                                <View style={styles.chevronContainer}>
+                                    <Ionicons name="chevron-forward" size={22} color="#000" />
+                                </View>
+                            </Animated.View>
+                        </TouchableOpacity>
+                    </Link>
 
-                <Link href="/register" asChild>
-                    <TouchableOpacity activeOpacity={0.7}>
-                        <Animated.View style={[
-                            styles.card,
-                            styles.cardElevated,
-                            {
-                                opacity: fadeAnim,
-                                transform: [{
-                                    translateY: slideAnim.interpolate({
-                                        inputRange: [0, 30],
-                                        outputRange: [0, 60]
-                                    })
-                                }]
-                            }
-                        ]}>
-                            <View style={[styles.iconContainer, styles.iconDark]}>
-                                <Ionicons name="car" size={28} color="#FFFFFF" />
-                            </View>
-                            <View style={styles.cardContent}>
-                                <Text style={styles.cardTitle}>Cooperative Driver</Text>
-                                <Text style={styles.cardDescription}>
-                                    Receive trip requests, update trip status and manage your schedule.
-                                </Text>
-                            </View>
-                            <View style={styles.chevronContainer}>
-                                <Ionicons name="chevron-forward" size={22} color="#000" />
-                            </View>
-                        </Animated.View>
-                    </TouchableOpacity>
-                </Link>
-            </View>
-                        
-        </SafeAreaView> 
+                    <Link href="/register" asChild>
+                        <TouchableOpacity activeOpacity={0.7}>
+                            <Animated.View style={[
+                                styles.card,
+                                styles.cardElevated,
+                                {
+                                    opacity: fadeAnim,
+                                    transform: [{
+                                        translateY: slideAnim.interpolate({
+                                            inputRange: [0, 30],
+                                            outputRange: [0, 60]
+                                        })
+                                    }]
+                                }
+                            ]}>
+                                <View style={[styles.iconContainer, styles.iconDark]}>
+                                    <Ionicons name="car" size={28} color="#FFFFFF" />
+                                </View>
+                                <View style={styles.cardContent}>
+                                    <Text style={styles.cardTitle}>Cooperative Driver</Text>
+                                    <Text style={styles.cardDescription}>
+                                        Receive trip requests, update trip status and manage your schedule.
+                                    </Text>
+                                </View>
+                                <View style={styles.chevronContainer}>
+                                    <Ionicons name="chevron-forward" size={22} color="#000" />
+                                </View>
+                            </Animated.View>
+                        </TouchableOpacity>
+                    </Link>
+                </View>
+
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

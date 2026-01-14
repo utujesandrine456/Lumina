@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,9 +18,10 @@ export default function OTPScreen() {
     const coopName = params.coopName as string;
     const pin = params.pin as string;
     const location = params.location as string;
+    const tinNumber = params.tinNumber as string;
 
     const { setCurrentUser, drivers, addDriver, addCooperative } = useDriverStore();
-    const [otp, setOtp] = useState(['', '', '', '', '', ' ']);
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(60);
     const [canResend, setCanResend] = useState(false);
     const inputRefs = useRef<(TextInput | null)[]>([]);
@@ -99,9 +100,8 @@ export default function OTPScreen() {
     const handleSuccess = () => {
         const safeRole = role as any;
 
-        if (role === 'adminfarmer') {
+        if (role === 'c-farmer') {
             const coopId = `coop-${phone}`;
-            setCurrentUser({ id: coopId, name: name || 'Cooperative Officer', phone, role: 'adminfarmer', cooperativeId: coopId });
             addCooperative({
                 id: coopId,
                 name: coopName || 'Cooperative',
@@ -111,28 +111,33 @@ export default function OTPScreen() {
                 pin: pin || '',
                 status: 'pending',
                 farmers: [],
+                tinNumber: tinNumber || '',
+                role: 'adminfarmer',
             });
 
-            router.push('/adminfarmerdashboard');
-        } else if (role === 'admindriver') {
-            const existing = drivers.find((d) => d.phone === phone);
-            const driver = existing ?? {
-                id: `drv-${Date.now()}`,
-                name: name || 'Driver',
+            Alert.alert('Success', 'Account created! Please login with your credentials.', [
+                { text: 'OK', onPress: () => router.replace('/login') }
+            ]);
+        } else if (role === 'c-driver') {
+            const coopId = `coop-driver-${phone}`;
+            addCooperative({
+                id: coopId,
+                name: coopName || 'Driver Cooperative',
+                officerName: name || 'Officer',
+                location: location || '',
                 phone: phone || '',
                 pin: pin || '',
-                plateNumber: 'UNKNOWN',
-                capacity: 0,
-                rating: 0,
-                availability: true,
-                verified: false,
-            } as any;
+                status: 'pending',
+                farmers: [],
+                tinNumber: tinNumber || '',
+                role: 'admindriver',
+            });
 
-            if (!existing) addDriver(driver);
-            setCurrentUser({ id: driver.id, name: driver.name || 'Driver', phone: phone || '', role: 'driver' });
-            router.push('/admindriverdashboard');
+            Alert.alert('Success', 'Account created! Please login with your credentials.', [
+                { text: 'OK', onPress: () => router.replace('/login') }
+            ]);
         } else {
-            setCurrentUser({ id: `user-${Date.now()}`, name: name || 'User', phone: phone || '', role: safeRole || 'user' });
+            setCurrentUser({ id: `user-${Date.now()}`, name: name || 'User', phone: phone || '', role: safeRole });
             Alert.alert("Success", "Account verified!");
         }
     };
@@ -302,11 +307,13 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
         textAlign: 'center',
-        fontSize: 20,
+        textAlignVertical: 'center',
+        fontSize: 22,
         fontFamily: 'Poppins_600SemiBold',
         color: '#1A1A1A',
-        outlineColor: 'transparent',
-        outlineWidth: 0,
+        paddingVertical: 0,
+        lineHeight: 48, 
+        includeFontPadding: false,
     },
     verifyButton: {
         width: '100%',

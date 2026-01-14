@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import FarmerBottomBar from '@/components/FarmerBottomBar';
 
 export default function Trips() {
@@ -126,11 +127,11 @@ export default function Trips() {
                     <View style={styles.driverRow}>
                         <View style={styles.driverInfo}>
                             <View style={styles.driverAvatar}>
-                                <Text style={styles.driverInitials}>{tripDriver.name.charAt(0)}</Text>
+                                <Text style={styles.driverInitials}>{tripDriver.fullName.charAt(0)}</Text>
                             </View>
                             <View>
                                 <Text style={styles.driverLabel}>Assigned Driver</Text>
-                                <Text style={styles.driverName}>{tripDriver.name}</Text>
+                                <Text style={styles.driverName}>{tripDriver.fullName}</Text>
                             </View>
                         </View>
                         <View style={styles.actionButtons}>
@@ -154,58 +155,60 @@ export default function Trips() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={styles.backButton}
-                >
-                    <Ionicons name="arrow-back" size={24} color="#000" />
-                </TouchableOpacity>
-                <View style={styles.headerTitleContainer}>
-                    <Text style={styles.title}>Trips</Text>
-                </View>
-            </View>
-
-            <View style={styles.filterContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-                    {['all', 'pending', 'ongoing', 'completed'].map((f) => (
-                        <TouchableOpacity
-                            key={f}
-                            style={[styles.filterChip, filter === f && styles.filterChipActive]}
-                            onPress={() => setFilter(f as any)}
-                        >
-                            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-                                {f.charAt(0).toUpperCase() + f.slice(1)}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>
-
-            {filteredTrips.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                    <View style={styles.emptyIconContainer}>
-                        <Ionicons name="map" size={40} color="#000" />
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={styles.backButton}
+                    >
+                        <Ionicons name="arrow-back" size={24} color="#000" />
+                    </TouchableOpacity>
+                    <View style={styles.headerTitleContainer}>
+                        <Text style={styles.title}>Trips</Text>
                     </View>
-                    <Text style={styles.emptyTitle}>No trips found</Text>
-                    <Text style={styles.emptyText}>You haven't made any transport requests in this category yet.</Text>
                 </View>
-            ) : (
-                <FlatList
-                    data={filteredTrips}
-                    renderItem={renderTrip}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                    }
-                />
-            )}
 
-            <FarmerBottomBar />
-        </SafeAreaView>
+                <View style={styles.filterContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+                        {['all', 'pending', 'ongoing', 'completed'].map((f) => (
+                            <TouchableOpacity
+                                key={f}
+                                style={[styles.filterChip, filter === f && styles.filterChipActive]}
+                                onPress={() => setFilter(f as any)}
+                            >
+                                <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+                                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+
+                {filteredTrips.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <View style={styles.emptyIconContainer}>
+                            <Ionicons name="map" size={40} color="#000" />
+                        </View>
+                        <Text style={styles.emptyTitle}>No trips found</Text>
+                        <Text style={styles.emptyText}>You haven't made any transport requests in this category yet.</Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={filteredTrips}
+                        renderItem={renderTrip}
+                        keyExtractor={(item) => item.id}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        }
+                    />
+                )}
+
+                <FarmerBottomBar />
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

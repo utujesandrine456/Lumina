@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
 import BottomBar from '@/components/DriverBottomBar';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const { width } = Dimensions.get('window');
 
@@ -13,12 +14,6 @@ export default function AdminDriverDashboard() {
   const router = useRouter();
   const { currentUser, drivers } = useDriverStore();
   const currentCooperativeId = currentUser?.cooperativeId;
-
-  useEffect(() => {
-    if (!currentUser || currentUser.role !== 'admindriver') {
-      router.replace('/login');
-    }
-  }, [currentUser]);
 
   const counts = useMemo(() => {
     if (!currentCooperativeId) { return { total: 0, available: 0, offline: 0 } }
@@ -38,79 +33,81 @@ export default function AdminDriverDashboard() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Welcome Back,</Text>
-            <Text style={styles.userName}>{currentUser?.name || 'Admin Driver'}</Text>
-            <Text style={styles.subtitle}>Driver Management</Text>
-          </View>
-          <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
-            <View style={styles.profileIcon}>
-              <Ionicons name="person" size={24} color="#FFF" />
+    <ProtectedRoute>
+      <SafeAreaView style={styles.container}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
+            <View>
+              <Text style={styles.greeting}>Welcome Back,</Text>
+              <Text style={styles.userName}>{currentUser?.name || 'Admin Driver'}</Text>
+              <Text style={styles.subtitle}>Driver Management</Text>
             </View>
-          </TouchableOpacity>
-        </Animated.View>
+            <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
+              <View style={styles.profileIcon}>
+                <Ionicons name="person" size={24} color="#FFF" />
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.statsCard}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{counts.total}</Text>
-            <Text style={styles.statLabel}>Total Drivers</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{counts.available}</Text>
-            <Text style={styles.statLabel}>Available</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{counts.offline}</Text>
-            <Text style={styles.statLabel}>Offline</Text>
-          </View>
-        </Animated.View>
-
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.actionsGrid}>
-          {quickActions.map((action, index) => (
-            <Animated.View key={index} entering={FadeInDown.delay(300 + (index * 50)).springify()} style={styles.actionWrapper}>
-              <TouchableOpacity style={styles.actionButton} onPress={() => router.push(action.route as any)}>
-                <View style={styles.actionIcon}>
-                  <Ionicons name={action.icon as any} size={24} color="#1A1A1A" />
-                </View>
-                <Text style={styles.actionLabel}>{action.label}</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
-        </View>
-
-        <Text style={styles.sectionTitle}>Driver Overview</Text>
-        <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.overviewCard}>
-          <View style={styles.overviewItem}>
-            <View style={styles.overviewIcon}>
-              <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.statsCard}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{counts.total}</Text>
+              <Text style={styles.statLabel}>Total Drivers</Text>
             </View>
-            <View style={styles.overviewContent}>
-              <Text style={styles.overviewLabel}>Active Drivers</Text>
-              <Text style={styles.overviewValue}>{counts.available} online now</Text>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{counts.available}</Text>
+              <Text style={styles.statLabel}>Available</Text>
             </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{counts.offline}</Text>
+              <Text style={styles.statLabel}>Offline</Text>
+            </View>
+          </Animated.View>
+
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsGrid}>
+            {quickActions.map((action, index) => (
+              <Animated.View key={index} entering={FadeInDown.delay(300 + (index * 50)).springify()} style={styles.actionWrapper}>
+                <TouchableOpacity style={styles.actionButton} onPress={() => router.push(action.route as any)}>
+                  <View style={styles.actionIcon}>
+                    <Ionicons name={action.icon as any} size={24} color="#1A1A1A" />
+                  </View>
+                  <Text style={styles.actionLabel}>{action.label}</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
           </View>
 
-          <View style={styles.separator} />
+          <Text style={styles.sectionTitle}>Driver Overview</Text>
+          <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.overviewCard}>
+            <View style={styles.overviewItem}>
+              <View style={styles.overviewIcon}>
+                <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+              </View>
+              <View style={styles.overviewContent}>
+                <Text style={styles.overviewLabel}>Active Drivers</Text>
+                <Text style={styles.overviewValue}>{counts.available} online now</Text>
+              </View>
+            </View>
 
-          <View style={styles.overviewItem}>
-            <View style={styles.overviewIcon}>
-              <Ionicons name="time-outline" size={24} color="#FF9800" />
+            <View style={styles.separator} />
+
+            <View style={styles.overviewItem}>
+              <View style={styles.overviewIcon}>
+                <Ionicons name="time-outline" size={24} color="#FF9800" />
+              </View>
+              <View style={styles.overviewContent}>
+                <Text style={styles.overviewLabel}>Offline Drivers</Text>
+                <Text style={styles.overviewValue}>{counts.offline} not available</Text>
+              </View>
             </View>
-            <View style={styles.overviewContent}>
-              <Text style={styles.overviewLabel}>Offline Drivers</Text>
-              <Text style={styles.overviewValue}>{counts.offline} not available</Text>
-            </View>
-          </View>
-        </Animated.View>
-      </ScrollView>
-      <BottomBar />
-    </SafeAreaView>
+          </Animated.View>
+        </ScrollView>
+        <BottomBar />
+      </SafeAreaView>
+    </ProtectedRoute>
   );
 }
 

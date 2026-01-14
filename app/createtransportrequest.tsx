@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { calculateDistance, calculatePrice } from '@/utils/PriceCalculator';
 import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
@@ -162,199 +163,201 @@ export default function CreateTransportRequest() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={styles.backButton}
-                        activeOpacity={0.7}
-                    >
-                        <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-                    </TouchableOpacity>
-                    <View style={styles.titleContainer}>
-                        <Text style={styles.title}>New Request</Text>
-                    </View>
-                    <View style={styles.placeholderButton} />
-                </View>
-
-                <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.form}>
-                    <Text style={styles.sectionTitle}>Selected Farmers ({selectedFarmersData.length})</Text>
-                    {selectedFarmersData.length === 0 ? (
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.header}>
                         <TouchableOpacity
-                            style={styles.selectButton}
-                            onPress={() => router.push('/farmerslist')}
+                            onPress={() => router.back()}
+                            style={styles.backButton}
+                            activeOpacity={0.7}
                         >
-                            <Ionicons name="people" size={20} color="#000" />
-                            <Text style={styles.selectButtonText}>Select Farmers from List</Text>
-                            <Ionicons name="arrow-forward" size={16} color="#000" />
+                            <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                         </TouchableOpacity>
-                    ) : (
-                        selectedFarmersData.map((farmer, index) => (
-                            <Animated.View
-                                key={farmer.id}
-                                entering={SlideInRight.delay(300 + index * 50).springify()}
-                                style={styles.farmerItem}
+                        <View style={styles.titleContainer}>
+                            <Text style={styles.title}>New Request</Text>
+                        </View>
+                        <View style={styles.placeholderButton} />
+                    </View>
+
+                    <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.form}>
+                        <Text style={styles.sectionTitle}>Selected Farmers ({selectedFarmersData.length})</Text>
+                        {selectedFarmersData.length === 0 ? (
+                            <TouchableOpacity
+                                style={styles.selectButton}
+                                onPress={() => router.push('/farmerslist')}
                             >
-                                <Text style={styles.farmerName}>{farmer.name}</Text>
-                                <Text style={styles.farmerDetails}>
-                                    {farmer.location && farmer.location !== 'Unknown' ? farmer.location : 'Location Pending'}
+                                <Ionicons name="people" size={20} color="#000" />
+                                <Text style={styles.selectButtonText}>Select Farmers from List</Text>
+                                <Ionicons name="arrow-forward" size={16} color="#000" />
+                            </TouchableOpacity>
+                        ) : (
+                            selectedFarmersData.map((farmer, index) => (
+                                <Animated.View
+                                    key={farmer.id}
+                                    entering={SlideInRight.delay(300 + index * 50).springify()}
+                                    style={styles.farmerItem}
+                                >
+                                    <Text style={styles.farmerName}>{farmer.name}</Text>
+                                    <Text style={styles.farmerDetails}>
+                                        {farmer.location && farmer.location !== 'Unknown' ? farmer.location : 'Location Pending'}
+                                    </Text>
+                                    <View style={styles.cropsRow}>
+                                        {farmer.crops.map((crop) => (
+                                            <View key={crop.id} style={styles.cropTag}>
+                                                <Text style={styles.cropTagText}>{crop.name}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
+                                </Animated.View>
+                            ))
+                        )}
+
+                        <Text style={styles.label}>Crop Type *</Text>
+                        <View style={styles.cropSelector}>
+                            {availableCrops.map((crop, index) => (
+                                <TouchableOpacity
+                                    key={crop}
+                                    style={[styles.cropOption, cropTypes.includes(crop) && styles.cropOptionSelected]}
+                                    onPress={() => toggleCrop(crop)}
+                                >
+                                    <Text style={[styles.cropOptionText, cropTypes.includes(crop) && styles.cropOptionTextSelected]}>
+                                        {crop}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        <Text style={styles.label}>Total Weight (kg) *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter total weight"
+                            keyboardType="numeric"
+                            value={totalWeight}
+                            onChangeText={setTotalWeight}
+                        />
+
+                        <Text style={styles.label}>Pickup Location *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter pickup location"
+                            value={pickupLocation}
+                            onChangeText={(text) => handleLocationChange(text, true)}
+                        />
+
+                        <Text style={styles.label}>Destination *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter destination"
+                            value={destination}
+                            onChangeText={(text) => handleLocationChange(text, false)}
+                        />
+
+                        {distance !== null && (
+                            <Animated.View entering={FadeInDown.springify()} style={styles.infoBox}>
+                                <Ionicons name="location" size={20} color="#000" />
+                                <Text style={styles.infoText}>Distance: {distance.toFixed(2)} km</Text>
+                            </Animated.View>
+                        )}
+
+                        <Text style={styles.label}>Pickup Date *</Text>
+                        {(Platform.OS === 'web' || Platform.OS === 'windows') ? (
+                            <View style={{ marginBottom: 15 }}>
+                                {React.createElement('input', {
+                                    type: 'date',
+                                    value: pickupDate.toISOString().split('T')[0],
+                                    min: new Date().toISOString().split('T')[0],
+                                    onChange: (e: any) => {
+                                        const d = new Date(e.target.value);
+                                        if (!isNaN(d.getTime())) {
+                                            setPickupDate(d);
+                                        }
+                                    },
+                                    style: {
+                                        padding: '12px',
+                                        borderRadius: '12px',
+                                        border: '1px solid #B5B5B5',
+                                        fontSize: '15px',
+                                        fontFamily: 'Poppins_400Regular',
+                                        width: '100%',
+                                        outline: 'none',
+                                        backgroundColor: '#FFF',
+                                        color: '#000',
+                                        boxSizing: 'border-box'
+                                    }
+                                })}
+                            </View>
+                        ) : (
+                            <TouchableOpacity
+                                style={styles.dateButton}
+                                onPress={() => setShowDatePicker(true)}
+                            >
+                                <Text style={styles.dateText}>
+                                    {pickupDate.toLocaleDateString()}
                                 </Text>
-                                <View style={styles.cropsRow}>
-                                    {farmer.crops.map((crop) => (
-                                        <View key={crop.id} style={styles.cropTag}>
-                                            <Text style={styles.cropTagText}>{crop.name}</Text>
-                                        </View>
-                                    ))}
+                                <Ionicons name="calendar-outline" size={20} color="#000" />
+                            </TouchableOpacity>
+                        )}
+
+                        {showDatePicker && Platform.OS !== 'web' && Platform.OS !== 'windows' && (
+                            <DateTimePicker
+                                value={pickupDate}
+                                mode="date"
+                                display="default"
+                                minimumDate={new Date()}
+                                onChange={(event, selectedDate) => {
+                                    setShowDatePicker(false);
+                                    if (selectedDate) {
+                                        setPickupDate(selectedDate);
+                                    }
+                                }}
+                            />
+                        )}
+
+                        <Text style={styles.label}>Price per kg (Frw) *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter price per kg"
+                            keyboardType="numeric"
+                            value={pricePerKg}
+                            onChangeText={setPricePerKg}
+                        />
+
+                        <Text style={styles.label}>Price per km (Frw) *</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter price per km"
+                            keyboardType="numeric"
+                            value={pricePerKm}
+                            onChangeText={setPricePerKm}
+                        />
+
+                        {totalPrice !== null && (
+                            <Animated.View entering={FadeInDown.springify()} style={styles.priceBox}>
+                                <View style={styles.priceRow}>
+                                    <Text style={styles.priceLabel}>Total Price (Locked):</Text>
+                                    <Text style={styles.priceValue}>{totalPrice.toFixed(2)} Frw</Text>
+                                </View>
+                                <View style={styles.priceBreakdown}>
+                                    <Text style={styles.breakdownText}>
+                                        ({totalWeight} kg × {pricePerKg} Frw/kg) + ({distance?.toFixed(2)} km × {pricePerKm} Frw/km)
+                                    </Text>
                                 </View>
                             </Animated.View>
-                        ))
-                    )}
+                        )}
 
-                    <Text style={styles.label}>Crop Type *</Text>
-                    <View style={styles.cropSelector}>
-                        {availableCrops.map((crop, index) => (
-                            <TouchableOpacity
-                                key={crop}
-                                style={[styles.cropOption, cropTypes.includes(crop) && styles.cropOptionSelected]}
-                                onPress={() => toggleCrop(crop)}
-                            >
-                                <Text style={[styles.cropOptionText, cropTypes.includes(crop) && styles.cropOptionTextSelected]}>
-                                    {crop}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-
-                    <Text style={styles.label}>Total Weight (kg) *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter total weight"
-                        keyboardType="numeric"
-                        value={totalWeight}
-                        onChangeText={setTotalWeight}
-                    />
-
-                    <Text style={styles.label}>Pickup Location *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter pickup location"
-                        value={pickupLocation}
-                        onChangeText={(text) => handleLocationChange(text, true)}
-                    />
-
-                    <Text style={styles.label}>Destination *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter destination"
-                        value={destination}
-                        onChangeText={(text) => handleLocationChange(text, false)}
-                    />
-
-                    {distance !== null && (
-                        <Animated.View entering={FadeInDown.springify()} style={styles.infoBox}>
-                            <Ionicons name="location" size={20} color="#000" />
-                            <Text style={styles.infoText}>Distance: {distance.toFixed(2)} km</Text>
-                        </Animated.View>
-                    )}
-
-                    <Text style={styles.label}>Pickup Date *</Text>
-                    {(Platform.OS === 'web' || Platform.OS === 'windows') ? (
-                        <View style={{ marginBottom: 15 }}>
-                            {React.createElement('input', {
-                                type: 'date',
-                                value: pickupDate.toISOString().split('T')[0],
-                                min: new Date().toISOString().split('T')[0],
-                                onChange: (e: any) => {
-                                    const d = new Date(e.target.value);
-                                    if (!isNaN(d.getTime())) {
-                                        setPickupDate(d);
-                                    }
-                                },
-                                style: {
-                                    padding: '12px',
-                                    borderRadius: '12px',
-                                    border: '1px solid #B5B5B5',
-                                    fontSize: '15px',
-                                    fontFamily: 'Poppins_400Regular',
-                                    width: '100%',
-                                    outline: 'none',
-                                    backgroundColor: '#FFF',
-                                    color: '#000',
-                                    boxSizing: 'border-box'
-                                }
-                            })}
-                        </View>
-                    ) : (
                         <TouchableOpacity
-                            style={styles.dateButton}
-                            onPress={() => setShowDatePicker(true)}
+                            style={[styles.submitButton, totalPrice !== null && styles.submitButtonActive]}
+                            onPress={handleSubmit}
+                            disabled={totalPrice === null}
                         >
-                            <Text style={styles.dateText}>
-                                {pickupDate.toLocaleDateString()}
-                            </Text>
-                            <Ionicons name="calendar-outline" size={20} color="#000" />
+                            <Text style={styles.submitButtonText}>Create Request</Text>
+                            <Ionicons name="lock-closed" size={20} color="#FFF" />
                         </TouchableOpacity>
-                    )}
-
-                    {showDatePicker && Platform.OS !== 'web' && Platform.OS !== 'windows' && (
-                        <DateTimePicker
-                            value={pickupDate}
-                            mode="date"
-                            display="default"
-                            minimumDate={new Date()}
-                            onChange={(event, selectedDate) => {
-                                setShowDatePicker(false);
-                                if (selectedDate) {
-                                    setPickupDate(selectedDate);
-                                }
-                            }}
-                        />
-                    )}
-
-                    <Text style={styles.label}>Price per kg (Frw) *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter price per kg"
-                        keyboardType="numeric"
-                        value={pricePerKg}
-                        onChangeText={setPricePerKg}
-                    />
-
-                    <Text style={styles.label}>Price per km (Frw) *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter price per km"
-                        keyboardType="numeric"
-                        value={pricePerKm}
-                        onChangeText={setPricePerKm}
-                    />
-
-                    {totalPrice !== null && (
-                        <Animated.View entering={FadeInDown.springify()} style={styles.priceBox}>
-                            <View style={styles.priceRow}>
-                                <Text style={styles.priceLabel}>Total Price (Locked):</Text>
-                                <Text style={styles.priceValue}>{totalPrice.toFixed(2)} Frw</Text>
-                            </View>
-                            <View style={styles.priceBreakdown}>
-                                <Text style={styles.breakdownText}>
-                                    ({totalWeight} kg × {pricePerKg} Frw/kg) + ({distance?.toFixed(2)} km × {pricePerKm} Frw/km)
-                                </Text>
-                            </View>
-                        </Animated.View>
-                    )}
-
-                    <TouchableOpacity
-                        style={[styles.submitButton, totalPrice !== null && styles.submitButtonActive]}
-                        onPress={handleSubmit}
-                        disabled={totalPrice === null}
-                    >
-                        <Text style={styles.submitButtonText}>Create Request</Text>
-                        <Ionicons name="lock-closed" size={20} color="#FFF" />
-                    </TouchableOpacity>
-                </Animated.View>
-            </ScrollView>
-        </SafeAreaView>
+                    </Animated.View>
+                </ScrollView>
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

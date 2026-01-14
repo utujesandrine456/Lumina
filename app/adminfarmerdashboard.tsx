@@ -7,6 +7,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
 import * as Location from 'expo-location';
 import FarmerBottomBar from '@/components/FarmerBottomBar';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const { width } = Dimensions.get('window');
 
@@ -20,12 +21,6 @@ export default function CooperativeDashboard() {
     const requests = coopId ? getCoopRequests(coopId) : [];
 
     const activeRequests = requests.filter(r => r.status !== 'completed' && r.status !== 'rejected').length;
-
-    useEffect(() => {
-        if (!currentUser || currentUser.role !== 'adminfarmer') {
-            router.replace('/login');
-        }
-    }, [currentUser]);
 
     useEffect(() => {
         (async () => {
@@ -46,81 +41,83 @@ export default function CooperativeDashboard() {
     ];
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
-                    <View>
-                        <Text style={styles.greeting}>Welcome Back,</Text>
-                        <Text style={styles.userName}>{currentUser?.name || 'Admin User'}</Text>
-                        <Text style={styles.coopName}>{currentCoop?.name}</Text>
-                    </View>
-                    <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
-                        <View style={styles.profileIcon}>
-                            <Ionicons name="person" size={24} color="#FFF" />
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                    <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
+                        <View>
+                            <Text style={styles.greeting}>Welcome Back,</Text>
+                            <Text style={styles.userName}>{currentUser?.name || 'Admin User'}</Text>
+                            <Text style={styles.coopName}>{currentCoop?.name}</Text>
                         </View>
-                    </TouchableOpacity>
-                </Animated.View>
-
-                <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.statsCard}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{farmers.length}</Text>
-                        <Text style={styles.statLabel}>Farmers</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{activeRequests}</Text>
-                        <Text style={styles.statLabel}>Active Jobs</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{currentCoop?.location ? "Set" : "Off"}</Text>
-                        <Text style={styles.statLabel}>GPS Status</Text>
-                    </View>
-                </Animated.View>
-
-                <Text style={styles.sectionTitle}>Quick Actions</Text>
-                <View style={styles.actionsGrid}>
-                    {quickActions.map((action, index) => (
-                        <Animated.View key={index} entering={FadeInDown.delay(300 + (index * 50)).springify()} style={styles.actionWrapper}>
-                            <TouchableOpacity style={styles.actionButton} onPress={() => router.push(action.route as any)}>
-                                <View style={styles.actionIcon}>
-                                    <Ionicons name={action.icon as any} size={24} color="#1A1A1A" />
-                                </View>
-                                <Text style={styles.actionLabel}>{action.label}</Text>
-                            </TouchableOpacity>
-                        </Animated.View>
-                    ))}
-                </View>
-
-                <Text style={styles.sectionTitle}>Recent Requests</Text>
-                <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.listContainer}>
-                    {requests.length > 0 ? (
-                        requests.slice(0, 5).map((req) => (
-                            <View key={req.id} style={styles.listItem}>
-                                <View style={styles.listIcon}>
-                                    <Ionicons name="cube" size={20} color="#1A1A1A" />
-                                </View>
-                                <View style={styles.listContent}>
-                                    <Text style={styles.listTitle}>{req.cropType} - {req.quantity}</Text>
-                                    <Text style={styles.listSub}>{req.destination}</Text>
-                                </View>
-                                <View style={[styles.statusBadge, { backgroundColor: req.status === 'completed' ? '#1A1A1A' : '#F5F5F5' }]}>
-                                    <Text style={[styles.statusText, { color: req.status === 'completed' ? '#FFF' : '#000' }]}>
-                                        {req.status}
-                                    </Text>
-                                </View>
+                        <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/profile')}>
+                            <View style={styles.profileIcon}>
+                                <Ionicons name="person" size={24} color="#FFF" />
                             </View>
-                        ))
-                    ) : (
-                        <View style={styles.emptyContainer}>
-                            <Ionicons name="documents-outline" size={48} color="#E0E0E0" />
-                            <Text style={styles.emptyText}>No transport requests yet.</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+
+                    <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.statsCard}>
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{farmers.length}</Text>
+                            <Text style={styles.statLabel}>Farmers</Text>
                         </View>
-                    )}
-                </Animated.View>
-            </ScrollView>
-            <FarmerBottomBar />
-        </SafeAreaView>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{activeRequests}</Text>
+                            <Text style={styles.statLabel}>Active Jobs</Text>
+                        </View>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{currentCoop?.location ? "Set" : "Off"}</Text>
+                            <Text style={styles.statLabel}>GPS Status</Text>
+                        </View>
+                    </Animated.View>
+
+                    <Text style={styles.sectionTitle}>Quick Actions</Text>
+                    <View style={styles.actionsGrid}>
+                        {quickActions.map((action, index) => (
+                            <Animated.View key={index} entering={FadeInDown.delay(300 + (index * 50)).springify()} style={styles.actionWrapper}>
+                                <TouchableOpacity style={styles.actionButton} onPress={() => router.push(action.route as any)}>
+                                    <View style={styles.actionIcon}>
+                                        <Ionicons name={action.icon as any} size={24} color="#1A1A1A" />
+                                    </View>
+                                    <Text style={styles.actionLabel}>{action.label}</Text>
+                                </TouchableOpacity>
+                            </Animated.View>
+                        ))}
+                    </View>
+
+                    <Text style={styles.sectionTitle}>Recent Requests</Text>
+                    <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.listContainer}>
+                        {requests.length > 0 ? (
+                            requests.slice(0, 5).map((req) => (
+                                <View key={req.id} style={styles.listItem}>
+                                    <View style={styles.listIcon}>
+                                        <Ionicons name="cube" size={20} color="#1A1A1A" />
+                                    </View>
+                                    <View style={styles.listContent}>
+                                        <Text style={styles.listTitle}>{req.cropType} - {req.quantityKg}kg</Text>
+                                        <Text style={styles.listSub}>{req.destination}</Text>
+                                    </View>
+                                    <View style={[styles.statusBadge, { backgroundColor: req.status === 'completed' ? '#1A1A1A' : '#F5F5F5' }]}>
+                                        <Text style={[styles.statusText, { color: req.status === 'completed' ? '#FFF' : '#000' }]}>
+                                            {req.status}
+                                        </Text>
+                                    </View>
+                                </View>
+                            ))
+                        ) : (
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="documents-outline" size={48} color="#E0E0E0" />
+                                <Text style={styles.emptyText}>No transport requests yet.</Text>
+                            </View>
+                        )}
+                    </Animated.View>
+                </ScrollView>
+                <FarmerBottomBar />
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

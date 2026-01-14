@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function RateDriver() {
     const router = useRouter();
@@ -51,72 +52,74 @@ export default function RateDriver() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <Text style={styles.title}>Rate Driver</Text>
-                    <View style={{ width: 24 }} />
-                </View>
-
-                <View style={styles.driverCard}>
-                    <Ionicons name="person-circle" size={64} color="#000" />
-                    <Text style={styles.driverName}>{trip.driver.name}</Text>
-                    <Text style={styles.plateNumber}>{trip.driver.plateNumber}</Text>
-                </View>
-
-                <View style={styles.form}>
-                    <Text style={styles.label}>How was your experience?</Text>
-                    <View style={styles.ratingOptions}>
-                        <TouchableOpacity
-                            style={[styles.ratingOption, rating === 'good' && styles.ratingOptionSelected]}
-                            onPress={() => setRating('good')}
-                        >
-                            <Ionicons name="happy-outline" size={32} color={rating === 'good' ? '#FFF' : '#000'} />
-                            <Text style={[styles.ratingText, rating === 'good' && styles.ratingTextSelected]}>
-                                Good
-                            </Text>
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <Ionicons name="arrow-back" size={24} color="#000" />
                         </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.ratingOption, rating === 'average' && styles.ratingOptionSelected]}
-                            onPress={() => setRating('average')}
-                        >
-                            <Ionicons name="remove-circle-outline" size={32} color={rating === 'average' ? '#FFF' : '#000'} />
-                            <Text style={[styles.ratingText, rating === 'average' && styles.ratingTextSelected]}>
-                                Average
-                            </Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.ratingOption, rating === 'bad' && styles.ratingOptionSelected]}
-                            onPress={() => setRating('bad')}
-                        >
-                            <Ionicons name="sad-outline" size={32} color={rating === 'bad' ? '#FFF' : '#000'} />
-                            <Text style={[styles.ratingText, rating === 'bad' && styles.ratingTextSelected]}>
-                                Bad
-                            </Text>
-                        </TouchableOpacity>
+                        <Text style={styles.title}>Rate Driver</Text>
+                        <View style={{ width: 24 }} />
                     </View>
 
-                    <Text style={styles.label}>Comment (Optional)</Text>
-                    <TextInput
-                        style={styles.commentInput}
-                        placeholder="Add a comment about your experience..."
-                        multiline
-                        numberOfLines={4}
-                        value={comment}
-                        onChangeText={setComment}
-                    />
+                    <View style={styles.driverCard}>
+                        <Ionicons name="person-circle" size={64} color="#000" />
+                        <Text style={styles.driverName}>{trip.driver.fullName}</Text>
+                        <Text style={styles.plateNumber}>{trip.driver.plateNumber}</Text>
+                    </View>
 
-                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                        <Text style={styles.submitButtonText}>Submit Rating</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
-        </SafeAreaView>
+                    <View style={styles.form}>
+                        <Text style={styles.label}>How was your experience?</Text>
+                        <View style={styles.ratingOptions}>
+                            <TouchableOpacity
+                                style={[styles.ratingOption, rating === 'good' && styles.ratingOptionSelected]}
+                                onPress={() => setRating('good')}
+                            >
+                                <Ionicons name="happy-outline" size={32} color={rating === 'good' ? '#FFF' : '#000'} />
+                                <Text style={[styles.ratingText, rating === 'good' && styles.ratingTextSelected]}>
+                                    Good
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.ratingOption, rating === 'average' && styles.ratingOptionSelected]}
+                                onPress={() => setRating('average')}
+                            >
+                                <Ionicons name="remove-circle-outline" size={32} color={rating === 'average' ? '#FFF' : '#000'} />
+                                <Text style={[styles.ratingText, rating === 'average' && styles.ratingTextSelected]}>
+                                    Average
+                                </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.ratingOption, rating === 'bad' && styles.ratingOptionSelected]}
+                                onPress={() => setRating('bad')}
+                            >
+                                <Ionicons name="sad-outline" size={32} color={rating === 'bad' ? '#FFF' : '#000'} />
+                                <Text style={[styles.ratingText, rating === 'bad' && styles.ratingTextSelected]}>
+                                    Bad
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={styles.label}>Comment (Optional)</Text>
+                        <TextInput
+                            style={styles.commentInput}
+                            placeholder="Add a comment about your experience..."
+                            multiline
+                            numberOfLines={4}
+                            value={comment}
+                            onChangeText={setComment}
+                        />
+
+                        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                            <Text style={styles.submitButtonText}>Submit Rating</Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

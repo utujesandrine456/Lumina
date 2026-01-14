@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 
 
@@ -76,155 +76,157 @@ export default function SettingsScreen() {
     );
 
     return (
-        <View style={styles.container}>
-            <Stack.Screen options={{ headerShown: false }} />
-            <SafeAreaView edges={['top']} style={styles.safeArea}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Settings</Text>
-                    <View style={{ width: 44 }} />
-                </View>
+        <ProtectedRoute>
+            <View style={styles.container}>
+                <Stack.Screen options={{ headerShown: false }} />
+                <SafeAreaView edges={['top']} style={styles.safeArea}>
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                            <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Settings</Text>
+                        <View style={{ width: 44 }} />
+                    </View>
 
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
-                    <SettingSection title="Preferences" delay={100}>
-                        <SettingItem
-                            icon="notifications-outline"
-                            label="Push Notifications"
-                            value={notifications}
-                            onToggle={setNotifications}
-                            bg="#E3F2FD"
-                            color="#2196F3"
-                        />
-                        <SettingItem
-                            icon="location-outline"
-                            label="Location Services"
-                            value={location}
-                            onToggle={setLocation}
-                            bg="#E8F5E9"
-                            color="#4CAF50"
-                        />
-                        <SettingItem
-                            icon="moon-outline"
-                            label="Dark Mode"
-                            value={darkMode}
-                            onToggle={setDarkMode}
-                            bg="#F3E5F5"
-                            color="#9C27B0"
-                            hideBorder
-                        />
-                    </SettingSection>
-
-                    <SettingSection title="Account" delay={200}>
-                        <ActionItem
-                            icon="person-outline"
-                            label="Edit Profile"
-                            onPress={() => router.push('/profile')}
-                        />
-                        <ActionItem
-                            icon="lock-closed-outline"
-                            label="Change PIN"
-                            onPress={openEditPinModal}
-                        />
-                        <ActionItem
-                            icon="shield-checkmark-outline"
-                            label="Privacy & Security"
-                            onPress={() => { }}
-                            hideBorder
-                        />
-                    </SettingSection>
-
-                    <SettingSection title="Support" delay={300}>
-                        <ActionItem
-                            icon="help-circle-outline"
-                            label="Help Center"
-                            onPress={() => router.push('/help')}
-                        />
-                        <ActionItem
-                            icon="document-text-outline"
-                            label="Terms of Service"
-                            onPress={() => { }}
-                            hideBorder
-                        />
-                    </SettingSection>
-
-                    <Animated.View entering={FadeInDown.delay(400).springify()} style={[styles.section, { marginBottom: 40 }]}>
-                        <View style={styles.card}>
-                            <ActionItem
-                                icon="log-out-outline"
-                                label="Log Out"
-                                onPress={() => router.replace('/login')}
-                                bg="#FFEBEE"
-                                color="#FF5252"
-                                textStyle={{ color: '#FF5252' }}
+                        <SettingSection title="Preferences" delay={100}>
+                            <SettingItem
+                                icon="notifications-outline"
+                                label="Push Notifications"
+                                value={notifications}
+                                onToggle={setNotifications}
+                                bg="#E3F2FD"
+                                color="#2196F3"
+                            />
+                            <SettingItem
+                                icon="location-outline"
+                                label="Location Services"
+                                value={location}
+                                onToggle={setLocation}
+                                bg="#E8F5E9"
+                                color="#4CAF50"
+                            />
+                            <SettingItem
+                                icon="moon-outline"
+                                label="Dark Mode"
+                                value={darkMode}
+                                onToggle={setDarkMode}
+                                bg="#F3E5F5"
+                                color="#9C27B0"
                                 hideBorder
                             />
-                        </View>
-                    </Animated.View>
+                        </SettingSection>
 
-                    <Text style={styles.versionText}>Version 1.0.0 (Build 124)</Text>
+                        <SettingSection title="Account" delay={200}>
+                            <ActionItem
+                                icon="person-outline"
+                                label="Edit Profile"
+                                onPress={() => router.push('/profile')}
+                            />
+                            <ActionItem
+                                icon="lock-closed-outline"
+                                label="Change PIN"
+                                onPress={openEditPinModal}
+                            />
+                            <ActionItem
+                                icon="shield-checkmark-outline"
+                                label="Privacy & Security"
+                                onPress={() => { }}
+                                hideBorder
+                            />
+                        </SettingSection>
 
-                </ScrollView>
-            </SafeAreaView>
+                        <SettingSection title="Support" delay={300}>
+                            <ActionItem
+                                icon="help-circle-outline"
+                                label="Help Center"
+                                onPress={() => router.push('/help')}
+                            />
+                            <ActionItem
+                                icon="document-text-outline"
+                                label="Terms of Service"
+                                onPress={() => { }}
+                                hideBorder
+                            />
+                        </SettingSection>
 
-            {showEditPin && (
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Change PIN</Text>
-                            <TouchableOpacity onPress={() => setShowEditPin(false)}>
-                                <Ionicons name="close" size={24} color="#000" />
+                        <Animated.View entering={FadeInDown.delay(400).springify()} style={[styles.section, { marginBottom: 40 }]}>
+                            <View style={styles.card}>
+                                <ActionItem
+                                    icon="log-out-outline"
+                                    label="Log Out"
+                                    onPress={() => router.replace('/login')}
+                                    bg="#FFEBEE"
+                                    color="#FF5252"
+                                    textStyle={{ color: '#FF5252' }}
+                                    hideBorder
+                                />
+                            </View>
+                        </Animated.View>
+
+                        <Text style={styles.versionText}>Version 1.0.0 (Build 124)</Text>
+
+                    </ScrollView>
+                </SafeAreaView>
+
+                {showEditPin && (
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>Change PIN</Text>
+                                <TouchableOpacity onPress={() => setShowEditPin(false)}>
+                                    <Ionicons name="close" size={24} color="#000" />
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>Current PIN</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={editPin.currentPin}
+                                    onChangeText={(text) => setEditPin(prev => ({ ...prev, currentPin: text }))}
+                                    keyboardType="numeric"
+                                    secureTextEntry
+                                    placeholder="Enter current PIN"
+                                    placeholderTextColor="#999"
+                                />
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>New PIN</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={editPin.pin}
+                                    onChangeText={(text) => setEditPin(prev => ({ ...prev, pin: text }))}
+                                    keyboardType="numeric"
+                                    secureTextEntry
+                                    placeholder="Enter new PIN"
+                                    placeholderTextColor="#999"
+                                />
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>Confirm New PIN</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={editPin.confirmnewPin}
+                                    onChangeText={(text) => setEditPin(prev => ({ ...prev, confirmnewPin: text }))}
+                                    keyboardType="numeric"
+                                    secureTextEntry
+                                    placeholder="Confirm new PIN"
+                                    placeholderTextColor="#999"
+                                />
+                            </View>
+
+                            <TouchableOpacity style={styles.saveButton} onPress={handleSavePin}>
+                                <Text style={styles.saveButtonText}>Save Changes</Text>
                             </TouchableOpacity>
                         </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Current PIN</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={editPin.currentPin}
-                                onChangeText={(text) => setEditPin(prev => ({ ...prev, currentPin: text }))}
-                                keyboardType="numeric"
-                                secureTextEntry
-                                placeholder="Enter current PIN"
-                                placeholderTextColor="#999"
-                            />
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>New PIN</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={editPin.pin}
-                                onChangeText={(text) => setEditPin(prev => ({ ...prev, pin: text }))}
-                                keyboardType="numeric"
-                                secureTextEntry
-                                placeholder="Enter new PIN"
-                                placeholderTextColor="#999"
-                            />
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Confirm New PIN</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={editPin.confirmnewPin}
-                                onChangeText={(text) => setEditPin(prev => ({ ...prev, confirmnewPin: text }))}
-                                keyboardType="numeric"
-                                secureTextEntry
-                                placeholder="Confirm new PIN"
-                                placeholderTextColor="#999"
-                            />
-                        </View>
-
-                        <TouchableOpacity style={styles.saveButton} onPress={handleSavePin}>
-                            <Text style={styles.saveButtonText}>Save Changes</Text>
-                        </TouchableOpacity>
                     </View>
-                </View>
-            )}
-        </View>
+                )}
+            </View>
+        </ProtectedRoute>
     );
 }
 
@@ -329,7 +331,7 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
         backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end',
+        justifyContent: 'center',
         zIndex: 1000,
     },
     modalContent: {
@@ -337,7 +339,7 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         padding: 24,
-        height: '60%',
+        height: '70%',
     },
     modalHeader: {
         flexDirection: 'row',

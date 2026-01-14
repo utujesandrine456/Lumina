@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import FarmerBottomBar from '@/components/FarmerBottomBar';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import BottomBar from '@/components/DriverBottomBar';
@@ -124,42 +125,44 @@ export default function DriversList() {
         router.replace('/adminfarmerdashboard');
     };
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <View>
-                    <TouchableOpacity onPress={handleBack} style={styles.backButton} activeOpacity={0.7}>
-                        <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-                    </TouchableOpacity>
-                </View>
-                <View>
-                    <Text style={styles.title}>All Drivers</Text>
-                    <Text style={styles.subtitle}>{displayedDrivers.length} drivers available</Text>
-                </View>
-                <View style={styles.placeholder} />
-            </View>
-
-            {displayedDrivers.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                    <View style={styles.emptyIconContainer}>
-                        <Ionicons name="search" size={40} color="#000" />
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                    <View>
+                        <TouchableOpacity onPress={handleBack} style={styles.backButton} activeOpacity={0.7}>
+                            <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+                        </TouchableOpacity>
                     </View>
-                    <Text style={styles.emptyTitle}>No Drivers Found</Text>
-                    <Text style={styles.emptyText}>
-                        {isAdmin ? 'No drivers registered yet.' : 'There are currently no drivers marked as available in your area.'}
-                    </Text>
+                    <View>
+                        <Text style={styles.title}>All Drivers</Text>
+                        <Text style={styles.subtitle}>{displayedDrivers.length} drivers available</Text>
+                    </View>
+                    <View style={styles.placeholder} />
                 </View>
-            ) : (
-                <FlatList
-                    data={displayedDrivers}
-                    renderItem={renderDriver}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                />
-            )}
 
-            <BottomBar />
-        </SafeAreaView>
+                {displayedDrivers.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <View style={styles.emptyIconContainer}>
+                            <Ionicons name="search" size={40} color="#000" />
+                        </View>
+                        <Text style={styles.emptyTitle}>No Drivers Found</Text>
+                        <Text style={styles.emptyText}>
+                            {isAdmin ? 'No drivers registered yet.' : 'There are currently no drivers marked as available in your area.'}
+                        </Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={displayedDrivers}
+                        renderItem={renderDriver}
+                        keyExtractor={(item) => item.id}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
+                    />
+                )}
+
+                <BottomBar />
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 
