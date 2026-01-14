@@ -6,12 +6,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import FarmerBottomBar from '@/components/FarmerBottomBar';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function NearbyDrivers() {
     return (
-        <ErrorBoundary>
-            <NearbyDriversContent />
-        </ErrorBoundary>
+        <ProtectedRoute>
+            <ErrorBoundary>
+                <NearbyDriversContent />
+            </ErrorBoundary>
+        </ProtectedRoute>
     );
 }
 
@@ -26,7 +29,7 @@ function NearbyDriversContent() {
 
     const loadDrivers = () => {
         const available = drivers.filter(d => d.available);
-        setNearbyDrivers(available);
+        setNearbyDrivers(available as any);
     };
 
     useEffect(() => {
@@ -58,12 +61,12 @@ function NearbyDriversContent() {
 
         updateRequest(requestId as string, {
             driverId: driver.id,
-            status: 'pending' 
+            status: 'pending'
         });
 
         Alert.alert(
             'Request Sent',
-            `Your request has been sent to ${driver.name}. You can track the status in Trips.`,
+            `Your request has been sent to ${driver.fullName}. You can track the status in Trips.`,
             [
                 {
                     text: 'Go to Trips',
@@ -92,7 +95,7 @@ function NearbyDriversContent() {
                             <Ionicons name="person" size={24} color={isSelected ? "#000" : "#FFF"} />
                         </View>
                         <View style={styles.driverDetails}>
-                            <Text style={[styles.driverName, isSelected && { color: '#FFF' }]}>{item.name}</Text>
+                            <Text style={[styles.driverName, isSelected && { color: '#FFF' }]}>{item.fullName}</Text>
                             <Text style={[styles.plateNumber, isSelected && { color: '#CCC' }]}>{item.plateNumber} • {item.vehicleType || 'Truck'}</Text>
                         </View>
                     </View>

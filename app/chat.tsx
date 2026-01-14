@@ -12,6 +12,7 @@ import {
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Linking } from 'react-native';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 
 
@@ -49,7 +50,7 @@ export default function ChatScreen() {
 
       setMessages(prevMessages => [...prevMessages, newMessage]);
       setMessage('');
-      
+
       setTimeout(() => {
         const driverReply = {
           id: generateId(),
@@ -72,7 +73,7 @@ export default function ChatScreen() {
 
   const renderItem = ({ item, index }: { item: any, index: number }) => {
     const isMine = item.sender === 'adminfarmer';
-    
+
     return (
       <Animated.View
         entering={FadeInUp.delay(index * 50)}
@@ -114,76 +115,78 @@ export default function ChatScreen() {
 
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color="#000" />
-          </TouchableOpacity>
-          <View>
-            <Text style={styles.name}>Driver Jean</Text>
-            <View style={styles.statusContainer}>
-              <View style={styles.statusIndicator} />
-              <Text style={styles.status}>Active now</Text>
+    <ProtectedRoute>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity style={styles.backButton}>
+              <Ionicons name="chevron-back" size={24} color="#000" />
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.name}>Driver Jean</Text>
+              <View style={styles.statusContainer}>
+                <View style={styles.statusIndicator} />
+                <Text style={styles.status}>Active now</Text>
+              </View>
             </View>
           </View>
-        </View>
-        <TouchableOpacity style={styles.callButton} onPress={makeCall}>
-          <Ionicons name="call-outline" size={22} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.daySeparator}>
-        <View style={styles.separatorLine} />
-        <Text style={styles.dayText}>Today</Text>
-        <View style={styles.separatorLine} />
-      </View>
-
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.chatArea}
-        showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-      />
-
-      <View style={styles.inputArea}>
-        <TouchableOpacity style={styles.attachButton}>
-          <Ionicons name="attach-outline" size={24} color="#000" />
-        </TouchableOpacity>
-        <View style={styles.inputContainer}>
-          <TextInput
-            placeholder="Type your message..."
-            placeholderTextColor="#666"
-            value={message}
-            onChangeText={setMessage}
-            style={styles.input}
-            multiline
-            maxLength={500}
-            onSubmitEditing={sendMessage}
-            returnKeyType="send"
-            underlineColorAndroid="transparent"
-            selectionColor="#000"
-          />
-          <TouchableOpacity style={styles.emojiButton}>
-            <Ionicons name="happy-outline" size={22} color="#000" />
+          <TouchableOpacity style={styles.callButton} onPress={makeCall}>
+            <Ionicons name="call-outline" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          style={[styles.sendBtn, !message.trim() && styles.sendBtnDisabled]} 
-          onPress={sendMessage}
-          disabled={!message.trim()}
-        >
-          <Ionicons name="send" size={20} color="#fff" />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+
+        <View style={styles.daySeparator}>
+          <View style={styles.separatorLine} />
+          <Text style={styles.dayText}>Today</Text>
+          <View style={styles.separatorLine} />
+        </View>
+
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.chatArea}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        />
+
+        <View style={styles.inputArea}>
+          <TouchableOpacity style={styles.attachButton}>
+            <Ionicons name="attach-outline" size={24} color="#000" />
+          </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            <TextInput
+              placeholder="Type your message..."
+              placeholderTextColor="#666"
+              value={message}
+              onChangeText={setMessage}
+              style={styles.input}
+              multiline
+              maxLength={500}
+              onSubmitEditing={sendMessage}
+              returnKeyType="send"
+              underlineColorAndroid="transparent"
+              selectionColor="#000"
+            />
+            <TouchableOpacity style={styles.emojiButton}>
+              <Ionicons name="happy-outline" size={22} color="#000" />
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            style={[styles.sendBtn, !message.trim() && styles.sendBtnDisabled]}
+            onPress={sendMessage}
+            disabled={!message.trim()}
+          >
+            <Ionicons name="send" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </ProtectedRoute>
   );
 }
 

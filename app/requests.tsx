@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { useRouter } from 'expo-router';
 import BottomBar from '@/components/DriverBottomBar';
 
@@ -162,41 +163,43 @@ export default function DriverRequests() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
-                </TouchableOpacity>
-                <View style={styles.headerTitleContainer}>
-                    <Text style={styles.title}>My Requests</Text>
-                    <Text style={styles.subtitle}>{driverRequests.length} requests</Text>
-                </View>
-                <View style={{ width: 40 }} />
-            </View>
-
-            {driverRequests.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                    <View style={styles.emptyIconContainer}>
-                        <Ionicons name="document-text-outline" size={40} color="#BDBDBD" />
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="#000" />
+                    </TouchableOpacity>
+                    <View style={styles.headerTitleContainer}>
+                        <Text style={styles.title}>My Requests</Text>
+                        <Text style={styles.subtitle}>{driverRequests.length} requests</Text>
                     </View>
-                    <Text style={styles.emptyTitle}>No Requests Yet</Text>
-                    <Text style={styles.emptyText}>You haven't received any transport requests yet.</Text>
+                    <View style={{ width: 40 }} />
                 </View>
-            ) : (
-                <FlatList
-                    data={driverRequests}
-                    renderItem={renderRequest}
-                    keyExtractor={(item) => item.id}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                    }
-                />
-            )}
 
-            <BottomBar />
-        </SafeAreaView>
+                {driverRequests.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <View style={styles.emptyIconContainer}>
+                            <Ionicons name="document-text-outline" size={40} color="#BDBDBD" />
+                        </View>
+                        <Text style={styles.emptyTitle}>No Requests Yet</Text>
+                        <Text style={styles.emptyText}>You haven't received any transport requests yet.</Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={driverRequests}
+                        renderItem={renderRequest}
+                        keyExtractor={(item) => item.id}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        }
+                    />
+                )}
+
+                <BottomBar />
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

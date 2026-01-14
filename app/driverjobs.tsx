@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { useRouter } from 'expo-router';
 import BottomBar from '@/components/DriverBottomBar';
 
@@ -69,7 +70,7 @@ export default function DriverJobs() {
                 <Ionicons name="cash-outline" size={18} color="#000" />
                 <Text style={styles.metaText}>{item.totalPrice?.toFixed(0)} Frw</Text>
             </View>
-            
+
             <View style={styles.metaRow}>
                 <Ionicons name="navigate-outline" size={18} color="#000" />
                 <Text style={styles.metaText}>{item.distance?.toFixed(1)} km</Text>
@@ -95,33 +96,35 @@ export default function DriverJobs() {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.headerBar}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
-                </TouchableOpacity>
-                <Text style={styles.title}>Available Jobs</Text>
-                <View style={{ width: 24 }} />
-            </View>
-
-            {pendingTrips.length === 0 ? (
-                <View style={styles.empty}>
-                    <Ionicons name="briefcase-outline" size={64} color="#BDBDBD" />
-                    <Text style={styles.emptyText}>No jobs available</Text>
-                    <Text style={styles.emptySub}>Check back soon for new requests.</Text>
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.headerBar}>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Ionicons name="arrow-back" size={24} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={styles.title}>Available Jobs</Text>
+                    <View style={{ width: 24 }} />
                 </View>
-            ) : (
-                <FlatList
-                    data={pendingTrips}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderItem}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                />
-            )}
 
-            <BottomBar />
-        </SafeAreaView>
+                {pendingTrips.length === 0 ? (
+                    <View style={styles.empty}>
+                        <Ionicons name="briefcase-outline" size={64} color="#BDBDBD" />
+                        <Text style={styles.emptyText}>No jobs available</Text>
+                        <Text style={styles.emptySub}>Check back soon for new requests.</Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={pendingTrips}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderItem}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
+                    />
+                )}
+
+                <BottomBar />
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

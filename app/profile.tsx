@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
 import BottomBar from '@/components/DriverBottomBar';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function Profile() {
     const router = useRouter();
@@ -37,7 +38,7 @@ export default function Profile() {
         if (!currentUser) return;
         setEditForm({
             name: isCoop ? (coop?.name || currentUser.name) : currentUser.name,
-            phone: isCoop ? (coop?.phone || currentUser.phone) : currentUser.phone,
+            phone: isCoop ? (coop?.phone || currentUser.phone || '') : (currentUser.phone || ''),
             vehicleType: driver?.vehicleType || '',
             plateNumber: driver?.plateNumber || '',
             location: coop?.location || '',
@@ -50,7 +51,7 @@ export default function Profile() {
 
         if (isDriver && driver) {
             updateDriver(driver.id, {
-                name: editForm.name,
+                fullName: editForm.name,
                 phone: editForm.phone,
                 vehicleType: editForm.vehicleType,
                 plateNumber: editForm.plateNumber,
@@ -80,287 +81,289 @@ export default function Profile() {
     }
 
     return (
-        <View style={styles.container}>
-            <SafeAreaView edges={['top']} style={styles.safeArea}>
-                <View style={styles.header}>
-                    <View style={styles.headerTop}>
-                        <TouchableOpacity
-                            onPress={() => router.back()}
-                            style={styles.backButton}
-                            activeOpacity={0.7}
-                        >
-                            <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings')}>
-                            <View style={styles.menuIconInfo}>
-                                <Ionicons name="settings-outline" size={22} color="#1A1A1A" />
-                                <Text style={styles.menuText}>Settings</Text>
+        <ProtectedRoute>
+            <View style={styles.container}>
+                <SafeAreaView edges={['top']} style={styles.safeArea}>
+                    <View style={styles.header}>
+                        <View style={styles.headerTop}>
+                            <TouchableOpacity
+                                onPress={() => router.back()}
+                                style={styles.backButton}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings')}>
+                                <View style={styles.menuIconInfo}>
+                                    <Ionicons name="settings-outline" size={22} color="#1A1A1A" />
+                                    <Text style={styles.menuText}>Settings</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color="#CCCCCC" />
+                            </TouchableOpacity>
+                            <Text style={styles.headerTitle}>Profile</Text>
+                            <TouchableOpacity style={styles.editButton} onPress={openEditModal}>
+                                <Ionicons name="pencil-outline" size={20} color="#000" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <Animated.View entering={FadeInUp.duration(500)} style={styles.profileSection}>
+                            <View style={styles.avatarContainer}>
+                                <View style={styles.avatar}>
+                                    <Ionicons
+                                        name={isCoop ? "business" : "person"}
+                                        size={36}
+                                        color="#000"
+                                    />
+                                </View>
+                                {isDriver && availability && (
+                                    <View style={styles.onlineIndicator} />
+                                )}
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color="#CCCCCC" />
-                        </TouchableOpacity>
-                        <Text style={styles.headerTitle}>Profile</Text>
-                        <TouchableOpacity style={styles.editButton} onPress={openEditModal}>
-                            <Ionicons name="pencil-outline" size={20} color="#000" />
-                        </TouchableOpacity>
+                            <Text style={styles.name}>
+                                {isCoop ? coop?.name : currentUser.name}
+                            </Text>
+                            <Text style={styles.role}>
+                                {isCoop ? 'Cooperative Officer' : 'Professional Driver'}
+                            </Text>
+                        </Animated.View>
                     </View>
 
-                    <Animated.View entering={FadeInUp.duration(500)} style={styles.profileSection}>
-                        <View style={styles.avatarContainer}>
-                            <View style={styles.avatar}>
-                                <Ionicons
-                                    name={isCoop ? "business" : "person"}
-                                    size={36}
-                                    color="#000"
-                                />
-                            </View>
-                            {isDriver && availability && (
-                                <View style={styles.onlineIndicator} />
-                            )}
-                        </View>
-                        <Text style={styles.name}>
-                            {isCoop ? coop?.name : currentUser.name}
-                        </Text>
-                        <Text style={styles.role}>
-                            {isCoop ? 'Cooperative Officer' : 'Professional Driver'}
-                        </Text>
-                    </Animated.View>
-                </View>
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                        {isDriver && (
+                            <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.statsGrid}>
+                                <View style={styles.statCard}>
+                                    <Text style={styles.statNumber}>{(driver?.rating || 4.9).toFixed(1)}</Text>
+                                    <Text style={styles.statLabel}>Rating</Text>
+                                </View>
+                                <View style={styles.statCard}>
+                                    <Text style={styles.statNumber}>
+                                        {driver ? useDriverStore.getState().getDriverRequests(driver.id).filter(r => r.status === 'completed').length : 0}
+                                    </Text>
+                                    <Text style={styles.statLabel}>Completed Trips</Text>
+                                </View>
+                                <View style={styles.statCard}>
+                                    <Text style={styles.statNumber}>{driver?.capacity ? `${driver.capacity}kg` : 'N/A'}</Text>
+                                    <Text style={styles.statLabel}>Capacity</Text>
+                                </View>
+                            </Animated.View>
+                        )}
 
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                    {isDriver && (
-                        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.statsGrid}>
-                            <View style={styles.statCard}>
-                                <Text style={styles.statNumber}>{(driver?.rating || 4.9).toFixed(1)}</Text>
-                                <Text style={styles.statLabel}>Rating</Text>
-                            </View>
-                            <View style={styles.statCard}>
-                                <Text style={styles.statNumber}>
-                                    {driver ? useDriverStore.getState().getDriverRequests(driver.id).filter(r => r.status === 'completed').length : 0}
-                                </Text>
-                                <Text style={styles.statLabel}>Completed Trips</Text>
-                            </View>
-                            <View style={styles.statCard}>
-                                <Text style={styles.statNumber}>{driver?.capacity ? `${driver.capacity}kg` : 'N/A'}</Text>
-                                <Text style={styles.statLabel}>Capacity</Text>
+                        <Animated.View entering={FadeInDown.delay(200).springify()}>
+                            <Text style={styles.sectionTitle}>Account Details</Text>
+                            <View style={styles.card}>
+                                <View style={styles.detailItem}>
+                                    <View style={styles.detailIconContainer}>
+                                        <Ionicons name="call-outline" size={18} color="#000" />
+                                    </View>
+                                    <View style={styles.detailTextContainer}>
+                                        <Text style={styles.detailLabel}>Phone Number</Text>
+                                        <Text style={styles.detailValue}>{currentUser.phone}</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.separator} />
+
+                                <View style={styles.detailItem}>
+                                    <View style={styles.detailIconContainer}>
+                                        <Ionicons name="card-outline" size={18} color="#000" />
+                                    </View>
+                                    <View style={styles.detailTextContainer}>
+                                        <Text style={styles.detailLabel}>{isCoop ? 'Officer ID' : 'Driver ID'}</Text>
+                                        <Text style={styles.detailValue}>{currentUser.id.slice(0, 8).toUpperCase()}</Text>
+                                    </View>
+                                </View>
+
+                                {isDriver && (
+                                    <>
+                                        <View style={styles.separator} />
+                                        <View style={styles.detailItem}>
+                                            <View style={styles.detailIconContainer}>
+                                                <Ionicons name="car-sport-outline" size={18} color="#000" />
+                                            </View>
+                                            <View style={styles.detailTextContainer}>
+                                                <Text style={styles.detailLabel}>Vehicle Type</Text>
+                                                <Text style={styles.detailValue}>{driver?.vehicleType || 'Not Set'}</Text>
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.separator} />
+                                        <View style={styles.detailItem}>
+                                            <View style={styles.detailIconContainer}>
+                                                <Ionicons name="text-outline" size={18} color="#000" />
+                                            </View>
+                                            <View style={styles.detailTextContainer}>
+                                                <Text style={styles.detailLabel}>Plate Number</Text>
+                                                <Text style={styles.detailValue}>{driver?.plateNumber || 'Not Set'}</Text>
+                                            </View>
+                                        </View>
+                                    </>
+                                )}
+
+                                {isCoop && (
+                                    <>
+                                        <View style={styles.separator} />
+                                        <View style={styles.detailItem}>
+                                            <View style={styles.detailIconContainer}>
+                                                <Ionicons name="location-outline" size={18} color="#000" />
+                                            </View>
+                                            <View style={styles.detailTextContainer}>
+                                                <Text style={styles.detailLabel}>Location</Text>
+                                                <Text style={styles.detailValue}>{coop?.location || 'GPS not set'}</Text>
+                                            </View>
+                                        </View>
+                                    </>
+                                )}
                             </View>
                         </Animated.View>
-                    )}
 
-                    <Animated.View entering={FadeInDown.delay(200).springify()}>
-                        <Text style={styles.sectionTitle}>Account Details</Text>
-                        <View style={styles.card}>
-                            <View style={styles.detailItem}>
-                                <View style={styles.detailIconContainer}>
-                                    <Ionicons name="call-outline" size={18} color="#000" />
+                        {isDriver && (
+                            <Animated.View entering={FadeInDown.delay(300).springify()}>
+                                <Text style={styles.sectionTitle}>Preferences</Text>
+                                <View style={styles.card}>
+                                    <View style={styles.settingItem}>
+                                        <View style={styles.settingLeft}>
+                                            <View style={[styles.settingIcon, { backgroundColor: '#f5f5f5' }]}>
+                                                <Ionicons name="notifications-outline" size={18} color="#000" />
+                                            </View>
+                                            <Text style={styles.settingText}>Notifications</Text>
+                                        </View>
+                                        <Switch
+                                            value={true}
+                                            trackColor={{ false: '#e0e0e0', true: '#000' }}
+                                            thumbColor={'#fff'}
+                                            ios_backgroundColor="#e0e0e0"
+                                        />
+                                    </View>
+
+                                    <View style={styles.separator} />
+
+                                    <View style={styles.settingItem}>
+                                        <View style={styles.settingLeft}>
+                                            <View style={[styles.settingIcon, { backgroundColor: availability ? '#000' : '#f5f5f5' }]}>
+                                                <Ionicons
+                                                    name="power-outline"
+                                                    size={18}
+                                                    color={availability ? '#fff' : '#000'}
+                                                />
+                                            </View>
+                                            <Text style={styles.settingText}>Available for Jobs</Text>
+                                        </View>
+                                        <Switch
+                                            value={availability}
+                                            onValueChange={toggleAvailability}
+                                            trackColor={{ false: '#e0e0e0', true: '#000' }}
+                                            thumbColor={'#fff'}
+                                            ios_backgroundColor="#e0e0e0"
+                                        />
+                                    </View>
                                 </View>
-                                <View style={styles.detailTextContainer}>
-                                    <Text style={styles.detailLabel}>Phone Number</Text>
-                                    <Text style={styles.detailValue}>{currentUser.phone}</Text>
-                                </View>
+                            </Animated.View>
+                        )}
+
+                        <Animated.View entering={FadeInDown.delay(400).springify()}>
+                            <Text style={styles.sectionTitle}>Actions</Text>
+                            <View style={styles.card}>
+                                <TouchableOpacity
+                                    style={styles.actionItem}
+                                    onPress={() => router.push('/help')}
+                                >
+                                    <View style={styles.actionLeft}>
+                                        <View style={[styles.actionIcon, { backgroundColor: '#f5f5f5' }]}>
+                                            <Ionicons name="help-circle-outline" size={18} color="#000" />
+                                        </View>
+                                        <Text style={styles.actionText}>Help & Support</Text>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={18} color="#000" />
+                                </TouchableOpacity>
+
+                                <View style={styles.separator} />
+
+                                <TouchableOpacity
+                                    style={styles.actionItem}
+                                    onPress={() => router.replace('/login')}
+                                >
+                                    <View style={styles.actionLeft}>
+                                        <View style={[styles.actionIcon, { backgroundColor: '#f5f5f5' }]}>
+                                            <Ionicons name="log-out-outline" size={18} color="#ff0000ff" />
+                                        </View>
+                                        <Text style={[styles.actionText, { color: '#ff0000ff' }]}>Log Out</Text>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={18} color="#ff0000ff" />
+                                </TouchableOpacity>
+                            </View>
+                        </Animated.View>
+
+                        <View style={styles.footerSpace} />
+                    </ScrollView>
+                </SafeAreaView>
+
+                {showEditModal && (
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>Edit Profile</Text>
+                                <TouchableOpacity onPress={() => setShowEditModal(false)}>
+                                    <Ionicons name="close" size={24} color="#000" />
+                                </TouchableOpacity>
                             </View>
 
-                            <View style={styles.separator} />
-
-                            <View style={styles.detailItem}>
-                                <View style={styles.detailIconContainer}>
-                                    <Ionicons name="card-outline" size={18} color="#000" />
-                                </View>
-                                <View style={styles.detailTextContainer}>
-                                    <Text style={styles.detailLabel}>{isCoop ? 'Officer ID' : 'Driver ID'}</Text>
-                                    <Text style={styles.detailValue}>{currentUser.id.slice(0, 8).toUpperCase()}</Text>
-                                </View>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>Full Name</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={editForm.name}
+                                    onChangeText={(text) => setEditForm(prev => ({ ...prev, name: text }))}
+                                    placeholder="Enter your name"
+                                />
                             </View>
 
                             {isDriver && (
                                 <>
-                                    <View style={styles.separator} />
-                                    <View style={styles.detailItem}>
-                                        <View style={styles.detailIconContainer}>
-                                            <Ionicons name="car-sport-outline" size={18} color="#000" />
-                                        </View>
-                                        <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Vehicle Type</Text>
-                                            <Text style={styles.detailValue}>{driver?.vehicleType || 'Not Set'}</Text>
-                                        </View>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.inputLabel}>Vehicle Type</Text>
+                                        <TextInput
+                                            style={styles.input}
+                                            value={editForm.vehicleType}
+                                            onChangeText={(text) => setEditForm(prev => ({ ...prev, vehicleType: text }))}
+                                            placeholder="e.g. Truck, Van"
+                                        />
                                     </View>
 
-                                    <View style={styles.separator} />
-                                    <View style={styles.detailItem}>
-                                        <View style={styles.detailIconContainer}>
-                                            <Ionicons name="text-outline" size={18} color="#000" />
-                                        </View>
-                                        <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Plate Number</Text>
-                                            <Text style={styles.detailValue}>{driver?.plateNumber || 'Not Set'}</Text>
-                                        </View>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.inputLabel}>Plate Number</Text>
+                                        <TextInput
+                                            style={styles.input}
+                                            value={editForm.plateNumber}
+                                            onChangeText={(text) => setEditForm(prev => ({ ...prev, plateNumber: text }))}
+                                            placeholder="e.g. RAA 123 B"
+                                        />
                                     </View>
                                 </>
                             )}
 
                             {isCoop && (
-                                <>
-                                    <View style={styles.separator} />
-                                    <View style={styles.detailItem}>
-                                        <View style={styles.detailIconContainer}>
-                                            <Ionicons name="location-outline" size={18} color="#000" />
-                                        </View>
-                                        <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Location</Text>
-                                            <Text style={styles.detailValue}>{coop?.location || 'GPS not set'}</Text>
-                                        </View>
-                                    </View>
-                                </>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Location</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        value={editForm.location}
+                                        onChangeText={(text) => setEditForm(prev => ({ ...prev, location: text }))}
+                                        placeholder="e.g. Kigali, Rwanda"
+                                    />
+                                </View>
                             )}
-                        </View>
-                    </Animated.View>
 
-                    {isDriver && (
-                        <Animated.View entering={FadeInDown.delay(300).springify()}>
-                            <Text style={styles.sectionTitle}>Preferences</Text>
-                            <View style={styles.card}>
-                                <View style={styles.settingItem}>
-                                    <View style={styles.settingLeft}>
-                                        <View style={[styles.settingIcon, { backgroundColor: '#f5f5f5' }]}>
-                                            <Ionicons name="notifications-outline" size={18} color="#000" />
-                                        </View>
-                                        <Text style={styles.settingText}>Notifications</Text>
-                                    </View>
-                                    <Switch
-                                        value={true}
-                                        trackColor={{ false: '#e0e0e0', true: '#000' }}
-                                        thumbColor={'#fff'}
-                                        ios_backgroundColor="#e0e0e0"
-                                    />
-                                </View>
-
-                                <View style={styles.separator} />
-
-                                <View style={styles.settingItem}>
-                                    <View style={styles.settingLeft}>
-                                        <View style={[styles.settingIcon, { backgroundColor: availability ? '#000' : '#f5f5f5' }]}>
-                                            <Ionicons
-                                                name="power-outline"
-                                                size={18}
-                                                color={availability ? '#fff' : '#000'}
-                                            />
-                                        </View>
-                                        <Text style={styles.settingText}>Available for Jobs</Text>
-                                    </View>
-                                    <Switch
-                                        value={availability}
-                                        onValueChange={toggleAvailability}
-                                        trackColor={{ false: '#e0e0e0', true: '#000' }}
-                                        thumbColor={'#fff'}
-                                        ios_backgroundColor="#e0e0e0"
-                                    />
-                                </View>
-                            </View>
-                        </Animated.View>
-                    )}
-
-                    <Animated.View entering={FadeInDown.delay(400).springify()}>
-                        <Text style={styles.sectionTitle}>Actions</Text>
-                        <View style={styles.card}>
-                            <TouchableOpacity
-                                style={styles.actionItem}
-                                onPress={() => router.push('/help')}
-                            >
-                                <View style={styles.actionLeft}>
-                                    <View style={[styles.actionIcon, { backgroundColor: '#f5f5f5' }]}>
-                                        <Ionicons name="help-circle-outline" size={18} color="#000" />
-                                    </View>
-                                    <Text style={styles.actionText}>Help & Support</Text>
-                                </View>
-                                <Ionicons name="chevron-forward" size={18} color="#000" />
-                            </TouchableOpacity>
-
-                            <View style={styles.separator} />
-
-                            <TouchableOpacity
-                                style={styles.actionItem}
-                                onPress={() => router.replace('/login')}
-                            >
-                                <View style={styles.actionLeft}>
-                                    <View style={[styles.actionIcon, { backgroundColor: '#f5f5f5' }]}>
-                                        <Ionicons name="log-out-outline" size={18} color="#ff0000ff" />
-                                    </View>
-                                    <Text style={[styles.actionText, { color: '#ff0000ff' }]}>Log Out</Text>
-                                </View>
-                                <Ionicons name="chevron-forward" size={18} color="#ff0000ff" />
+                            <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
+                                <Text style={styles.saveButtonText}>Save Changes</Text>
                             </TouchableOpacity>
                         </View>
-                    </Animated.View>
-
-                    <View style={styles.footerSpace} />
-                </ScrollView>
-            </SafeAreaView>
-
-            {showEditModal && (
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Edit Profile</Text>
-                            <TouchableOpacity onPress={() => setShowEditModal(false)}>
-                                <Ionicons name="close" size={24} color="#000" />
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Full Name</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={editForm.name}
-                                onChangeText={(text) => setEditForm(prev => ({ ...prev, name: text }))}
-                                placeholder="Enter your name"
-                            />
-                        </View>
-
-                        {isDriver && (
-                            <>
-                                <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Vehicle Type</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        value={editForm.vehicleType}
-                                        onChangeText={(text) => setEditForm(prev => ({ ...prev, vehicleType: text }))}
-                                        placeholder="e.g. Truck, Van"
-                                    />
-                                </View>
-
-                                <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Plate Number</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        value={editForm.plateNumber}
-                                        onChangeText={(text) => setEditForm(prev => ({ ...prev, plateNumber: text }))}
-                                        placeholder="e.g. RAA 123 B"
-                                    />
-                                </View>
-                            </>
-                        )}
-
-                        {isCoop && (
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Location</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    value={editForm.location}
-                                    onChangeText={(text) => setEditForm(prev => ({ ...prev, location: text }))}
-                                    placeholder="e.g. Kigali, Rwanda"
-                                />
-                            </View>
-                        )}
-
-                        <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
-                            <Text style={styles.saveButtonText}>Save Changes</Text>
-                        </TouchableOpacity>
                     </View>
-                </View>
-            )
-            }
+                )
+                }
 
-            {isDriver && <BottomBar />}
-        </View >
+                {isDriver && <BottomBar />}
+            </View >
+        </ProtectedRoute>
     );
 }
 

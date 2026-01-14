@@ -7,6 +7,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useDriverStore } from '@/constants/store';
 import * as Location from 'expo-location';
 import BottomBar from '@/components/DriverBottomBar';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const { width } = Dimensions.get('window');
 
@@ -96,96 +97,98 @@ export default function DriverDashboard() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
-                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
-                    <View style={styles.headerLeft}>
-                        <View style={styles.avatarContainer}>
-                            <Ionicons name="person" size={24} color="#FFF" />
-                        </View>
-                        <View>
-                            <Text style={styles.greeting}>Welcome back,</Text>
-                            <Text style={styles.userName}>{currentUser?.name || "Driver"}</Text>
-                        </View>
-                    </View>
-                    <View style={styles.statusPill}>
-                        <View style={[styles.statusDot, { backgroundColor: isAvailable ? '#4CAF50' : '#FF5252' }]} />
-                        <Text style={styles.statusText}>{isAvailable ? "Online" : "Offline"}</Text>
-                    </View>
-                </Animated.View>
-
-                <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.card}>
-                    <View style={styles.cardHeader}>
-                        <View style={styles.iconBox}>
-                            <Ionicons name="power" size={24} color="#1A1A1A" />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 16 }}>
-                            <Text style={styles.cardTitle}>Availability Status</Text>
-                            <Text style={styles.cardSubtitle}>Go online to receive jobs</Text>
-                        </View>
-                        <Switch
-                            trackColor={{ false: '#767577', true: '#1A1A1A' }}
-                            thumbColor={isAvailable ? '#FFFFFF' : '#f4f3f4'}
-                            ios_backgroundColor="#3e3e3e"
-                            onValueChange={handleToggleAvailability}
-                            value={isAvailable}
-                        />
-                    </View>
-                </Animated.View>
-
-                <Text style={styles.sectionTitle}>New Requests</Text>
-                <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.listContainer}>
-                    {relevantRequests.length > 0 ? (
-                        relevantRequests.map((req) => (
-                            <View key={req.id} style={styles.jobCard}>
-                                <View style={styles.jobHeader}>
-                                    <Text style={styles.cropType}>{req.cropType}</Text>
-                                    <Text style={styles.quantity}>{req.quantity}</Text>
-                                </View>
-
-                                <View style={styles.routeContainer}>
-                                    <View style={styles.routeRow}>
-                                        <View style={[styles.dot, { backgroundColor: '#999' }]} />
-                                        <Text style={styles.routeText}>{req.pickupLocation}</Text>
-                                    </View>
-                                    <View style={styles.line} />
-                                    <View style={styles.routeRow}>
-                                        <View style={[styles.dot, { backgroundColor: '#1A1A1A' }]} />
-                                        <Text style={styles.routeText}>{req.destination}</Text>
-                                    </View>
-                                </View>
-
-                                {req.status === 'pending' ? (
-                                    <View style={styles.actions}>
-                                        <TouchableOpacity
-                                            style={styles.acceptButton}
-                                            onPress={() => handleAcceptRequest(req.id)}
-                                        >
-                                            <Text style={styles.buttonText}>Accept Job</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                ) : (
-                                    <View style={styles.statusBadge}>
-                                        <Text style={styles.statusBadgeText}>
-                                            {req.status === 'accepted' ? 'In Progress' : req.status}
-                                        </Text>
-                                    </View>
-                                )}
+                    <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
+                        <View style={styles.headerLeft}>
+                            <View style={styles.avatarContainer}>
+                                <Ionicons name="person" size={24} color="#FFF" />
                             </View>
-                        ))
-                    ) : (
-                        <View style={styles.emptyContainer}>
-                            <Ionicons name="car-sport-outline" size={48} color="#E0E0E0" />
-                            <Text style={styles.emptyText}>No requests available right now.</Text>
+                            <View>
+                                <Text style={styles.greeting}>Welcome back,</Text>
+                                <Text style={styles.userName}>{currentUser?.name || "Driver"}</Text>
+                            </View>
                         </View>
-                    )}
-                </Animated.View>
+                        <View style={styles.statusPill}>
+                            <View style={[styles.statusDot, { backgroundColor: isAvailable ? '#4CAF50' : '#FF5252' }]} />
+                            <Text style={styles.statusText}>{isAvailable ? "Online" : "Offline"}</Text>
+                        </View>
+                    </Animated.View>
 
-            </ScrollView>
+                    <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.card}>
+                        <View style={styles.cardHeader}>
+                            <View style={styles.iconBox}>
+                                <Ionicons name="power" size={24} color="#1A1A1A" />
+                            </View>
+                            <View style={{ flex: 1, marginLeft: 16 }}>
+                                <Text style={styles.cardTitle}>Availability Status</Text>
+                                <Text style={styles.cardSubtitle}>Go online to receive jobs</Text>
+                            </View>
+                            <Switch
+                                trackColor={{ false: '#767577', true: '#1A1A1A' }}
+                                thumbColor={isAvailable ? '#FFFFFF' : '#f4f3f4'}
+                                ios_backgroundColor="#3e3e3e"
+                                onValueChange={handleToggleAvailability}
+                                value={isAvailable}
+                            />
+                        </View>
+                    </Animated.View>
 
-            <BottomBar />
-        </SafeAreaView>
+                    <Text style={styles.sectionTitle}>New Requests</Text>
+                    <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.listContainer}>
+                        {relevantRequests.length > 0 ? (
+                            relevantRequests.map((req) => (
+                                <View key={req.id} style={styles.jobCard}>
+                                    <View style={styles.jobHeader}>
+                                        <Text style={styles.cropType}>{req.cropType}</Text>
+                                        <Text style={styles.quantity}>{req.quantityKg}kg</Text>
+                                    </View>
+
+                                    <View style={styles.routeContainer}>
+                                        <View style={styles.routeRow}>
+                                            <View style={[styles.dot, { backgroundColor: '#999' }]} />
+                                            <Text style={styles.routeText}>{req.pickupLocation}</Text>
+                                        </View>
+                                        <View style={styles.line} />
+                                        <View style={styles.routeRow}>
+                                            <View style={[styles.dot, { backgroundColor: '#1A1A1A' }]} />
+                                            <Text style={styles.routeText}>{req.destination}</Text>
+                                        </View>
+                                    </View>
+
+                                    {req.status === 'pending' ? (
+                                        <View style={styles.actions}>
+                                            <TouchableOpacity
+                                                style={styles.acceptButton}
+                                                onPress={() => handleAcceptRequest(req.id)}
+                                            >
+                                                <Text style={styles.buttonText}>Accept Job</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ) : (
+                                        <View style={styles.statusBadge}>
+                                            <Text style={styles.statusBadgeText}>
+                                                {req.status === 'accepted' ? 'In Progress' : req.status}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                            ))
+                        ) : (
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="car-sport-outline" size={48} color="#E0E0E0" />
+                                <Text style={styles.emptyText}>No requests available right now.</Text>
+                            </View>
+                        )}
+                    </Animated.View>
+
+                </ScrollView>
+
+                <BottomBar />
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
+
 export default function HelpScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,7 +53,6 @@ export default function HelpScreen() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-
           <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.searchSection}>
             <Text style={styles.greeting}>How can we help you?</Text>
             <View style={styles.searchBar}>
@@ -98,7 +98,7 @@ export default function HelpScreen() {
               <Text style={styles.contactTitle}>Still need help?</Text>
               <Text style={styles.contactSub}>Our support team is available 24/7</Text>
             </View>
-            <TouchableOpacity style={styles.contactButton} onPress={() => Linking.openURL('tel:1234567890')}>
+            <TouchableOpacity style={styles.contactButton} onPress={() => Linking.openURL('tel:0785805869')}>
               <Ionicons name="call" size={20} color="#FFF" />
               <Text style={styles.contactButtonText}>Call Us</Text>
             </TouchableOpacity>

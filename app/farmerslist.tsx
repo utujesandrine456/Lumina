@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import FarmerBottomBar from '@/components/FarmerBottomBar';
 
@@ -78,61 +79,63 @@ export default function FarmersList() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={styles.backButton}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-                </TouchableOpacity>
-                <View style={styles.titleContainer}>
-                    <Text style={styles.title}>All Farmers</Text>
-                </View>
-                <View style={styles.placeholderButton} />
-            </View>
-
-            {farmers.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                    <View style={styles.iconCircle}>
-                        <Ionicons name="people" size={48} color="#1A1A1A" />
-                    </View>
-                    <Text style={styles.emptyTitle}>No Farmers Yet</Text>
-                    <Text style={styles.emptyText}>Register farmers to start managing their harvest transport requests.</Text>
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.header}>
                     <TouchableOpacity
-                        style={styles.addButton}
-                        onPress={() => router.push('/registerfarmer')}
+                        onPress={() => router.back()}
+                        style={styles.backButton}
+                        activeOpacity={0.7}
                     >
-                        <Text style={styles.addButtonText}>Register New Farmer</Text>
-                        <Ionicons name="add" size={20} color="#FFF" />
+                        <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                     </TouchableOpacity>
+                    <View style={styles.titleContainer}>
+                        <Text style={styles.title}>All Farmers</Text>
+                    </View>
+                    <View style={styles.placeholderButton} />
                 </View>
-            ) : (
-                <>
-                    <FlatList
-                        data={farmers}
-                        renderItem={renderFarmer}
-                        keyExtractor={(item) => item.id}
-                        contentContainerStyle={styles.listContent}
-                        showsVerticalScrollIndicator={false}
-                    />
-                    {selectedIds.length > 0 && (
-                        <Animated.View entering={FadeInDown.duration(200)} style={styles.footer}>
-                            <View style={styles.selectionInfo}>
-                                <Text style={styles.selectedCount}>
-                                    {selectedIds.length} Selected
-                                </Text>
-                            </View>
-                            <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-                                <Text style={styles.continueButtonText}>Create Request</Text>
-                                <Ionicons name="arrow-forward" size={18} color="#FFF" />
-                            </TouchableOpacity>
-                        </Animated.View>
-                    )}
-                </>
-            )}
-        </SafeAreaView>
+
+                {farmers.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <View style={styles.iconCircle}>
+                            <Ionicons name="people" size={48} color="#1A1A1A" />
+                        </View>
+                        <Text style={styles.emptyTitle}>No Farmers Yet</Text>
+                        <Text style={styles.emptyText}>Register farmers to start managing their harvest transport requests.</Text>
+                        <TouchableOpacity
+                            style={styles.addButton}
+                            onPress={() => router.push('/registerfarmer')}
+                        >
+                            <Text style={styles.addButtonText}>Register New Farmer</Text>
+                            <Ionicons name="add" size={20} color="#FFF" />
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <>
+                        <FlatList
+                            data={farmers}
+                            renderItem={renderFarmer}
+                            keyExtractor={(item) => item.id}
+                            contentContainerStyle={styles.listContent}
+                            showsVerticalScrollIndicator={false}
+                        />
+                        {selectedIds.length > 0 && (
+                            <Animated.View entering={FadeInDown.duration(200)} style={styles.footer}>
+                                <View style={styles.selectionInfo}>
+                                    <Text style={styles.selectedCount}>
+                                        {selectedIds.length} Selected
+                                    </Text>
+                                </View>
+                                <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
+                                    <Text style={styles.continueButtonText}>Create Request</Text>
+                                    <Ionicons name="arrow-forward" size={18} color="#FFF" />
+                                </TouchableOpacity>
+                            </Animated.View>
+                        )}
+                    </>
+                )}
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

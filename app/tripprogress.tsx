@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming, withRepeat } from 'react-native-reanimated';
 import * as Location from 'expo-location';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function TripProgress() {
     const router = useRouter();
@@ -16,7 +17,7 @@ export default function TripProgress() {
     const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
     const pulseScale = useSharedValue(1);
 
-    
+
     useEffect(() => {
         if (isActive) {
             (async () => {
@@ -71,91 +72,93 @@ export default function TripProgress() {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Trip In Progress</Text>
-                    <View style={{ width: 24 }} />
-                </View>
-
-                <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.content}>
-                    <View style={styles.tripCard}>
-                        <Text style={styles.tripRoute}>
-                            {trip.pickupLocation} → {trip.destination}
-                        </Text>
-                        <View style={styles.tripDetails}>
-                            <View style={styles.detailRow}>
-                                <Ionicons name="cube-outline" size={20} color="#000" />
-                                <Text style={styles.detailText}>{trip.cropType}</Text>
-                                <Text style={styles.detailValue}>{trip.totalWeight} kg</Text>
-                            </View>
-                            <View style={styles.detailRow}>
-                                <Ionicons name="location-outline" size={20} color="#000" />
-                                <Text style={styles.detailText}>Distance</Text>
-                                <Text style={styles.detailValue}>{trip.distance?.toFixed(2)} km</Text>
-                            </View>
-                        </View>
-                    </View>
-
-                    <View style={styles.statusContainer}>
-                        <Animated.View style={[styles.statusIndicator, animatedPulseStyle, isActive && styles.statusIndicatorActive]}>
-                            <Ionicons
-                                name={isActive ? "play-circle" : "pause-circle"}
-                                size={64}
-                                color={isActive ? "#000" : "#757575"}
-                            />
-                        </Animated.View>
-                        <Text style={[styles.statusText, isActive && styles.statusTextActive]}>
-                            {isActive ? 'Trip Active' : 'Trip Paused'}
-                        </Text>
-                        <Text style={styles.statusDescription}>
-                            {isActive
-                                ? 'Your location is being tracked'
-                                : 'Tap Start to begin tracking your trip'}
-                        </Text>
-                    </View>
-
-                    {currentLocation && (
-                        <View style={styles.locationCard}>
-                            <Ionicons name="location" size={24} color="#000" />
-                            <View style={styles.locationInfo}>
-                                <Text style={styles.locationLabel}>Current Location</Text>
-                                <Text style={styles.locationValue}>
-                                    {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}
-                                </Text>
-                            </View>
-                        </View>
-                    )}
-
-                    <TouchableOpacity
-                        style={[styles.startStopButton, isActive && styles.startStopButtonActive]}
-                        onPress={handleStartStop}
-                    >
-                        <Ionicons
-                            name={isActive ? "stop-circle" : "play-circle"}
-                            size={24}
-                            color="#FFF"
-                        />
-                        <Text style={styles.startStopButtonText}>
-                            {isActive ? 'Stop Trip' : 'Start Trip'}
-                        </Text>
-                    </TouchableOpacity>
-
-                    {trip.status === 'in-progress' && (
-                        <TouchableOpacity
-                            style={styles.deliveryButton}
-                            onPress={() => router.push({ pathname: '/delivery', params: { tripId: trip.id } })}
-                        >
-                            <Ionicons name="checkmark-circle" size={24} color="#FFF" />
-                            <Text style={styles.deliveryButtonText}>Confirm Delivery</Text>
+        <ProtectedRoute>
+            <SafeAreaView style={styles.container}>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <Ionicons name="arrow-back" size={24} color="#000" />
                         </TouchableOpacity>
-                    )}
-                </Animated.View>
-            </ScrollView>
-        </SafeAreaView>
+                        <Text style={styles.headerTitle}>Trip In Progress</Text>
+                        <View style={{ width: 24 }} />
+                    </View>
+
+                    <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.content}>
+                        <View style={styles.tripCard}>
+                            <Text style={styles.tripRoute}>
+                                {trip.pickupLocation} → {trip.destination}
+                            </Text>
+                            <View style={styles.tripDetails}>
+                                <View style={styles.detailRow}>
+                                    <Ionicons name="cube-outline" size={20} color="#000" />
+                                    <Text style={styles.detailText}>{trip.cropType}</Text>
+                                    <Text style={styles.detailValue}>{trip.totalWeight} kg</Text>
+                                </View>
+                                <View style={styles.detailRow}>
+                                    <Ionicons name="location-outline" size={20} color="#000" />
+                                    <Text style={styles.detailText}>Distance</Text>
+                                    <Text style={styles.detailValue}>{trip.distance?.toFixed(2)} km</Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.statusContainer}>
+                            <Animated.View style={[styles.statusIndicator, animatedPulseStyle, isActive && styles.statusIndicatorActive]}>
+                                <Ionicons
+                                    name={isActive ? "play-circle" : "pause-circle"}
+                                    size={64}
+                                    color={isActive ? "#000" : "#757575"}
+                                />
+                            </Animated.View>
+                            <Text style={[styles.statusText, isActive && styles.statusTextActive]}>
+                                {isActive ? 'Trip Active' : 'Trip Paused'}
+                            </Text>
+                            <Text style={styles.statusDescription}>
+                                {isActive
+                                    ? 'Your location is being tracked'
+                                    : 'Tap Start to begin tracking your trip'}
+                            </Text>
+                        </View>
+
+                        {currentLocation && (
+                            <View style={styles.locationCard}>
+                                <Ionicons name="location" size={24} color="#000" />
+                                <View style={styles.locationInfo}>
+                                    <Text style={styles.locationLabel}>Current Location</Text>
+                                    <Text style={styles.locationValue}>
+                                        {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}
+                                    </Text>
+                                </View>
+                            </View>
+                        )}
+
+                        <TouchableOpacity
+                            style={[styles.startStopButton, isActive && styles.startStopButtonActive]}
+                            onPress={handleStartStop}
+                        >
+                            <Ionicons
+                                name={isActive ? "stop-circle" : "play-circle"}
+                                size={24}
+                                color="#FFF"
+                            />
+                            <Text style={styles.startStopButtonText}>
+                                {isActive ? 'Stop Trip' : 'Start Trip'}
+                            </Text>
+                        </TouchableOpacity>
+
+                        {trip.status === 'in-progress' && (
+                            <TouchableOpacity
+                                style={styles.deliveryButton}
+                                onPress={() => router.push({ pathname: '/delivery', params: { tripId: trip.id } })}
+                            >
+                                <Ionicons name="checkmark-circle" size={24} color="#FFF" />
+                                <Text style={styles.deliveryButtonText}>Confirm Delivery</Text>
+                            </TouchableOpacity>
+                        )}
+                    </Animated.View>
+                </ScrollView>
+            </SafeAreaView>
+        </ProtectedRoute>
     );
 }
 

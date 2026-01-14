@@ -41,12 +41,12 @@ export default function Layout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="CooperativeRegistrationScreen" />
         <Stack.Screen name="PhoneVerificationScreen" />
-        <Stack.Screen name="CFarmerDashboardScreen" />
         <Stack.Screen name="AddFarmerScreen" />
         <Stack.Screen name="FarmerListScreen" />
         <Stack.Screen name="CreateRequestScreen" />
         <Stack.Screen name="ChatScreen" />
-        <Stack.Screen name="CDriverDashboardScreen" />
+        <Stack.Screen name="admindriverdashboard" />
+        <Stack.Screen name="adminfarmerdashboard" />
         <Stack.Screen name="driverdashboard" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="deliveryconfirmation" />

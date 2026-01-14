@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { Link } from 'expo-router';
 import { MonoText } from '@/components/StyledText';
 
@@ -150,7 +151,7 @@ export default function NotificationsScreen() {
       prev.map(notification => ({ ...notification, read: true }))
     );
     setUnreadCount(0);
-    
+
     // Animation feedback
     Animated.sequence([
       Animated.timing(fadeAnim, {
@@ -171,7 +172,7 @@ export default function NotificationsScreen() {
     if (deletedNotification && !deletedNotification.read) {
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
-    
+
     setNotifications(prev => prev.filter(notification => notification.id !== id));
   };
 
@@ -239,9 +240,9 @@ export default function NotificationsScreen() {
               </View>
             )}
           </View>
-          
+
           <Text style={styles.notificationMessage}>{item.message}</Text>
-          
+
           <View style={styles.notificationActions}>
             <TouchableOpacity
               style={styles.actionButton}
@@ -250,7 +251,7 @@ export default function NotificationsScreen() {
               <Ionicons name="checkmark-done" size={20} color="#4CAF50" />
               <Text style={styles.actionText}>Mark Read</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[styles.actionButton, styles.deleteButton]}
               onPress={() => deleteNotification(item.id)}
@@ -290,7 +291,7 @@ export default function NotificationsScreen() {
             )}
           </View>
         </View>
-        
+
         <View style={styles.headerStats}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{notifications.length}</Text>

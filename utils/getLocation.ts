@@ -8,10 +8,20 @@ export async function getCurrentCoordinates(){
         return null;
     }
 
-    const location = await Location.getCurrentPositionAsync({});
+    const enabled = await Location.hasServicesEnabledAsync();
+    if (!enabled) {
+        alert("Location services are disabled. Please enable location services to continue.");
+        return null;
+    }
 
-    return {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-    };
+    try {
+        const location = await Location.getCurrentPositionAsync({});
+        return {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+        };
+    } catch (error) {
+        alert("Unable to get current location. Please ensure location services are enabled and try again.");
+        return null;
+    }
 }

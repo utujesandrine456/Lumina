@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDriverStore } from '@/constants/store';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import * as Location from 'expo-location';
 
 export default function RegisterDriver() {
@@ -63,20 +64,22 @@ export default function RegisterDriver() {
 
     const driver = {
       id: `drv-${Date.now()}`,
-      name,
+      cooperativeId: currentUser?.cooperativeId || '',
+      fullName: name,
       phone,
       pin,
-      idNumber,
+      nationalId: idNumber,
       licenseNumber,
+      vehicleType: 'Truck',
       plateNumber,
       capacity: Number(capacity) || 0,
       rating: 0,
+      available: true,
       availability: true,
       verified: canVerifyNow ? verified : false,
       coordinates: coordinates,
     };
 
-    addDriver(driver as any);
     addDriver(driver as any);
 
     if (canVerifyNow && verified) {
@@ -87,85 +90,87 @@ export default function RegisterDriver() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#000" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Register Driver</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
-        <View style={styles.form}>
-          <Text style={styles.helperText}>
-            Registered by: {pickupRoleLabel}. Drivers become bookable once verified.
-          </Text>
-
-          <Text style={styles.label}>Driver Name *</Text>
-          <TextInput style={styles.input} placeholder="Enter driver name" value={name} onChangeText={setName} />
-
-          <Text style={styles.label}>Phone Number *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter phone number"
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-          />
-
-          <Text style={styles.label}>Access PIN (4 digits) *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Set a 4-digit PIN"
-            keyboardType="numeric"
-            value={pin}
-            onChangeText={setPin}
-            maxLength={4}
-            secureTextEntry
-          />
-
-          <Text style={styles.label}>National ID / Passport *</Text>
-          <TextInput style={styles.input} placeholder="Enter National ID or Passport" value={idNumber} onChangeText={setIdNumber} />
-
-          <Text style={styles.label}>Driving License Number *</Text>
-          <TextInput style={styles.input} placeholder="Enter License Number" value={licenseNumber} onChangeText={setLicenseNumber} />
-
-          <Text style={styles.label}>Plate Number *</Text>
-          <TextInput style={styles.input} placeholder="Enter plate number" value={plateNumber} onChangeText={setPlateNumber} />
-
-          <Text style={styles.label}>Truck Capacity (kg) *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g., 1500"
-            keyboardType="numeric"
-            value={capacity}
-            onChangeText={setCapacity}
-          />
-
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>Use GPS location</Text>
-            <Switch value={useGps} onValueChange={setUseGps} trackColor={{ false: '#BDBDBD', true: '#000' }} />
+    <ProtectedRoute>
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color="#000" />
+            </TouchableOpacity>
+            <Text style={styles.title}>Register Driver</Text>
+            <View style={{ width: 24 }} />
           </View>
 
-          {canVerifyNow ? (
+          <View style={styles.form}>
+            <Text style={styles.helperText}>
+              Registered by: {pickupRoleLabel}. Drivers become bookable once verified.
+            </Text>
+
+            <Text style={styles.label}>Driver Name *</Text>
+            <TextInput style={styles.input} placeholder="Enter driver name" value={name} onChangeText={setName} />
+
+            <Text style={styles.label}>Phone Number *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter phone number"
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+            />
+
+            <Text style={styles.label}>Access PIN (4 digits) *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Set a 4-digit PIN"
+              keyboardType="numeric"
+              value={pin}
+              onChangeText={setPin}
+              maxLength={4}
+              secureTextEntry
+            />
+
+            <Text style={styles.label}>National ID / Passport *</Text>
+            <TextInput style={styles.input} placeholder="Enter National ID or Passport" value={idNumber} onChangeText={setIdNumber} />
+
+            <Text style={styles.label}>Driving License Number *</Text>
+            <TextInput style={styles.input} placeholder="Enter License Number" value={licenseNumber} onChangeText={setLicenseNumber} />
+
+            <Text style={styles.label}>Plate Number *</Text>
+            <TextInput style={styles.input} placeholder="Enter plate number" value={plateNumber} onChangeText={setPlateNumber} />
+
+            <Text style={styles.label}>Truck Capacity (kg) *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., 1500"
+              keyboardType="numeric"
+              value={capacity}
+              onChangeText={setCapacity}
+            />
+
             <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Mark as verified (Admin only)</Text>
-              <Switch value={verified} onValueChange={setVerified} trackColor={{ false: '#BDBDBD', true: '#000' }} />
+              <Text style={styles.switchLabel}>Use GPS location</Text>
+              <Switch value={useGps} onValueChange={setUseGps} trackColor={{ false: '#BDBDBD', true: '#000' }} />
             </View>
-          ) : null}
 
-          <TouchableOpacity style={styles.secondaryButton} onPress={setGpsLocation}>
-            <Ionicons name="location-outline" size={18} color="#000" />
-            <Text style={styles.secondaryButtonText}>{coords ? 'Update GPS Location' : 'Set GPS Location'}</Text>
-          </TouchableOpacity>
+            {canVerifyNow ? (
+              <View style={styles.switchRow}>
+                <Text style={styles.switchLabel}>Mark as verified (Admin only)</Text>
+                <Switch value={verified} onValueChange={setVerified} trackColor={{ false: '#BDBDBD', true: '#000' }} />
+              </View>
+            ) : null}
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Register Driver</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            <TouchableOpacity style={styles.secondaryButton} onPress={setGpsLocation}>
+              <Ionicons name="location-outline" size={18} color="#000" />
+              <Text style={styles.secondaryButtonText}>{coords ? 'Update GPS Location' : 'Set GPS Location'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+              <Text style={styles.submitButtonText}>Register Driver</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </ProtectedRoute>
   );
 }
 
